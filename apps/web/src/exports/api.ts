@@ -6,7 +6,29 @@ import { api, ApiError } from '../lib/api';
  * attachment` — so the page stays put and the browser names it.
  */
 
-export type ExportKind = 'pdf' | 'dxf' | 'ifc' | 'gltf' | 'usdz' | 'still' | 'shots' | 'film' | 'pair';
+export type ExportKind = 'pdf' | 'dxf' | 'ifc' | 'gltf' | 'usdz' | 'still' | 'shots' | 'film' | 'pair' | 'tour';
+
+/**
+ * A virtual tour's request (FLR-T-14.2; sizes and qualities are @floorspec/mesh `TOUR_SIZES` and
+ * `TOUR_QUALITIES`): the rooms in order — the first opens the tour — each from its centre or a saved
+ * view's eye; the eye's height in base units.
+ */
+export interface TourRequest {
+  rooms?: { room: string; view?: string }[];
+  eyeHeight?: number;
+  size?: 'small' | 'medium' | 'large';
+  quality?: 'draft' | 'standard' | 'high';
+}
+
+/** A tour job's facts, as the api shows them. */
+export interface TourFacts {
+  rooms: { id: string; name: string; view: string | null }[];
+  panos: number;
+  size: 'small' | 'medium' | 'large';
+  quality: 'draft' | 'standard' | 'high';
+  eyeHeight: number;
+  at: string | null;
+}
 
 /**
  * A still's sizes and qualities, as the worker offers them (apps/worker/src/pathtrace/presets.ts) —
@@ -156,6 +178,8 @@ export interface ExportJob {
   shots?: { views: string[] | null; size: ShotSize; quality: StillQuality } | null;
   /** A film's (FLR-T-14.1); null for any other export. */
   film?: FilmFacts | null;
+  /** A virtual tour's (FLR-T-14.2); null for any other export. */
+  tour?: TourFacts | null;
   /** Stopped by a person rather than failed (FLR-T-14.1). */
   cancelled?: boolean;
   /**
@@ -189,6 +213,9 @@ export interface ExportJob {
     shots?: { file: string; view: string; name: string; width: number; height: number; samples: number; ms: number }[];
     /** A matched pair's (FLR-T-14.4): its four pictures and what each side was. */
     pair?: PairFacts;
+    /** A tour's (FLR-T-14.2): its panoramas and the doorways they link. */
+    panos?: number;
+    doorways?: number;
   } | null;
   createdAt: string;
   finishedAt: string | null;
@@ -218,6 +245,8 @@ export interface ExportRequest {
   film?: FilmRequest;
   /** A matched pair's (FLR-T-14.4). */
   pair?: PairRequest;
+  /** A virtual tour's (FLR-T-14.2). */
+  tour?: TourRequest;
   /** glTF and USDZ: the doors closed (default) or open (FLR-T-13.8). */
   doors?: 'open' | 'closed';
   /** glTF and USDZ (FLR-T-13.12): the lights on, each at an output and colour temperature; default every one at full. */
@@ -293,6 +322,13 @@ export function filmProgress(job: ExportJob): { frame: number; frames: number; c
   return { frame: p['frame'], frames: p['frames'], clock: typeof p['clock'] === 'string' ? p['clock'] : null, preview: typeof p['preview'] === 'string' && p['preview'].startsWith('data:image/png;base64,') ? p['preview'] : null };
 }
 
+/** A tour job's progress (FLR-T-14.2): the panorama being made, of all of them, its room, and its cube face. */
+export function tourProgress(job: ExportJob): { pano: number; panos: number; room: string | null; face: number; faces: number } | null {
+  const p = job.progress as Record<string, unknown> | null | undefined;
+  if (p === null || p === undefined || typeof p['pano'] !== 'number' || typeof p['panos'] !== 'number') return null;
+  return { pano: p['pano'], panos: p['panos'], room: typeof p['room'] === 'string' ? p['room'] : null, face: typeof p['face'] === 'number' ? p['face'] : 1, faces: typeof p['faces'] === 'number' ? p['faces'] : 6 };
+}
+
 /** Cancel an export still queued or running (FLR-T-14.1). */
 export async function cancelExport(projectId: string, id: string): Promise<ExportJob> {
   return (await api.post<{ export: ExportJob }>(`/api/projects/${projectId}/exports/${id}/cancel`, {})).export;
@@ -328,14 +364,18 @@ export function describeJob(job: ExportJob, sets: readonly DesignSet[] = []): st
 }
 
 function describeStatus(job: ExportJob): string {
-  const what = { pdf: 'PDF', dxf: 'DXF', ifc: 'IFC model', gltf: 'glTF', usdz: 'USDZ', still: 'Still', shots: 'Shot list', film: 'Film', pair: 'Matched pair' }[job.kind];
+  const what = { pdf: 'PDF', dxf: 'DXF', ifc: 'IFC model', gltf: 'glTF', usdz: 'USDZ', still: 'Still', shots: 'Shot list', film: 'Film', pair: 'Matched pair', tour: 'Virtual tour' }[job.kind];
   switch (job.status) {
     case 'queued':
-      return job.kind === 'ifc' ? `${what} waiting to be written` : job.kind === 'still' || job.kind === 'shots' || job.kind === 'film' || job.kind === 'pair' ? `${what} waiting to be rendered` : `${what} waiting to be drawn`;
+      return job.kind === 'ifc' ? `${what} waiting to be written` : job.kind === 'still' || job.kind === 'shots' || job.kind === 'film' || job.kind === 'pair' || job.kind === 'tour' ? `${what} waiting to be rendered` : `${what} waiting to be drawn`;
     case 'running':
       if (job.kind === 'film') {
         const f = filmProgress(job);
         return f === null ? 'Rendering the film…' : `Rendering the film… frame ${String(f.frame)} of ${String(f.frames)}`;
+      }
+      if (job.kind === 'tour') {
+        const t = tourProgress(job);
+        return t === null ? 'Rendering the tour…' : `Rendering the tour… panorama ${String(t.pano)} of ${String(t.panos)}`;
       }
       if (job.kind === 'shots') return job.progress?.shot !== undefined ? `Rendering the shot list… shot ${String(job.progress.shot)} of ${String(job.progress.shots ?? 0)}` : 'Rendering the shot list…';
       if (job.kind === 'still') return job.progress ? `Rendering the still… pass ${String(job.progress.pass)} of ${String(job.progress.passes)}` : 'Rendering the still…';
@@ -350,6 +390,7 @@ function describeStatus(job: ExportJob): string {
       if (r?.shots !== undefined) return `${r.name} · ${String(r.shots.length)} ${r.shots.length === 1 ? 'shot' : 'shots'}`;
       if (r?.elements !== undefined) return `${r.name} · ${String(r.elements)} ${r.elements === 1 ? 'element' : 'elements'}`;
       if (job.kind === 'film' && r?.frames !== undefined && r.height !== undefined) return `${r.name} · ${String(r.frames)} frames · ${String(r.height)}p`;
+      if (job.kind === 'tour' && r?.panos !== undefined) return `${r.name.replace(/\.json$/, '.zip')} · ${String(r.panos)} ${r.panos === 1 ? 'panorama' : 'panoramas'}`;
       if (r?.pair !== undefined) return `${r.name} · A ${r.pair.a.label} and B ${r.pair.b.label}`;
       return r?.name ?? what;
     }

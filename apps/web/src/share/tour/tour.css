@@ -1,0 +1,517 @@
+/* FLR-T-14.2: a virtual tour — the dialog that makes one, and the viewer that walks it (phone-first). */
+
+/* ── Make a virtual tour ─────────────────────────────────────────────────────────────────────── */
+
+.fs-tour-dialog {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12);
+}
+.fs-tour-dialog__head {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: calc(-1 * var(--space-8));
+}
+.fs-tour-rooms {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  max-height: 340px;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  list-style: none;
+}
+.fs-tour-rooms__row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  min-height: 40px;
+  padding: var(--space-2) var(--space-8);
+  border-radius: var(--radius-md);
+}
+.fs-tour-rooms__row:hover {
+  background: var(--color-surface-hover);
+}
+.fs-tour-rooms__row label {
+  white-space: nowrap;
+}
+.fs-tour-rooms__stands {
+  flex: none;
+  width: 220px;
+}
+.fs-tour-rooms__level {
+  color: var(--color-fg-muted);
+  font-family: var(--font-mono);
+  font-size: var(--text-11);
+  white-space: nowrap;
+}
+.fs-tour-rooms__off {
+  flex: none;
+  width: 220px;
+  color: var(--color-fg-faint);
+  padding-inline: var(--space-12);
+}
+.fs-tour-dialog__facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-24);
+  padding-top: var(--space-8);
+  border-top: 1px solid var(--color-border);
+}
+.fs-tour-dialog__fact {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+.fs-tour-dialog__value {
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  font-size: var(--text-13);
+}
+.fs-tour-dialog__share {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+.fs-tour-dialog__share .fs-note {
+  margin: 0;
+}
+.fs-tour-dialog__tally {
+  flex: 1 1 0;
+  min-width: 0;
+  color: var(--color-fg-muted);
+  font-family: var(--font-mono);
+  font-size: var(--text-12);
+}
+.fs-tour-modal [class*='footer'] {
+  align-items: center;
+}
+
+/* The job card, in the dialog: the film's card, in the flow. */
+.fs-film-job.fs-film-job--inline {
+  position: static;
+  width: auto;
+  max-width: none;
+  box-shadow: none;
+}
+.fs-tour-job__link {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-8);
+}
+.fs-tour-job__url {
+  display: flex;
+  flex: 1 1 240px;
+  align-items: center;
+  gap: var(--space-8);
+  min-width: 0;
+  height: 32px;
+  padding: 0 var(--space-12);
+  border: 1px solid var(--color-border-field);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+}
+.fs-tour-job__input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  color: var(--color-fg);
+  font-family: var(--font-mono);
+  font-size: var(--text-12);
+  outline: none;
+}
+.fs-tour-job__url:focus-within {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 1px;
+}
+.fs-tour-job__open {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-4);
+  color: var(--color-accent);
+  font-size: var(--text-12);
+}
+.fs-film-job .fs-tour-job__qr {
+  width: 168px;
+}
+/* The card's icons are 16 px; the QR code is not an icon. */
+.fs-film-job .fs-tour-job__qr > svg {
+  width: 100%;
+  height: auto;
+  color: inherit;
+}
+
+/* ── The viewer ──────────────────────────────────────────────────────────────────────────────── */
+
+.fs-tour {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  background: var(--color-bg-sunken);
+  color: var(--color-fg);
+  touch-action: none;
+  user-select: none;
+}
+.fs-tour__surface {
+  position: absolute;
+  inset: 0;
+  cursor: grab;
+}
+.fs-tour__surface:active {
+  cursor: grabbing;
+}
+.fs-tour__surface:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: -2px;
+}
+.fs-tour__canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.fs-tour__veil {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: var(--color-bg-sunken);
+  opacity: 0.85;
+}
+
+/* The room's card, top. */
+.fs-tour-card {
+  position: absolute;
+  top: max(var(--space-16), env(safe-area-inset-top));
+  left: var(--space-16);
+  right: var(--space-16);
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  max-width: 520px;
+  margin-inline: auto;
+  padding: var(--space-12) var(--space-8) var(--space-12) var(--space-16);
+  border: 1px solid var(--color-border-float);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-raised);
+  box-shadow: var(--shadow-float);
+}
+.fs-tour-card__text {
+  flex: 1;
+  min-width: 0;
+}
+.fs-tour-card__room {
+  margin: 0;
+  font-size: var(--text-16);
+  font-weight: var(--weight-semibold);
+  line-height: var(--leading-20);
+}
+.fs-tour-card__where {
+  margin: 0;
+  overflow: hidden;
+  color: var(--color-fg-muted);
+  font-size: var(--text-12);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* A doorway: a ring on the floor at its threshold, and the pill above it (the board's Hotspot). */
+.fs-tour-hotspot {
+  position: absolute;
+  width: 0;
+  height: 0;
+}
+.fs-tour-hotspot__ring {
+  position: absolute;
+  left: -40px;
+  top: -9px;
+  width: 80px;
+  height: 18px;
+  border: 2px solid var(--color-accent);
+  border-radius: 50%;
+  pointer-events: none;
+}
+.fs-tour-hotspot__pill {
+  position: absolute;
+  bottom: 18px;
+  left: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-8);
+  min-height: 44px;
+  padding: var(--space-4) var(--space-16) var(--space-4) var(--space-6);
+  border: 1px solid var(--color-border-float);
+  border-radius: var(--radius-full);
+  background: var(--color-surface-raised);
+  box-shadow: var(--shadow-float);
+  color: var(--color-fg);
+  font: inherit;
+  font-size: var(--text-13);
+  font-weight: var(--weight-medium);
+  white-space: nowrap;
+  cursor: pointer;
+  transform: translateX(-50%);
+}
+.fs-tour-hotspot__pill:hover,
+.fs-tour-hotspot__pill:focus-visible {
+  background: var(--color-accent);
+  color: var(--color-accent-contrast);
+}
+.fs-tour-hotspot__pill:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+.fs-tour-hotspot__arrow {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 32px;
+  border-radius: var(--radius-full);
+  background: var(--color-accent);
+  color: var(--color-accent-contrast);
+}
+.fs-tour-hotspot__pill:hover .fs-tour-hotspot__arrow,
+.fs-tour-hotspot__pill:focus-visible .fs-tour-hotspot__arrow {
+  background: var(--color-surface-raised);
+  color: var(--color-fg);
+}
+.fs-tour-hotspot__arrow svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* The hint, above the map. */
+.fs-tour-hint {
+  position: absolute;
+  left: 50%;
+  bottom: calc(var(--space-16) + 118px + var(--space-16) + env(safe-area-inset-bottom));
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-8);
+  max-width: calc(100% - 2 * var(--space-16));
+  margin: 0;
+  padding: var(--space-6) var(--space-16);
+  border: 1px solid var(--color-border-float);
+  border-radius: var(--radius-full);
+  background: var(--color-surface-raised);
+  font-size: var(--text-13);
+  pointer-events: none;
+  transform: translateX(-50%);
+  white-space: nowrap;
+}
+.fs-tour-hint svg {
+  flex: none;
+  width: 16px;
+  height: 16px;
+}
+.fs-tour-hint--problem {
+  white-space: normal;
+  color: var(--color-danger);
+}
+
+/* The map, bottom left: the level's plan around you, the way you face. */
+.fs-tour-map {
+  position: absolute;
+  left: var(--space-16);
+  bottom: calc(var(--space-16) + env(safe-area-inset-bottom));
+  width: 150px;
+  height: 118px;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid var(--color-border-float);
+  border-radius: var(--radius-lg);
+  background: var(--color-bg-sunken);
+  box-shadow: var(--shadow-float);
+  cursor: pointer;
+}
+.fs-tour-map:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+.fs-tour-map__plan {
+  position: absolute;
+  max-width: none;
+  pointer-events: none;
+}
+.fs-tour-map__you {
+  position: absolute;
+  left: 35px;
+  top: 19px;
+  width: 80px;
+  height: 80px;
+  pointer-events: none;
+}
+.fs-tour-map__cone {
+  fill: var(--color-accent);
+  opacity: 0.45;
+}
+.fs-tour-map__ring {
+  fill: var(--color-surface-raised);
+}
+.fs-tour-map__dot {
+  fill: var(--color-accent);
+}
+
+.fs-tour-tools {
+  position: absolute;
+  right: var(--space-16);
+  bottom: calc(var(--space-16) + env(safe-area-inset-bottom));
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12);
+}
+.fs-tour-tools button {
+  width: 44px;
+  height: 44px;
+  box-shadow: var(--shadow-float);
+}
+
+/* The plan sheet: every toured room, a tap away. */
+.fs-tour-sheet__scrim {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  background: color-mix(in srgb, var(--color-bg-sunken) 55%, transparent);
+}
+.fs-tour-sheet {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12);
+  width: 100%;
+  max-width: 560px;
+  max-height: 88dvh;
+  padding: var(--space-8) var(--space-16) calc(var(--space-16) + env(safe-area-inset-bottom));
+  overflow-y: auto;
+  border: 1px solid var(--color-border-float);
+  border-bottom: 0;
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  background: var(--color-surface-raised);
+  box-shadow: var(--shadow-sheet);
+}
+.fs-tour-sheet__handle {
+  align-self: center;
+  width: 36px;
+  height: 4px;
+  border-radius: var(--radius-full);
+  background: var(--color-border);
+}
+.fs-tour-sheet__head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+}
+.fs-tour-sheet__title {
+  flex: 1;
+  margin: 0;
+  font-size: var(--text-16);
+  font-weight: var(--weight-semibold);
+}
+.fs-tour-sheet__plan {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-bg-sunken);
+}
+.fs-tour-sheet__plan > img {
+  display: block;
+}
+.fs-tour-pin {
+  position: absolute;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-6);
+  padding: var(--space-2) var(--space-8);
+  border: 1px solid var(--color-border-float);
+  border-radius: var(--radius-full);
+  background: var(--color-surface-raised);
+  color: var(--color-fg);
+  font: inherit;
+  font-size: var(--text-12);
+  white-space: nowrap;
+  cursor: pointer;
+  transform: translate(-50%, -50%);
+}
+.fs-tour-pin__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: var(--radius-full);
+  background: var(--color-accent);
+}
+.fs-tour-pin[aria-current='true'] {
+  background: var(--color-accent);
+  color: var(--color-accent-contrast);
+}
+.fs-tour-pin[aria-current='true'] .fs-tour-pin__dot {
+  background: var(--color-accent-contrast);
+}
+.fs-tour-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-8);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.fs-tour-chip {
+  min-height: 36px;
+  padding: var(--space-4) var(--space-12);
+  border: 1px solid var(--color-border-field);
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--color-fg);
+  font: inherit;
+  font-size: var(--text-13);
+  cursor: pointer;
+}
+.fs-tour-chip:hover {
+  background: var(--color-surface-hover);
+}
+.fs-tour-chip[aria-current='true'] {
+  border-color: var(--color-accent);
+  background: var(--color-accent);
+  color: var(--color-accent-contrast);
+}
+.fs-tour-chip:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+.fs-tour-sheet__note {
+  margin: 0;
+  color: var(--color-fg-muted);
+  font-size: var(--text-12);
+  line-height: var(--leading-16);
+}
+
+/* Waiting for it to be made, and a link that opens nothing. */
+.fs-tour-wait {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  font-family: var(--font-mono);
+  font-size: var(--text-12);
+}
+.fs-tour-wait__bar {
+  width: 100%;
+  height: 6px;
+  accent-color: var(--color-accent);
+}
+.fs-tour-notice {
+  display: grid;
+  min-height: 100dvh;
+  place-items: center;
+  padding: var(--space-16);
+  background: var(--color-bg);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .fs-tour-hotspot__pill,
+  .fs-tour-chip {
+    transition: background var(--duration-2) var(--ease-out);
+  }
+}
