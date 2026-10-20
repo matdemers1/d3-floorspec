@@ -8,7 +8,7 @@
  * Advisory: its spacing is Floorspec's own round defaults (`EXTERIOR_DEFAULTS`), each configurable,
  * and it says so; it checks no code and never says a design meets one (FLR-ADR-011). The kinds of
  * exterior light and their beams are the application's catalogue (`@floorspec/render2d/exterior`,
- * FLR-ADR-063), recorded on FS_electrical's `exterior` lights; their lumens and colour on FS_lighting.
+ * FLR-ADR-062), recorded on FS_electrical's `exterior` lights; their lumens and colour on FS_lighting.
  *
  * A landscape transformer is recorded as FS_electrical has it: a panel that supplies 12 V, fed by a
  * 120 V circuit of the main panel (FS_electrical 3.4) — its taps are the 12 V circuits.

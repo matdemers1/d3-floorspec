@@ -1,6 +1,6 @@
 /**
  * Exterior lights in 3D (FLR-T-15.5): the lamps each kind of exterior light shines with — its
- * catalogue and beams are @floorspec/render2d's (`exterior.ts`, FLR-ADR-063) — for every view that
+ * catalogue and beams are @floorspec/render2d's (`exterior.ts`, FLR-ADR-062) — for every view that
  * lights the grounds: the editor's 3D view, the glTF export and the GPU still, the path tracer.
  */
 import type { ExteriorData } from '@floorspec/render2d/exterior';

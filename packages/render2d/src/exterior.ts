@@ -1,5 +1,5 @@
 /**
- * Exterior lighting (FLR-T-15.5, FLR-ADR-063): the kinds of exterior light a landscape is lit with —
+ * Exterior lighting (FLR-T-15.5, FLR-ADR-062): the kinds of exterior light a landscape is lit with —
  * path lights, uplights, wall-washers, step lights and string lights — and where each one's light
  * lands, drawn on the plan as a beam.
  *

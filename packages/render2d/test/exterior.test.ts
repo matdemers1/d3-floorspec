@@ -5,7 +5,7 @@ import { BEAM_STYLE, beamOf, beamWords, bulbCount, EXTERIOR_DEFS, EXTERIOR_KINDS
 
 /**
  * Exterior lights and their beams (FLR-T-15.5): the application's catalogue of exterior kinds kept on
- * FS_electrical's `exterior` lights (FLR-ADR-063), and where each one's light lands on the plan — a
+ * FS_electrical's `exterior` lights (FLR-ADR-062), and where each one's light lands on the plan — a
  * pool, a cone, a fan, a half-disc, a run of bulbs — drawn in the Beams layer, in one warm tint.
  */
 
