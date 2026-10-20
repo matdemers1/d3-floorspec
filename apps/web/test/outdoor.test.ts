@@ -37,7 +37,7 @@ describe('FS_outdoor in the editor', () => {
     const fence = fenceElement(fenceStyle('fence-privacy-6'), [[0, 0], [0, -30 * FT], [20 * FT, -30 * FT]], 'L1');
     expect(gateAt(DOC, fence)).toEqual({ offset: 13 * FT, width: 4 * FT });
     const withPath = structuredClone(DOC) as FloorspecDocument & { extensions: Record<string, unknown> };
-    withPath.extensions = { ...(withPath.extensions ?? {}), FS_landscape: { collections: { hardscape: { X900: { form: 'path', points: [[-5 * FT, -10 * FT], [5 * FT, -10 * FT]], width: 3 * FT, fallback: { level: 'L1', box: { min: [0, 0, 0], max: [1, 1, 1] } } } } } } };
+    withPath.extensions = { ...withPath.extensions, FS_landscape: { collections: { hardscape: { X900: { form: 'path', points: [[-5 * FT, -10 * FT], [5 * FT, -10 * FT]], width: 3 * FT, fallback: { level: 'L1', box: { min: [0, 0, 0], max: [1, 1, 1] } } } } } } };
     expect(gateAt(withPath, fence)).toEqual({ offset: 8 * FT, width: 4 * FT });
     const one = { ...fence, gates: [{ offset: 13 * FT, width: 4 * FT }] };
     const next = gateAt(DOC, one);
@@ -46,15 +46,15 @@ describe('FS_outdoor in the editor', () => {
   });
 
   it('places a plunge pool from the Outdoor shelf in one op, and the pool derives its water', () => {
-    const e = entriesFor(DOC).find((x) => x.key === 'outdoor:plunge-pool-8x14')!;
-    if (e.source.kind !== 'outdoor') throw new Error('not an outdoor entry');
+    const e = entriesFor(DOC).find((x) => x.key === 'outdoor:plunge-pool-8x14');
+    if (e?.source.kind !== 'outdoor') throw new Error('not an outdoor entry');
     const batch = placeOutdoor(DOC, e.source.collection, e.source.element, { mode: 'free', level: 'L1', at: [-30 * FT, -30 * FT] });
     expect(batch.filter((o) => o.op === 'placeElement').length).toBe(1);
     const r = commit(TEXT, batch);
     expect(r.status).toBe('committed');
     if (r.status !== 'committed') return;
-    const x = check(JSON.parse(r.document) as FloorspecDocument, OFFICIAL_READER).derived!.extensions!.FS_outdoor!;
-    expect(Object.values(x.pools)[0]).toMatchObject({ form: 'plunge', basin: [6 * FT, 12 * FT], depth: 60 * IN });
+    const x = check(JSON.parse(r.document) as FloorspecDocument, OFFICIAL_READER).derived?.extensions?.FS_outdoor;
+    expect(Object.values(x?.pools ?? {})[0]).toMatchObject({ form: 'plunge', basin: [6 * FT, 12 * FT], depth: 60 * IN });
   });
 
   it("re-spaces a pergola's posts as it is stretched, never widening them, and sizes it on a 6\" grid", () => {
