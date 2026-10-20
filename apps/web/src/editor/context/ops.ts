@@ -175,7 +175,13 @@ export const generatedRecord = (model: EditorModel, member: ContextMember, id: s
 /** The context record under a plan point: a tree's crown, a neighbour's footprint, a street's width. */
 export function contextAt(model: EditorModel, at: Point, tol: number): { member: ContextMember; id: string } | null {
   const ctx = contextDrawingOf(model);
-  for (const t of [...ctx.trees].reverse()) if (Math.hypot(at[0] - t.at[0], at[1] - t.at[1]) <= t.spread / 2 + tol) return { member: 'trees', id: t.id };
+  // the tree whose trunk is nearest, of those whose crown is under the point
+  let tree: { id: string; d: number } | null = null;
+  for (const t of ctx.trees) {
+    const d = Math.hypot(at[0] - t.at[0], at[1] - t.at[1]);
+    if (d <= t.spread / 2 + tol && (tree === null || d < tree.d)) tree = { id: t.id, d };
+  }
+  if (tree !== null) return { member: 'trees', id: tree.id };
   for (const n of [...ctx.neighbours].reverse()) if (inside(at, n.footprint)) return { member: 'neighbours', id: n.id };
   for (const s of ctx.streets)
     for (const [i, a] of s.centreline.entries()) {

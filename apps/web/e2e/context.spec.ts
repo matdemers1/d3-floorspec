@@ -183,11 +183,11 @@ test('context: generate the street, neighbours and trees from the street side, s
   await expect(page.getByTestId('context-under')).toBeAttached();
   await expect(page.locator('.fs-canvas')).not.toHaveAttribute('data-ghost', /\bcontext\b/);
 
-  // ── By hand: a tree north of the lot, then dragged 10′ east with the Context tool; Regenerate keeps it.
+  // ── By hand: a tree just north of the lot, then dragged 10′ east with the Context tool; Regenerate keeps it.
   const draw = panel.getByRole('radiogroup', { name: 'Draw by hand' });
-  await draw.getByRole('radio', { name: 'Tree' }).click();
+  await draw.getByRole('radio', { name: 'Tree', exact: true }).click();
   let cam = await cameraOf(page);
-  const plant = cam.at(ft(40, 125));
+  const plant = cam.at(ft(60, 106));
   await page.mouse.click(plant.x, plant.y);
   await expect.poll(async () => records(await docOf(page, project), 'trees').length).toBe(trees + 1);
   const [handId, hand] = records(await docOf(page, project), 'trees').find(([, t]) => t.extras === undefined)!;
