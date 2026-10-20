@@ -1,4 +1,4 @@
-import { appearanceOf, DEFAULT_COLOURS, ROLE_LOOKS, type Appearance, type MeshPart, type PartKind } from '@floorspec/mesh';
+import { appearanceOf, CONTEXT_CASTS_SHADE, DEFAULT_COLOURS, ROLE_LOOKS, type Appearance, type MeshPart, type PartKind } from '@floorspec/mesh';
 import type { EditorModel, WallView } from '../model';
 import type { LevelsShown } from './mode';
 
@@ -54,8 +54,10 @@ export function lookOf(part: Pick<MeshPart, 'kind' | 'opening' | 'model'>): Look
  * piece of a luminaire (FLR-T-13.1). A fixture never shadows its own lamp: its canopy, trim and shade
  * are left out of every lamp's shadow map, as the path tracer's shadow rays pass them.
  */
-export function castsShadow(part: Pick<MeshPart, 'extension'>, look: Look): boolean {
+export function castsShadow(part: Pick<MeshPart, 'extension'> & Partial<Pick<MeshPart, 'kind'>>, look: Look): boolean {
   if (look === 'glass' || look === 'pick' || look === 'lens') return false;
+  // FLR-T-15.3: the street, the neighbours and the trees beyond the lot shade the design — one flag (FS_context 6.2).
+  if (part.kind === 'context') return CONTEXT_CASTS_SHADE;
   return !(part.extension?.name === 'FS_electrical' && part.extension.collection === 'lights');
 }
 
@@ -71,6 +73,8 @@ export interface Visibility {
   level: string | null;
   /** Each level's place, lowest first. */
   order: ReadonlyMap<string, number>;
+  /** FLR-T-15.3: the Context layer — the street, the neighbours and the trees beyond the lot — on, ghosted or off; absent: on. */
+  context?: 'on' | 'ghost' | 'off';
 }
 
 /**
@@ -86,6 +90,8 @@ export interface Visibility {
  */
 export function isVisible(part: Pick<MeshPart, 'kind' | 'level' | 'state'>, v: Visibility): boolean {
   if (part.state !== undefined && part.state !== (v.walking ? 'open' : 'closed')) return false;
+  // Context (FLR-T-15.3) stands around the whole house, whichever levels show: the Context layer alone hides it.
+  if (part.kind === 'context') return v.context !== 'off';
   if (v.walking) return true;
   if (v.levels === 'house' || v.level === null) return v.roof || !ROOFS.has(part.kind);
   const at = v.order.get(part.level);
@@ -256,6 +262,7 @@ export function faceColours(model: EditorModel, part: MeshPart, normals: Float32
       return one(materialColour(model, rooms?.[part.threshold?.room ?? '']?.['floorFinish'] as string | undefined) ?? (part.threshold === undefined ? DEFAULTS.floor : appearance(model).floor(part.threshold.room).color));
     case 'extension':
     case 'joinery':
+    case 'context':
       // A model's piece, or an opening's joinery, is in its role's colour (above: FLR-T-12.21, FLR-T-13.8), the worker's render and export alike.
       return one(DEFAULTS.extension);
     case 'opening':

@@ -1,0 +1,81 @@
+/* FLR-T-15.3: the Context panel — semantic tokens only. Context is drawn in the plan's own neutral style (render2d). */
+.fs-context-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+}
+.fs-context__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+}
+.fs-context__hint {
+  margin: 0;
+}
+.fs-context__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-8);
+  margin-top: var(--space-8);
+}
+.fs-context__facts {
+  margin: 0 0 var(--space-8);
+  display: grid;
+  gap: var(--space-4);
+}
+.fs-context__fact {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-8);
+  font-size: var(--text-13);
+}
+.fs-context__fact dt {
+  color: var(--color-fg-muted);
+}
+.fs-context__fact dd {
+  margin: 0;
+  color: var(--color-fg);
+  text-align: right;
+}
+.fs-context__records ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.fs-context__record {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  border-radius: var(--radius-sm);
+}
+.fs-context__record[data-selected] {
+  background: var(--color-surface-hover);
+}
+.fs-context__pick {
+  flex: 1;
+  display: flex;
+  gap: var(--space-8);
+  align-items: baseline;
+  min-height: 28px;
+  padding: 0 var(--space-4);
+  border: 0;
+  background: none;
+  color: var(--color-fg);
+  font: inherit;
+  font-size: var(--text-13);
+  text-align: left;
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+}
+.fs-context__pick:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 1px;
+}
+.fs-context__record-id {
+  font-family: var(--font-mono);
+  font-size: var(--text-12);
+  color: var(--color-fg-muted);
+}
+.fs-context__record-text {
+  color: var(--color-fg);
+}
