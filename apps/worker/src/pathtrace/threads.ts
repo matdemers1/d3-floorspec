@@ -8,10 +8,8 @@
  * database live on the same box), at most four. Run from TypeScript sources (the tests), where there
  * is no compiled thread to start, a still is traced in-process.
  */
-import { existsSync } from 'node:fs';
 import { availableParallelism } from 'node:os';
-import { fileURLToPath } from 'node:url';
-import { Worker } from 'node:worker_threads';
+import { canThread as compiled, runThread } from '../threads/index.js';
 import type { Features } from './denoise.js';
 import { trace, type PtScene, type TraceOptions } from './trace.js';
 
@@ -25,7 +23,7 @@ export function stillThreads(): number {
 }
 
 /** Whether the compiled thread exists to start (it does not when running from sources). */
-export const canThread = (): boolean => existsSync(fileURLToPath(THREAD));
+export const canThread = (): boolean => compiled(THREAD);
 
 /**
  * Trace on `threads` threads. With a `signal` (FLR-T-14.2: a tour's panorama, cancelled by a person),
@@ -43,41 +41,31 @@ export async function traceParallel(scene: PtScene, options: TraceOptions, threa
   const { onPass, ...rest } = options;
   const done = new Array<number>(n).fill(0);
   let reported = 0;
-  const workers: Worker[] = [];
-  let stop: (() => void) | undefined;
-  const stopped = new Promise<never>((_, reject) => {
-    stop = () => { reject(signal?.reason instanceof Error ? signal.reason : new Error('the trace was stopped')); };
-  });
-  // Nobody awaits it unless it is raced: no unhandled rejection when the trace ends first.
-  stopped.catch(() => undefined);
-  const onAbort = () => {
-    for (const w of workers) void w.terminate();
-    stop?.();
-  };
+  // Every thread ended together: by the signal, or when one fails, or when all are done.
+  const all = new AbortController();
+  const onAbort = () => { all.abort(); };
   signal?.addEventListener('abort', onAbort, { once: true });
+  const stopped = () => (signal?.reason instanceof Error ? signal.reason : new Error('the trace was stopped'));
   try {
-    const all = Promise.all(
-      Array.from({ length: n }, (_, index) => {
-        const worker = new Worker(THREAD, { workerData: { scene, options: { ...rest, rows: { of: n, index } } } });
-        workers.push(worker);
-        return new Promise<{ color: Float32Array; features: Features }>((resolve, reject) => {
-          worker.on('message', (m: { type: 'pass'; done: number } | { type: 'done'; color: Float32Array; features: Features } | { type: 'error'; message: string }) => {
-            if (m.type === 'pass') {
-              done[index] = m.done;
-              const least = Math.min(...done);
-              if (least > reported) {
-                reported = least;
-                void onPass?.(least, options.samples);
-              }
-            } else if (m.type === 'done') resolve({ color: m.color, features: m.features });
-            else reject(new Error(m.message));
-          });
-          worker.on('error', reject);
-          worker.on('exit', (code) => { if (code !== 0) reject(new Error(`a still thread stopped (${String(code)})`)); });
-        });
-      }),
+    const shares = await Promise.all(
+      Array.from({ length: n }, (_, index) =>
+        runThread<{ color: Float32Array; features: Features }>(THREAD, { scene, options: { ...rest, rows: { of: n, index } } }, {
+          name: 'a still thread',
+          signal: all.signal,
+          stopped,
+          onMessage: (message) => {
+            const m = message as { type?: unknown; done?: unknown };
+            if (m.type !== 'pass' || typeof m.done !== 'number') return;
+            done[index] = m.done;
+            const least = Math.min(...done);
+            if (least > reported) {
+              reported = least;
+              void onPass?.(least, options.samples);
+            }
+          },
+        }),
+      ),
     );
-    const shares = await (signal === undefined ? all : Promise.race([all, stopped]));
     // Each pixel from the thread that traced it: row y belongs to thread y mod n.
     const out = shares[0]!;
     const W = options.width;
@@ -96,6 +84,6 @@ export async function traceParallel(scene: PtScene, options: TraceOptions, threa
     return { ...out, threads: n };
   } finally {
     signal?.removeEventListener('abort', onAbort);
-    for (const w of workers) void w.terminate();
+    all.abort();
   }
 }

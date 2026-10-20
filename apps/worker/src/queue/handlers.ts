@@ -18,6 +18,7 @@ import { timelapseProblem, type Timelapse } from '@floorspec/mesh/sky';
 import { DEFAULT_EYE_HEIGHT, linkedDoorways, MAX_EYE_HEIGHT, MAX_TOUR_ROOMS, MIN_EYE_HEIGHT, TOUR_QUALITIES, TOUR_SIZES, tourAt, type TourQuality, type TourSize } from '@floorspec/mesh';
 import { renderTour, type TourStop } from '../tour/index.js';
 import { daylightStudy, DAYLIGHT_SKIES, type DaylightSky } from '../pathtrace/daylight.js';
+import { canJobThread, onJobThread } from './offthread.js';
 
 export interface JobRow {
   readonly id: string;
@@ -465,9 +466,19 @@ export interface HandlerOptions {
    * read-only; without it, exports carry colours and list the maps they left out.
    */
   readonly assetDir?: string;
+  /**
+   * Run every job in this thread (FLR-T-14.12): the job thread itself, and the tests. Otherwise each
+   * job but a film runs on a thread of its own (offthread.ts) wherever the compiled thread exists.
+   */
+  readonly inline?: boolean;
 }
 
-/** The job table, reading maps from `assetDir` when it is given. */
+/**
+ * The kinds that run in the process that holds the job even when it threads its jobs: a film draws
+ * its frames on a thread of its own already (FLR-T-14.10) and feeds them to ffmpeg from here.
+ */
+const OWN_THREADS: ReadonlySet<string> = new Set(['export.film']);
+
 /** The parameters of a daylight study (FLR-T-14.7), as the api writes them. */
 export interface DaylightParams {
   /** A date and time at the site (`AT_PATTERN`). */
@@ -485,7 +496,21 @@ export function daylightParams(raw: unknown): DaylightParams {
   return { at, sky, ...(design === undefined ? {} : { design }) };
 }
 
+/**
+ * The job table, reading maps from `assetDir` when it is given. Measured on the Courtyard House
+ * (FLR-T-14.12), every kind but a film held the event loop for longer than a request may wait — a
+ * DXF a quarter of a second, a tour or a pair seconds at a time — so each runs on a thread of its
+ * own, the process keeping only the orchestration.
+ */
 export function createHandlers(opts: HandlerOptions = {}): Readonly<Record<string, Handler>> {
+  const table = inlineHandlers(opts);
+  if (opts.inline === true || !canJobThread()) return table;
+  const threaded: Record<string, Handler> = {};
+  for (const [kind, run] of Object.entries(table)) threaded[kind] = OWN_THREADS.has(kind) ? run : (document, job) => onJobThread(document, job, opts.assetDir);
+  return threaded;
+}
+
+function inlineHandlers(opts: HandlerOptions): Readonly<Record<string, Handler>> {
   const store = { images: assetDirImages(opts.assetDir), models: assetDirModels(opts.assetDir) };
   return {
     'export.pdf': async (document, job) => {
