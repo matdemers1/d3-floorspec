@@ -2045,6 +2045,8 @@ interface Hook {
    */
   roles: Record<string, string[]>;
   wet: number;
+  /** FLR-T-16.1: the solar arrays' parts showing now. */
+  arrays: number;
   walking: boolean;
   /** The walker, in metres in the document's frame; null when not walking. */
   walker: { x: number; y: number; feet: number; eye: number; ground: number; yaw: number; room: string | null; blocked: string | null } | null;
@@ -2133,6 +2135,9 @@ function useTestHook(store: EditorStore, three: ThreeStore, ctl: ThreeController
       },
       get wet() {
         return built.filter((b) => b.wet === true).length;
+      },
+      get arrays() {
+        return visible.filter((b) => isArray(b.part)).length;
       },
       get walking() {
         return three.get().walking && ctl.walker !== null;
