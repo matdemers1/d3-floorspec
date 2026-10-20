@@ -460,7 +460,8 @@ function lints(ctx: ExtensionContext): void {
     const dist = edgeSetbacks(lot.length, sb);
     const things: [string, IPoint[]][] = [
       ...entries(ctx.doc.junctions).map(([id, j]) => [id, [ipoint(j.position)]] as [string, IPoint[]]),
-      ...entries(ctx.doc.slabs).map(([id, sl]) => [id, sl.boundary.map(ipoint)] as [string, IPoint[]]),
+      // 2.3: a walkway or a driveway reaches the street across the front setback by design
+      ...entries(ctx.doc.slabs).filter(([, sl]) => sl.purpose !== 'walkway' && sl.purpose !== 'driveway').map(([id, sl]) => [id, sl.boundary.map(ipoint)] as [string, IPoint[]]),
       ...ctx.records<GradingPad>('pads').map(([id, p]) => [id, p.boundary.map(ipoint)] as [string, IPoint[]]),
     ];
     for (const [id, pts] of things)
@@ -521,7 +522,7 @@ export const FS_SITE: ExtensionImplementation<DerivedSite> = {
     { code: 'FS-SITE-INV-005', severity: 'error', condition: '`setbacks` in a document whose site has no `boundary`, or a street edge the boundary does not have' },
     { code: 'FS-SITE-LINT-001', severity: 'info', condition: 'the document has a surface and a lot, and a vertex of the lot is outside the hull' },
     { code: 'FS-SITE-LINT-002', severity: 'warning', condition: 'the document has a surface, and a vertex of a graded outline is outside the hull' },
-    { code: 'FS-SITE-LINT-003', severity: 'info', condition: 'the document has setbacks, and a junction, a slab or a pad is not clear of them' },
+    { code: 'FS-SITE-LINT-003', severity: 'info', condition: 'the document has setbacks, and a junction, a slab other than a walkway or a driveway, or a pad is not clear of them' },
   ],
   validate: (data) => validateSchema(data),
   invariants,

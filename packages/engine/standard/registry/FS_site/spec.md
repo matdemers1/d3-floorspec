@@ -196,7 +196,8 @@ is nearer than `d` to the edge when
 What is tested is:
 
 - a **junction** (Core §5.1), of any level: its position;
-- a **slab** (Core §6.7): every vertex of its `boundary`;
+- a **slab** (Core §6.7) whose `purpose` is not `"walkway"` or `"driveway"` — a walk and a drive reach
+  the street across the front setback by design: every vertex of its `boundary`;
 - a **pad** (4.1): every vertex of its `boundary`.
 
 A document SHOULD keep every junction, slab and pad clear of its setbacks. {#FS-SITE-2.3.1 SHOULD}
@@ -423,7 +424,7 @@ record that breaks it.
 |---|---|---|---|
 | `FS-SITE-LINT-001` | info | the document has a surface and a lot, and a vertex of the lot is outside the hull | — |
 | `FS-SITE-LINT-002` | warning | the document has a surface, and a vertex of a graded outline — a grading slab's or a pad's — is outside the hull: what it cuts and fills there is not measured | the slab or the pad |
-| `FS-SITE-LINT-003` | info | the document has setbacks, and a junction, a slab or a pad is not clear of them (2.3.1) | the junction, the slab or the pad |
+| `FS-SITE-LINT-003` | info | the document has setbacks, and a junction, a slab other than a walkway or a driveway, or a pad is not clear of them (2.3.1) | the junction, the slab or the pad |
 
 Outside the hull means outside it and not on its boundary. Lints never make a document invalid. A
 survey that stops short of the lot line is common, and the lint says only where the surface ends.
