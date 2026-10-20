@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion -- a test asserts on values it has just looked up. */
 /**
  * FLR-T-16.4: the editor's thermal envelope — the library's values written onto a plan that has none (one
  * batch, FS_thermal declared, the estimate then the plan's own), the estimate of the Courtyard House's
