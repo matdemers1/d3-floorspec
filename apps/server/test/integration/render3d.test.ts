@@ -163,6 +163,31 @@ describe('3D render-back', () => {
     expect((await operator.get(`/api/projects/${id}/render?view=3d&sky=clear&at=June%2021`)).status).toBe(400);
   });
 
+  it('draws the house in a season and a weather, a saved view too — looks, never the model (FLR-T-15.4)', async () => {
+    const operator = await setupOperator(running);
+    const { id } = await projectWithDocument(db, operator, WITH_VIEWS, 'Ranch through the year');
+    const before = await operator.get(`/api/projects/${id}/model.json`);
+    const r = await fetch(`${running.url}/api/projects/${id}/render?view=3d&camera=sw&width=96&season=winter&weather=snow`, { headers: { cookie: cookieOf(operator) } });
+    expect(r.status, await r.clone().text()).toBe(200);
+    const job = (await db.job.findMany({ where: { projectId: id }, orderBy: { createdAt: 'asc' } })).at(-1);
+    expect(job?.params).toMatchObject({ season: 'winter', weather: 'snow' });
+    expect(job?.result).toMatchObject({ sky: { preset: 'overcast', look: { season: 'winter', weather: 'snow' } } });
+    // A saved view takes them: its camera and its time, in autumn under an overcast sky.
+    const view = await fetch(`${running.url}/api/projects/${id}/render?view=3d&savedView=Front&width=96&season=autumn&weather=overcast`, { headers: { cookie: cookieOf(operator) } });
+    expect(view.status, await view.clone().text()).toBe(200);
+    const viewJob = (await db.job.findMany({ where: { projectId: id }, orderBy: { createdAt: 'asc' } })).at(-1);
+    expect(viewJob?.params).toMatchObject({ view: 'SV1', season: 'autumn', weather: 'overcast' });
+    expect(viewJob?.result).toMatchObject({ view: { id: 'SV1' }, sky: { preset: 'overcast', look: { season: 'autumn', weather: 'overcast' } } });
+    // Not a season or a weather; and not for a plan.
+    expect((await operator.get(`/api/projects/${id}/render?view=3d&season=fall`)).status).toBe(400);
+    expect((await operator.get(`/api/projects/${id}/render?view=3d&weather=hail`)).status).toBe(400);
+    const plan = await operator.get(`/api/projects/${id}/render?view=plan&season=winter`);
+    expect(plan.status).toBe(400);
+    expect(plan.text).toMatch(/view=3d/);
+    // Nothing was written.
+    expect((await operator.get(`/api/projects/${id}/model.json`)).text).toBe(before.text);
+  }, 120_000);
+
   it('draws the doors closed, or open when asked (FLR-T-13.8)', async () => {
     const operator = await setupOperator(running);
     const { id } = await projectWithDocument(db, operator, REQUIRES_ELECTRICAL, 'Wired ranch');
