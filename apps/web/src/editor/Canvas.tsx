@@ -19,7 +19,7 @@ import { reviewDiagnostics, reviewTarget } from './review';
 import { DeviceGhost, DeviceOutline, SystemsLayer } from './systems/Symbols';
 import { FurnitureLayer } from '../furniture/Plan';
 import { ResizeGhost, ResizeHandles, resizableOn } from '../furniture/Handles';
-import { GapMarkers } from './systems/Assistant';
+import { ExteriorStretchMarkers, GapMarkers } from './systems/Assistant';
 import { kindById } from './systems/catalog';
 import { anchorOf, circuitsOf } from './systems/view';
 import { RuleFindingLabels, RuleFindingsLayer } from '../findings/Overlay';
@@ -173,6 +173,7 @@ export function PlanCanvas({ store, tools }: { store: EditorStore; tools: ToolCo
   // The plan steps back while the systems are being worked on (the board's "23").
   const focusSystems = tool === 'device' || picking === 'switch';
   const electricalTool = useEditor(store, (s) => s.tool === 'device' && kindById(s.draw.device)?.system === 'electrical');
+  const exteriorTool = useEditor(store, (s) => s.tool === 'device' && kindById(s.draw.device)?.exterior !== undefined);
   // A trade mode's ghosts (FLR-T-18.3): drawn grey and faint (modes.css), and not picked (tools.ts).
   const ghost = useModes(store, (s) => (s.ghost.length === 0 ? undefined : s.ghost.join(' ')));
   const trade = useModes(store, (s) => (s.mode === null ? undefined : (modesOf(store).tradeOf(s.mode) ?? undefined)));
@@ -226,7 +227,8 @@ export function PlanCanvas({ store, tools }: { store: EditorStore; tools: ToolCo
               <SystemsLayer view={view} level={level} document={model.document} derived={model.derived} layers={layers} selection={selection} look={look} units={units} />
               {/* FLR-T-18.12: the level below or above, in the reference colour: snapped to, never picked. */}
               <ReferenceLayer store={store} view={view} level={level.id} layers={layers} />
-              {electricalTool && layers.electrical && !layers.coreOnly && !comparing ? <GapMarkers store={store} view={view} level={level} model={fullModel ?? model} units={units} /> : null}
+              {electricalTool && !exteriorTool && layers.electrical && !layers.coreOnly && !comparing ? <GapMarkers store={store} view={view} level={level} model={fullModel ?? model} units={units} /> : null}
+              {exteriorTool && layers.electrical && !layers.coreOnly && !comparing ? <ExteriorStretchMarkers store={store} view={view} model={fullModel ?? model} units={units} /> : null}
               <DiffLayer store={store} view={view} levelId={level.id} />
               <RuleFindingsLayer store={store} view={view} level={level} />
               <Findings store={store} view={view} level={level} />

@@ -15,7 +15,8 @@ import { DataIcon, DropIcon, AirIcon, PlugIcon } from '../icons';
 import { defaultHeight, RECEPTACLE, extensionOfSystem, extensionVersion, kindById, kindsOf, SYSTEMS, words, type DeviceKind, type SystemId } from './catalog';
 import { addCircuit, addGasSource, addStack, assignCircuit, moveDevice, nextRecordId, rotateDevice, setMember, setRecordMember, type HostRef } from './ops';
 import { memberSpecs, type MemberSpec } from './schema';
-import { AssistantCard } from './Assistant';
+import { AssistantCard, ExteriorAssistantCard } from './Assistant';
+import { ExteriorSection } from './ExteriorPanel';
 import { circuitsOf, compareIds, elementsOfExtension, recordsOf, switchesOf, type DeviceView } from './view';
 import { isResizable, normalRotation, turnBatch } from '../../furniture/resize';
 import { SizeSection } from '../../furniture/SizeSection';
@@ -188,6 +189,7 @@ export function circuitBadges(model: EditorModel, circuit: Json): string[] {
 }
 
 export function ElectricalOverview({ store, model, units }: { store: EditorStore; model: EditorModel; units: UnitSystem }) {
+  const exterior = useEditor(store, (s) => s.tool === 'device' && kindById(s.draw.device)?.exterior !== undefined);
   const derived = model.derived?.extensions?.FS_electrical;
   const panels = elementsOfExtension(model.document, 'FS_electrical', 'panels');
   const circuits = recordsOf(model.document, 'FS_electrical', 'circuits');
@@ -234,7 +236,8 @@ export function ElectricalOverview({ store, model, units }: { store: EditorStore
           </ul>
         </Section>
       ) : null}
-      <AssistantCard store={store} model={model} units={units} />
+      {/* FLR-T-15.5: with an exterior light's tool in hand, the assistant offers the grounds' lighting instead. */}
+      {exterior ? <ExteriorAssistantCard store={store} model={model} units={units} /> : <AssistantCard store={store} model={model} units={units} />}
       <Legend units={units} />
     </>
   );
@@ -421,6 +424,7 @@ export function DeviceBody({ ctx, device }: { ctx: SystemsCtx; device: DeviceVie
   const asLoad = device === undefined ? canBeLoadAt(at) : canBeLoad(device);
   return (
     <>
+      <ExteriorSection ctx={ctx} />
       <SizeSection key={id} ctx={ctx} device={device} />
       <PlacementSection ctx={ctx} device={device} />
       {asLoad && elementsOfExtension(model.document, 'FS_electrical', 'panels').length > 0 ? <CircuitSection ctx={ctx} /> : null}

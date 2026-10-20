@@ -2862,6 +2862,42 @@ line.fs-diff {
   fill: var(--color-surface-raised);
   stroke: var(--color-warning);
 }
+/* FLR-T-15.5: a walk's stretch no exterior light reaches, dashed along its centre line. */
+.fs-gap--dark {
+  stroke-dasharray: 2 6;
+  opacity: 0.9;
+}
+.fs-assistant__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--space-6);
+}
+.fs-assistant__list li {
+  display: grid;
+  gap: 2px;
+  font-size: var(--text-12);
+}
+.fs-assistant__detail,
+.fs-assistant__sum {
+  color: var(--color-fg-muted);
+  font-size: var(--text-11);
+}
+.fs-assistant__sum {
+  font-family: var(--font-mono);
+}
+.fs-assistant__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-6);
+  align-items: center;
+}
+.fs-ext-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+}
 .fs-gap__text {
   fill: var(--color-fg);
   font-family: var(--font-mono);

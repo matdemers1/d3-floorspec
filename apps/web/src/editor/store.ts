@@ -307,6 +307,8 @@ export interface EditorState {
   /** Panels shown on narrow screens. */
   treeOpen: boolean;
   findingsOpen: boolean;
+  /** FLR-T-15.5: the exterior assistant's path-light spacing along a walk, base units; absent, Floorspec's default. */
+  exteriorSpacing?: number;
   prompt: Prompt | null;
   /** The live event stream (FLR-T-3.5). */
   live: 'connecting' | 'live' | 'reconnecting';
