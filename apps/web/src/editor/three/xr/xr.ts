@@ -134,10 +134,13 @@ const SUB = 0.05;
 
 /** Follow a path until it meets the house: the first floor it comes down on, wall it runs into or ceiling it rises into. */
 export function castPath(world: World, path: readonly Vec3[]): PathHit {
-  const points: Vec3[] = [path[0]!];
+  const first = path[0];
+  if (first === undefined) return { points: [], kind: 'nothing', at: null };
+  const points: Vec3[] = [first];
   for (let i = 1; i < path.length; i++) {
-    const a = path[i - 1]!;
-    const b = path[i]!;
+    const a = path[i - 1];
+    const b = path[i];
+    if (a === undefined || b === undefined) continue;
     const n = Math.max(1, Math.ceil(Math.hypot(b[0] - a[0], b[1] - a[1], b[2] - a[2]) / SUB));
     for (let k = 1; k <= n; k++) {
       const p: Vec3 = [a[0] + ((b[0] - a[0]) * (k - 1)) / n, a[1] + ((b[1] - a[1]) * (k - 1)) / n, a[2] + ((b[2] - a[2]) * (k - 1)) / n];
@@ -172,7 +175,7 @@ export function castPath(world: World, path: readonly Vec3[]): PathHit {
 export function aim(world: World, from: Feet, origin: Vec3, direction: Vec3, arc: boolean): { path: PathHit; check: TeleportCheck } {
   const path = castPath(world, arc ? arcPoints(origin, direction, world.base) : rayPoints(origin, direction));
   if (path.kind !== 'floor' || path.at === null) {
-    const at = path.at ?? path.points[path.points.length - 1]!;
+    const at = path.at ?? path.points[path.points.length - 1] ?? origin;
     return { path, check: { ok: false, reason: path.kind === 'wall' ? 'a-wall' : path.kind === 'ceiling' ? 'a-ceiling' : 'nothing', x: at[0], y: at[1], floor: at[2] } };
   }
   return { path, check: teleportCheck(world, from, { x: path.at[0], y: path.at[1], z: path.at[2] }) };
