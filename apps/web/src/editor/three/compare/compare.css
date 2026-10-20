@@ -1,16 +1,16 @@
 /* Compare in 3D (FLR-T-14.4): the board's "14.4 · Compare in 3D" frames. Tokens only. */
 
-.fs-compare {
+.fs-compare3d {
   position: absolute;
   inset: 0;
   pointer-events: none;
 }
-.fs-compare > * {
+.fs-compare3d > * {
   pointer-events: auto;
 }
 
 /* ─── What each side shows ─────────────────────────────────────────────────────────────────── */
-.fs-compare__chip {
+.fs-compare3d__chip {
   position: absolute;
   top: 72px;
   display: inline-flex;
@@ -30,14 +30,14 @@
   text-overflow: ellipsis;
   pointer-events: none;
 }
-.fs-compare__chip--b {
+.fs-compare3d__chip--b {
   border-color: var(--color-accent);
   background: var(--color-accent);
   color: var(--color-accent-contrast);
 }
 
 /* ─── The divider ──────────────────────────────────────────────────────────────────────────── */
-.fs-compare__line {
+.fs-compare3d__line {
   position: absolute;
   top: 0;
   bottom: 0;
@@ -46,7 +46,7 @@
   cursor: ew-resize;
   touch-action: none;
 }
-.fs-compare__line::before {
+.fs-compare3d__line::before {
   content: '';
   position: absolute;
   top: 0;
@@ -57,11 +57,11 @@
   border-left: 1px solid var(--color-surface);
   background: var(--color-fg);
 }
-.fs-compare__line--fixed {
+.fs-compare3d__line--fixed {
   cursor: default;
   pointer-events: none;
 }
-.fs-compare__handle {
+.fs-compare3d__handle {
   position: absolute;
   display: flex;
   align-items: center;
@@ -77,15 +77,15 @@
   cursor: ew-resize;
   touch-action: none;
 }
-.fs-compare__handle:focus-visible {
+.fs-compare3d__handle:focus-visible {
   outline: 2px solid var(--color-focus);
   outline-offset: 2px;
 }
-.fs-editor .fs-three .fs-compare__handle svg.lucide {
+.fs-editor .fs-three .fs-compare3d__handle svg.lucide {
   width: var(--icon-16);
   height: var(--icon-16);
 }
-.fs-compare__linked {
+.fs-compare3d__linked {
   position: absolute;
   left: 50%;
   bottom: 76px;
@@ -106,7 +106,7 @@
 }
 
 /* ─── What is on its way ───────────────────────────────────────────────────────────────────── */
-.fs-compare__status {
+.fs-compare3d__status {
   position: absolute;
   left: 50%;
   top: 112px;
@@ -117,7 +117,7 @@
   gap: var(--space-6);
   pointer-events: none;
 }
-.fs-compare__status-item {
+.fs-compare3d__status-item {
   display: inline-flex;
   align-items: center;
   gap: var(--space-6);
@@ -131,12 +131,12 @@
   font-family: var(--font-sans);
   font-size: var(--text-12);
 }
-.fs-compare__status-item--error {
+.fs-compare3d__status-item--error {
   border-color: var(--color-warning);
 }
 
 /* ─── The bar ──────────────────────────────────────────────────────────────────────────────── */
-.fs-compare__bar {
+.fs-compare3d__bar {
   position: absolute;
   left: 50%;
   bottom: var(--space-16);
@@ -152,54 +152,54 @@
   box-shadow: var(--shadow-float);
   font-family: var(--font-sans);
 }
-.fs-compare__icon {
+.fs-compare3d__icon {
   flex: none;
   color: var(--color-fg-muted);
 }
-.fs-compare__letter {
+.fs-compare3d__letter {
   color: var(--color-fg-muted);
   font-size: var(--text-12);
   font-weight: var(--weight-medium);
 }
-.fs-compare__source {
+.fs-compare3d__source {
   min-width: 0;
   max-width: 220px;
 }
-.fs-compare__source-label {
+.fs-compare3d__source-label {
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
 }
 
 /* ─── The picker ───────────────────────────────────────────────────────────────────────────── */
-.fs-compare__menu {
+.fs-compare3d__menu {
   min-width: 280px;
   max-height: min(60vh, 520px);
   overflow-y: auto;
 }
-.fs-compare__item {
+.fs-compare3d__item {
   display: flex;
   align-items: center;
   gap: var(--space-8);
 }
-.fs-compare__item-text {
+.fs-compare3d__item-text {
   display: flex;
   flex: 1 1 auto;
   flex-direction: column;
   min-width: 0;
 }
-.fs-compare__item-label {
+.fs-compare3d__item-label {
   color: var(--color-fg);
 }
-.fs-compare__item-detail {
+.fs-compare3d__item-detail {
   color: var(--color-fg-muted);
   font-size: var(--text-12);
 }
-.fs-compare__tick {
+.fs-compare3d__tick {
   flex: none;
   color: var(--color-accent);
 }
-.fs-compare__sr {
+.fs-compare3d__sr {
   position: absolute;
   width: 1px;
   height: 1px;

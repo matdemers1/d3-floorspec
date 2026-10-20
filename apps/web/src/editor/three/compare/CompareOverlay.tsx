@@ -78,25 +78,25 @@ function SourceMenu({ side, value, other, choices, onChange }: { side: Side; val
   return (
     <Menu>
       <MenuTrigger>
-        <Button size="sm" variant="secondary" className="fs-compare__source" iconAfter={<ChevronDown />} aria-label={`${letter}: ${current?.label ?? `Choose ${letter}…`}`}>
-          <span className="fs-compare__source-label">{current?.label ?? `Choose ${letter}…`}</span>
+        <Button size="sm" variant="secondary" className="fs-compare3d__source" iconAfter={<ChevronDown />} aria-label={`${letter}: ${current?.label ?? `Choose ${letter}…`}`}>
+          <span className="fs-compare3d__source-label">{current?.label ?? `Choose ${letter}…`}</span>
         </Button>
       </MenuTrigger>
-      <MenuContent side="top" align="start" className="fs-compare__menu">
+      <MenuContent side="top" align="start" className="fs-compare3d__menu">
         {groups.length === 0 ? <MenuLabel>Nothing else to compare yet: a pending changeset, a design option or an earlier version</MenuLabel> : null}
         {groups.map(({ g, list }) => (
           <div key={g} role="group" aria-label={GROUP_LABELS[g]}>
             <MenuLabel>{GROUP_LABELS[g]}</MenuLabel>
             {list.map((c) => (
-              <MenuItem key={c.key} onSelect={() => { onChange(c.source); }} className="fs-compare__item">
-                <span className="fs-compare__item-text">
-                  <span className="fs-compare__item-label">{c.label}</span>
-                  {c.detail === '' ? null : <span className="fs-compare__item-detail">{c.detail}</span>}
+              <MenuItem key={c.key} onSelect={() => { onChange(c.source); }} className="fs-compare3d__item">
+                <span className="fs-compare3d__item-text">
+                  <span className="fs-compare3d__item-label">{c.label}</span>
+                  {c.detail === '' ? null : <span className="fs-compare3d__item-detail">{c.detail}</span>}
                 </span>
                 {current?.key === c.key ? (
                   <>
-                    <Check aria-hidden="true" className="fs-compare__tick" />
-                    <span className="fs-compare__sr"> (shown)</span>
+                    <Check aria-hidden="true" className="fs-compare3d__tick" />
+                    <span className="fs-compare3d__sr"> (shown)</span>
                   </>
                 ) : null}
               </MenuItem>
@@ -160,24 +160,24 @@ export function CompareOverlay({ store, choices, width, height, statuses }: { st
   // The chips sit either side of the divider, kept inside the view.
   const CHIP_GAP = 12;
   return (
-    <div className="fs-compare" ref={root} data-mode={c.mode}>
+    <div className="fs-compare3d" ref={root} data-mode={c.mode}>
       {comparing ? (
         <>
           {leftName !== null ? (
-            <div className={`fs-compare__chip fs-compare__chip--${left}`} style={c.mode === 'side' ? { left: CHIP_GAP } : { right: Math.max(CHIP_GAP, width - x + CHIP_GAP) }} role="note">
+            <div className={`fs-compare3d__chip fs-compare3d__chip--${left}`} style={c.mode === 'side' ? { left: CHIP_GAP } : { right: Math.max(CHIP_GAP, width - x + CHIP_GAP) }} role="note">
               {leftName}
             </div>
           ) : null}
           {rightName !== null ? (
-            <div className={`fs-compare__chip fs-compare__chip--${right}`} style={{ left: Math.min(Math.max(CHIP_GAP, x + CHIP_GAP), Math.max(CHIP_GAP, width - 160)) }} role="note">
+            <div className={`fs-compare3d__chip fs-compare3d__chip--${right}`} style={{ left: Math.min(Math.max(CHIP_GAP, x + CHIP_GAP), Math.max(CHIP_GAP, width - 160)) }} role="note">
               {rightName}
             </div>
           ) : null}
           {c.mode === 'swipe' ? (
             <>
-              <div className="fs-compare__line" style={{ left: x }} onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerCancel={up} aria-hidden="true" />
+              <div className="fs-compare3d__line" style={{ left: x }} onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerCancel={up} aria-hidden="true" />
               <div
-                className="fs-compare__handle"
+                className="fs-compare3d__handle"
                 style={{ left: x, top: height / 2 }}
                 role="slider"
                 tabIndex={0}
@@ -198,8 +198,8 @@ export function CompareOverlay({ store, choices, width, height, statuses }: { st
             </>
           ) : (
             <>
-              <div className="fs-compare__line fs-compare__line--fixed" style={{ left: x }} aria-hidden="true" />
-              <div className="fs-compare__linked" role="note">
+              <div className="fs-compare3d__line fs-compare3d__line--fixed" style={{ left: x }} aria-hidden="true" />
+              <div className="fs-compare3d__linked" role="note">
                 {c.linked ? <Link2 aria-hidden="true" /> : <Link2Off aria-hidden="true" />}
                 {c.linked ? 'Cameras linked' : 'Cameras unlinked: each half orbits on its own'}
               </div>
@@ -208,9 +208,9 @@ export function CompareOverlay({ store, choices, width, height, statuses }: { st
         </>
       ) : null}
       {waiting.length > 0 ? (
-        <div className="fs-compare__status" role="status">
+        <div className="fs-compare3d__status" role="status">
           {waiting.map((w) => (
-            <span key={w.side} className={`fs-compare__status-item fs-compare__status-item--${w.tone}`}>
+            <span key={w.side} className={`fs-compare3d__status-item fs-compare3d__status-item--${w.tone}`}>
               {w.tone === 'busy' ? <Spinner size="sm" /> : <TriangleAlert aria-hidden="true" />}
               {w.text}
             </span>
@@ -221,11 +221,11 @@ export function CompareOverlay({ store, choices, width, height, statuses }: { st
           {comparing ? `Comparing ${leftName ?? ''} on the left with ${rightName ?? ''} on the right.` : ''}
         </div>
       )}
-      <div className="fs-compare__bar" role="toolbar" aria-label="Compare">
-        <Columns2 aria-hidden="true" className="fs-compare__icon" />
-        <span className="fs-compare__letter" aria-hidden="true">A</span>
+      <div className="fs-compare3d__bar" role="toolbar" aria-label="Compare">
+        <Columns2 aria-hidden="true" className="fs-compare3d__icon" />
+        <span className="fs-compare3d__letter" aria-hidden="true">A</span>
         <SourceMenu side="a" value={c.a} other={c.b} choices={choices} onChange={(a) => { three.setCompare({ a, focus: null }); }} />
-        <span className="fs-compare__letter" aria-hidden="true">B</span>
+        <span className="fs-compare3d__letter" aria-hidden="true">B</span>
         <SourceMenu side="b" value={c.b} other={c.a} choices={choices} onChange={(b) => { three.setCompare({ b, focus: null }); }} />
         <SegmentedControl
           aria-label="Compare as"
