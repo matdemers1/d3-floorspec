@@ -4,6 +4,8 @@ import { Box, Download, FileText, Layers, Ruler, BookOpen } from 'lucide-react';
 import { messageOf } from '../lib/api';
 import { describeJob, designLabel, optionChoiceLabel, PAGES, requestExport, startDownload, takesDesign, untilFinished, type DesignSet, type ExportJob, type PageName } from './api';
 import './exports.css';
+import { ViewInArIcon } from '../editor/icons';
+import { ArDialog } from './ar/ArDialog';
 
 /**
  * The Export dialog (Figma: Floorspec (FLR), P9 · Handoff & sharing, 16 · Export): every format in
@@ -15,6 +17,9 @@ import './exports.css';
  *
  * A model with design options (Core 0.3, chapter 19) is drawn in one design: a "Design" choice per
  * option set, the primary by default, for every format but IFC, which is of the primary (FLR-T-9.7).
+ *
+ * Export ▸ View in AR… (FLR-T-14.3) opens its own dialog: the USDZ made for AR Quick Look at true or
+ * table scale, sent to a phone by a QR code.
  */
 
 type Choice = 'model' | 'pdf' | 'dxf' | 'ifc' | 'gltf' | 'usdz';
@@ -112,6 +117,7 @@ export function ExportDialog({ open, onOpenChange, projectId, projectName, versi
   const [job, setJob] = useState<ExportJob | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [ar, setAr] = useState(false);
   const abort = useRef<AbortController | null>(null);
 
   useEffect(() => {
@@ -194,120 +200,126 @@ export function ExportDialog({ open, onOpenChange, projectId, projectName, versi
     );
 
   return (
-    <Modal
-      open={open}
-      onOpenChange={onOpenChange}
-      size="lg"
-      className="fs-export-dialog"
-      title={`Export ${projectName}`}
-      description={subtitle === '' ? undefined : subtitle}
-      footer={
-        <>
-          <span className="fs-export-dialog__status" aria-live="polite">
-            {status}
-          </span>
-          <Button variant="secondary" onClick={() => { onOpenChange(false); }}>
-            Cancel
-          </Button>
-          <Button variant="primary" icon={<Download />} loading={busy} onClick={() => void run()}>
-            Export
-          </Button>
-        </>
-      }
-    >
-      <div role="radiogroup" aria-label="Format" className="fs-export-dialog__formats">
-        {FORMATS.map((f) => {
-          const available = f.later === undefined;
-          const selected = f.id === choice;
-          return (
-            <button
-              key={f.id}
-              type="button"
-              role="radio"
-              aria-checked={selected}
-              aria-disabled={!available}
-              disabled={!available || busy}
-              className="fs-export-format"
-              data-selected={selected ? 'true' : undefined}
-              onClick={() => { if (available) setChoice(f.id); }}
-            >
-              <span className="fs-export-format__icon" aria-hidden="true">{f.icon}</span>
-              <span className="fs-export-format__text">
-                <span className="fs-export-format__title">{f.title}</span>
-                <span className="fs-export-format__detail">{available ? f.detail : `${f.detail} · ${f.later ?? ''}`}</span>
-              </span>
-              <span className="fs-export-format__ext">{f.ext}</span>
-            </button>
-          );
-        })}
-      </div>
-      {choice === 'model' ? (
-        <div className="fs-export-dialog__options">
-          <label className="fs-export-dialog__option">
-            <span>Form</span>
-            <Select aria-label="Form" size="sm" value={form} disabled={busy} onValueChange={(v) => { setForm(v as ModelForm); }} options={MODEL_FORMS} />
-          </label>
+    <>
+      <Modal
+        open={open}
+        onOpenChange={onOpenChange}
+        size="lg"
+        className="fs-export-dialog"
+        title={`Export ${projectName}`}
+        description={subtitle === '' ? undefined : subtitle}
+        footer={
+          <>
+            <span className="fs-export-dialog__status" aria-live="polite">
+              {status}
+            </span>
+            <Button variant="ghost" icon={<ViewInArIcon />} disabled={busy} onClick={() => { onOpenChange(false); setAr(true); }}>
+              View in AR…
+            </Button>
+            <Button variant="secondary" onClick={() => { onOpenChange(false); }}>
+              Cancel
+            </Button>
+            <Button variant="primary" icon={<Download />} loading={busy} onClick={() => void run()}>
+              Export
+            </Button>
+          </>
+        }
+      >
+        <div role="radiogroup" aria-label="Format" className="fs-export-dialog__formats">
+          {FORMATS.map((f) => {
+            const available = f.later === undefined;
+            const selected = f.id === choice;
+            return (
+              <button
+                key={f.id}
+                type="button"
+                role="radio"
+                aria-checked={selected}
+                aria-disabled={!available}
+                disabled={!available || busy}
+                className="fs-export-format"
+                data-selected={selected ? 'true' : undefined}
+                onClick={() => { if (available) setChoice(f.id); }}
+              >
+                <span className="fs-export-format__icon" aria-hidden="true">{f.icon}</span>
+                <span className="fs-export-format__text">
+                  <span className="fs-export-format__title">{f.title}</span>
+                  <span className="fs-export-format__detail">{available ? f.detail : `${f.detail} · ${f.later ?? ''}`}</span>
+                </span>
+                <span className="fs-export-format__ext">{f.ext}</span>
+              </button>
+            );
+          })}
         </div>
-      ) : null}
-      {choice !== 'model' ? (
-        <div className="fs-export-dialog__options">
-          {levels.length > 1 ? (
+        {choice === 'model' ? (
+          <div className="fs-export-dialog__options">
             <label className="fs-export-dialog__option">
-              <span>Levels</span>
-              <Select
-                aria-label="Levels"
-                size="sm"
-                value={level}
-                disabled={busy}
-                onValueChange={setLevel}
-                options={[{ value: 'all', label: choice === 'pdf' ? 'Every level, a sheet each' : choice === 'dxf' ? 'Every level, a file each (ZIP)' : 'Every level, one model' }, ...levels.map((l) => ({ value: l.id, label: l.name }))]}
-              />
+              <span>Form</span>
+              <Select aria-label="Form" size="sm" value={form} disabled={busy} onValueChange={(v) => { setForm(v as ModelForm); }} options={MODEL_FORMS} />
             </label>
-          ) : null}
-          {designed
-            ? optionSets.map((set) => {
-                const name = optionSets.length === 1 ? 'Design' : `Design · ${set.name}`;
-                return (
-                  <label key={set.id} className="fs-export-dialog__option">
-                    <span>{name}</span>
-                    <Select
-                      aria-label={name}
-                      size="sm"
-                      value={chosenDesign[set.id] ?? set.primary}
-                      disabled={busy}
-                      onValueChange={(v) => { setDesign((d) => ({ ...d, [set.id]: v })); }}
-                      options={set.options.map((o) => ({ value: o.id, label: o.id === set.primary ? `${optionChoiceLabel(set, o.id)} (primary)` : optionChoiceLabel(set, o.id) }))}
-                    />
-                  </label>
-                );
-              })
-            : null}
-          {moded ? (
-            <label className="fs-export-dialog__option">
-              <span>Drawing</span>
-              <Select aria-label="Drawing" size="sm" value={drawing} disabled={busy} onValueChange={setDrawing} options={modes.map((m) => ({ value: m.value, label: m.label }))} />
-            </label>
-          ) : null}
-          {renovation !== undefined && (choice === 'pdf' || choice === 'dxf') ? (
-            <label className="fs-export-dialog__option">
-              <span>Renovation</span>
-              <Select aria-label="Renovation plan" size="sm" value={reno} disabled={busy} onValueChange={setReno} options={RENOVATION_PLANS} />
-            </label>
-          ) : null}
-          {choice === 'pdf' ? (
-            <label className="fs-export-dialog__option">
-              <span>Style</span>
-              <Select aria-label="Plan style" size="sm" value={style} disabled={busy} onValueChange={setStyle} options={PDF_STYLES} />
-            </label>
-          ) : null}
-          {choice === 'pdf' ? (
-            <label className="fs-export-dialog__option">
-              <span>Paper</span>
-              <Select aria-label="Paper" size="sm" value={page} disabled={busy} onValueChange={(v) => { setPage(v as PageName); }} options={PAGES} />
-            </label>
-          ) : null}
-        </div>
-      ) : null}
-    </Modal>
+          </div>
+        ) : null}
+        {choice !== 'model' ? (
+          <div className="fs-export-dialog__options">
+            {levels.length > 1 ? (
+              <label className="fs-export-dialog__option">
+                <span>Levels</span>
+                <Select
+                  aria-label="Levels"
+                  size="sm"
+                  value={level}
+                  disabled={busy}
+                  onValueChange={setLevel}
+                  options={[{ value: 'all', label: choice === 'pdf' ? 'Every level, a sheet each' : choice === 'dxf' ? 'Every level, a file each (ZIP)' : 'Every level, one model' }, ...levels.map((l) => ({ value: l.id, label: l.name }))]}
+                />
+              </label>
+            ) : null}
+            {designed
+              ? optionSets.map((set) => {
+                  const name = optionSets.length === 1 ? 'Design' : `Design · ${set.name}`;
+                  return (
+                    <label key={set.id} className="fs-export-dialog__option">
+                      <span>{name}</span>
+                      <Select
+                        aria-label={name}
+                        size="sm"
+                        value={chosenDesign[set.id] ?? set.primary}
+                        disabled={busy}
+                        onValueChange={(v) => { setDesign((d) => ({ ...d, [set.id]: v })); }}
+                        options={set.options.map((o) => ({ value: o.id, label: o.id === set.primary ? `${optionChoiceLabel(set, o.id)} (primary)` : optionChoiceLabel(set, o.id) }))}
+                      />
+                    </label>
+                  );
+                })
+              : null}
+            {moded ? (
+              <label className="fs-export-dialog__option">
+                <span>Drawing</span>
+                <Select aria-label="Drawing" size="sm" value={drawing} disabled={busy} onValueChange={setDrawing} options={modes.map((m) => ({ value: m.value, label: m.label }))} />
+              </label>
+            ) : null}
+            {renovation !== undefined && (choice === 'pdf' || choice === 'dxf') ? (
+              <label className="fs-export-dialog__option">
+                <span>Renovation</span>
+                <Select aria-label="Renovation plan" size="sm" value={reno} disabled={busy} onValueChange={setReno} options={RENOVATION_PLANS} />
+              </label>
+            ) : null}
+            {choice === 'pdf' ? (
+              <label className="fs-export-dialog__option">
+                <span>Style</span>
+                <Select aria-label="Plan style" size="sm" value={style} disabled={busy} onValueChange={setStyle} options={PDF_STYLES} />
+              </label>
+            ) : null}
+            {choice === 'pdf' ? (
+              <label className="fs-export-dialog__option">
+                <span>Paper</span>
+                <Select aria-label="Paper" size="sm" value={page} disabled={busy} onValueChange={(v) => { setPage(v as PageName); }} options={PAGES} />
+              </label>
+            ) : null}
+          </div>
+        ) : null}
+      </Modal>
+      <ArDialog open={ar} onOpenChange={setAr} projectId={projectId} projectName={projectName} levels={levels} />
+    </>
   );
 }

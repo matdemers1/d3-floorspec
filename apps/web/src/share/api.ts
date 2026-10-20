@@ -30,6 +30,8 @@ export interface ShareLinkRow {
   state: 'active' | 'expired' | 'revoked';
   /** A virtual tour's link (FLR-T-14.2): its export job; it shows the tour alone. */
   tour?: string | null;
+  /** An AR model's link (FLR-T-14.3): its USDZ export; it shows the model alone. */
+  ar?: string | null;
 }
 
 export interface NewShare {
@@ -40,6 +42,8 @@ export interface NewShare {
   comments?: boolean;
   /** A virtual tour's export job (FLR-T-14.2): the link shows that tour alone. */
   tour?: string;
+  /** An AR model's USDZ export (FLR-T-14.3): the link shows that model alone. */
+  ar?: string;
 }
 
 export const listShares = async (projectId: string) => (await api.get<{ links: ShareLinkRow[] }>(`/api/projects/${projectId}/shares`)).links;
@@ -116,7 +120,7 @@ export interface ShareMeta {
   project: { name: string };
   sharedBy: string;
   version: { hash: string; seq: number | null; pinned: boolean } | null;
-  shows: Shows & { tour?: boolean };
+  shows: Shows & { tour?: boolean; ar?: boolean };
   comments: { allowed: boolean; signedIn: boolean; you: { name: string } | null; owner: boolean };
   expiresAt: string;
 }

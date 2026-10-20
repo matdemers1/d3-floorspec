@@ -30,6 +30,7 @@ function inDays(days: number): string {
 export function describeLink(link: ShareLinkRow): string {
   const parts = [`Created ${dateOf(link.createdAt)}`];
   if (link.tour !== undefined && link.tour !== null) parts.unshift('Virtual tour');
+  if (link.ar !== undefined && link.ar !== null) parts.unshift('AR model');
   if (link.state === 'revoked') parts.push(`revoked ${dateOf(link.revokedAt ?? link.createdAt)}`);
   else if (link.state === 'expired') parts.push(`expired ${dateOf(link.expiresAt)}`);
   else parts.push(`expires ${dateOf(link.expiresAt)}`);

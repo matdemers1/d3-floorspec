@@ -1,5 +1,5 @@
 import { useId, useMemo } from 'react';
-import { Alert, Button, IconButton, Select, StatusDot, Switch } from '@d3cloud/ui';
+import { Alert, Button, IconButton, Select, StatusDot, Switch, Tooltip } from '@d3cloud/ui';
 import { X } from 'lucide-react';
 import type { HouseMesh } from '@floorspec/mesh';
 import { labelOf, type EditorModel } from '../../model';
@@ -16,8 +16,9 @@ import './xr.css';
 
 /**
  * Walk it in VR (FLR-T-14.3; the board's "14.3 · Walk it in VR — entering WebXR from the 3D view"):
- * the "Enter VR" pill beside the 3D view's levels — shown only when this browser offers immersive VR
- * (`navigator.xr.isSessionSupported('immersive-vr')`), never a dead button — and the panel it opens:
+ * "Enter VR" at the end of the Experiences cluster (the read-me's "Enter VR when offered") — shown only
+ * when this browser offers immersive VR (`navigator.xr.isSessionSupported('immersive-vr')`), never a
+ * dead button — and the panel it opens:
  * that the headset is ready, where the walk starts and at what eye height, the comfort options, what
  * each gesture does in the headset, and Enter VR. VR is read-only: edit in 2D or 3D.
  *
@@ -27,30 +28,30 @@ import './xr.css';
 
 const UNITS = 1_280_000;
 
-export function EnterVrPill({ store }: { store: EditorStore }) {
+export function EnterVrButton({ store }: { store: EditorStore }) {
   const supported = useXrSupport(store);
   const open = useXr(store, (s) => s.open);
   if (!supported) return null;
   return (
-    <button
-      type="button"
-      className="fs-vr-pill"
-      aria-haspopup="dialog"
-      aria-expanded={open}
-      onClick={() => {
-        const x = xrOf(store);
-        if (!x.get().open) {
-          // The panels over the view share one place.
-          sunOf(store).set({ open: false, playing: false, lapse: false });
-          daylightOf(store).set({ open: false });
-          threeOf(store).set({ lightingOpen: false, cameraOpen: false, sectionOpen: false });
-        }
-        x.set({ open: !x.get().open, error: null });
-      }}
-    >
-      <HeadsetIcon />
-      Enter VR
-    </button>
+    <Tooltip content={open ? 'Close Walk it in VR' : 'Walk it in VR: the house at 1:1 in your headset'}>
+      <IconButton
+        label="Enter VR"
+        icon={<HeadsetIcon />}
+        size="sm"
+        pressed={open}
+        aria-haspopup="dialog"
+        onClick={() => {
+          const x = xrOf(store);
+          if (!x.get().open) {
+            // The panels over the view share one place.
+            sunOf(store).set({ open: false, playing: false, lapse: false });
+            daylightOf(store).set({ open: false });
+            threeOf(store).set({ lightingOpen: false, cameraOpen: false, sectionOpen: false });
+          }
+          x.set({ open: !x.get().open, error: null });
+        }}
+      />
+    </Tooltip>
   );
 }
 

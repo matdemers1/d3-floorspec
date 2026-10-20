@@ -1,33 +1,4 @@
-/* FLR-T-14.3 · Walk it in VR: the pill beside the levels, its panel, and the screen beside the headset. */
-
-.fs-vr-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-6);
-  height: 30px;
-  margin-top: 2px;
-  padding: 0 var(--space-12);
-  border: 1px solid var(--color-accent);
-  border-radius: var(--radius-full);
-  background: var(--color-accent-muted);
-  color: var(--color-fg);
-  font: inherit;
-  font-size: var(--text-13);
-  font-weight: var(--weight-medium);
-  white-space: nowrap;
-  cursor: pointer;
-}
-.fs-vr-pill:hover {
-  border-color: var(--color-accent-hover);
-}
-.fs-vr-pill:focus-visible {
-  outline: 2px solid var(--color-focus);
-  outline-offset: 2px;
-}
-.fs-vr-pill[aria-expanded='true'] {
-  background: var(--color-accent);
-  color: var(--color-accent-contrast);
-}
+/* FLR-T-14.3 · Walk it in VR: its panel, and the screen beside the headset. */
 
 .fs-sun.fs-section.fs-vr {
   width: 324px;

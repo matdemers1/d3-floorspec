@@ -13,6 +13,7 @@ import { daylightOf } from '../../daylight/state';
 import type { Drawing } from './SectionOverlay';
 import { toggleCompare, useCompareChoices } from '../compare/CompareOverlay';
 import { XrayButton } from '../xray/XrayPanel';
+import { EnterVrButton } from '../xr/VrPanel';
 import './section.css';
 
 /**
@@ -63,6 +64,8 @@ const EXPERIENCES: readonly Experience[] = [
   { id: 'compare', Button: CompareButton },
   { id: 'edit', Button: EditButton },
   { id: 'tape', Button: TapeButton },
+  // FLR-T-14.3: Enter VR, where the browser offers immersive VR (and nothing where it does not).
+  { id: 'vr', Button: ({ ctx }) => <EnterVrButton store={ctx.store} /> },
 ];
 
 export function ExperiencesToolbar({ ctx }: { ctx: ExperienceContext }) {

@@ -63,7 +63,7 @@ import { wallLabels } from './xray/labels';
 import { colourVar, planOf, XRAY_SYSTEMS } from './xray/xray';
 import type { XrayPlan, XrayWall } from '@floorspec/mesh';
 import { XrScene } from './xr/XrScene';
-import { EnterVrPill, VrPanel, VrStatus } from './xr/VrPanel';
+import { VrPanel, VrStatus } from './xr/VrPanel';
 import { useXr } from './xr/state';
 
 /**
@@ -1055,8 +1055,6 @@ export default function ThreeView({ store, compact = false }: { store: EditorSto
             {ctx !== null ? <ExperiencesToolbar ctx={ctx} /> : null}
             {/* Beside the clusters, as the board's 3D frames have it (FLR-T-14.8): never under a longer cluster. */}
             <LevelsControl store={store} three={three} model={ready.model} order={order} levels={levels} level={levelId} />
-            {/* FLR-T-14.3: only where the browser offers immersive VR. */}
-            <EnterVrPill store={store} />
           </div>
           {ctx !== null ? <SectionPanel ctx={ctx} /> : null}
           {ctx !== null ? <ExplodedPanel ctx={ctx} /> : null}

@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 import type { HouseMesh } from '@floorspec/mesh';
@@ -24,6 +24,23 @@ import { useXr, xrOf, type XrStore } from './state';
  */
 
 const FADE_S = 0.15;
+
+/** Under automation only (navigator.webdriver): the e2e suite reads where the last aim would land. */
+export interface XrHook {
+  /** The last aim: whether it may land, where, or why not. */
+  aim: TeleportCheck | null;
+  /** The rig: where the headset's space stands in the house. */
+  rig: Rig;
+  /** The menu as drawn, a PNG data URL, and whether it shows. */
+  menu: string | null;
+  menuShown: boolean;
+}
+
+declare global {
+  interface Window {
+    __floorspecXr?: XrHook;
+  }
+}
 const HINT = 'Trigger or pinch · teleport   Stick · turn   Y · menu';
 const AXIS = new THREE.Vector3(0, 0, -1);
 
@@ -31,9 +48,16 @@ export type XrColours = MenuColours;
 
 /** The design system's colours, for the arc, the target and the menu: read where the view is. */
 export function xrColours(): XrColours {
-  const s = getComputedStyle(document.documentElement);
-  const v = (name: string, fallback: string) => s.getPropertyValue(name).trim() || fallback;
-  return {
+  // Resolved through an element: a token may be another token (`var(--…)`), which a canvas cannot read.
+  const probe = document.createElement('span');
+  probe.style.display = 'none';
+  document.body.appendChild(probe);
+  const v = (name: string, fallback: string) => {
+    probe.style.color = fallback;
+    probe.style.color = `var(${name}, ${fallback})`;
+    return getComputedStyle(probe).color || fallback;
+  };
+  const colours: XrColours = {
     surface: v('--color-surface-raised', 'dimgray'),
     border: v('--color-border', 'gray'),
     fg: v('--color-fg', 'white'),
@@ -42,6 +66,8 @@ export function xrColours(): XrColours {
     accentFg: v('--color-accent-contrast', 'white'),
     danger: v('--color-danger', 'crimson'),
   };
+  probe.remove();
+  return colours;
 }
 
 export function XrScene({ store, world, model, mesh }: { store: EditorStore; world: World; model: EditorModel; mesh: HouseMesh }) {
@@ -52,8 +78,11 @@ export function XrScene({ store, world, model, mesh }: { store: EditorStore; wor
 function XrSession({ session, store, world, model, mesh }: { session: XRSession; store: EditorStore; world: World; model: EditorModel; mesh: HouseMesh }) {
   const gl = useThree((s) => s.gl);
   const scene = useThree((s) => s.scene);
-  const driver = useMemo(() => new Driver(gl, scene, session, store, world, model, mesh), [gl, scene, session, store, world, model, mesh]);
+  // One driver a session: the house meshed again under it (an edit elsewhere) is handed to it, not a new session.
+  const first = useRef({ world, model, mesh });
+  const driver = useMemo(() => new Driver(gl, scene, session, store, first.current.world, first.current.model, first.current.mesh), [gl, scene, session, store]);
   useEffect(() => driver.start(), [driver]);
+  useEffect(() => { driver.house(world, model); }, [driver, world, model]);
   useFrame((_, dt, frame) => { driver.frame(dt, frame); });
   return null;
 }
@@ -101,8 +130,8 @@ class Driver {
     private readonly scene: THREE.Scene,
     private readonly session: XRSession,
     private readonly store: EditorStore,
-    private readonly world: World,
-    private readonly model: EditorModel,
+    private world: World,
+    private model: EditorModel,
     mesh: HouseMesh,
   ) {
     this.x = xrOf(store);
@@ -116,11 +145,11 @@ class Driver {
     // The arc: dots along it, in the accent where it may land, muted where it may not.
     const dots = new THREE.BufferGeometry();
     dots.setAttribute('position', new THREE.BufferAttribute(new Float32Array(3 * 256), 3));
-    this.arc = new THREE.Points(dots, new THREE.PointsMaterial({ size: 0.035, sizeAttenuation: true, color: new THREE.Color(this.colours.accent), transparent: true, opacity: 0.95 }));
+    this.arc = new THREE.Points(dots, new THREE.PointsMaterial({ size: 0.035, sizeAttenuation: true, toneMapped: false, color: new THREE.Color(this.colours.accent), transparent: true, opacity: 0.95 }));
     this.arc.frustumCulled = false;
     this.arc.visible = false;
     // Where you would land: a ring on the floor.
-    this.ring = new THREE.Mesh(new THREE.RingGeometry(0.2, 0.27, 48), new THREE.MeshBasicMaterial({ color: new THREE.Color(this.colours.accent), side: THREE.DoubleSide, transparent: true, opacity: 0.9, depthWrite: false }));
+    this.ring = new THREE.Mesh(new THREE.RingGeometry(0.2, 0.27, 48), new THREE.MeshBasicMaterial({ color: new THREE.Color(this.colours.accent), toneMapped: false, side: THREE.DoubleSide, transparent: true, opacity: 0.9, depthWrite: false }));
     this.ring.visible = false;
     // The comfort veil about the head: dark all over while a teleport fades, round the edge while turning smoothly.
     this.veil = new THREE.Mesh(
@@ -137,17 +166,28 @@ class Driver {
       }),
     );
     this.veil.renderOrder = 1000;
+    // Interface, not house: drawn as the design system's colours, outside the sky's exposure (SkyScene's tone curve).
     this.veil.frustumCulled = false;
     // The menu: a canvas drawn as a panel at your side.
+    // Its size first: a texture keeps the size it was made at.
     const canvas = document.createElement('canvas');
     canvas.width = MENU_PX.width;
-    canvas.height = 256;
+    canvas.height = menuLayout({ levels: world.levels }).height;
     const texture = new THREE.CanvasTexture(canvas);
     texture.colorSpace = THREE.SRGBColorSpace;
-    const panel = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.MeshBasicMaterial({ map: texture, transparent: true, side: THREE.DoubleSide, depthWrite: false }));
+    const panel = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.MeshBasicMaterial({ map: texture, toneMapped: false, transparent: true, side: THREE.DoubleSide, depthWrite: false }));
     panel.renderOrder = 900;
+    panel.scale.set(MENU_WIDTH_M, (MENU_WIDTH_M * canvas.height) / MENU_PX.width, 1);
     this.menu = { canvas, texture, mesh: panel, buttons: [], hover: null, at: null, note: HINT };
     this.objects.push(this.arc, this.ring, this.veil, panel);
+  }
+
+  /** The house meshed again: aim and switch level in it from now on. */
+  house(world: World, model: EditorModel): void {
+    if (world === this.world && model === this.model) return;
+    this.world = world;
+    this.model = model;
+    this.drawMenu();
   }
 
   /** Set the session going; the cleanup ends what this added. */
@@ -155,7 +195,7 @@ class Driver {
     for (const o of this.objects) this.scene.add(o);
     for (const index of [0, 1]) {
       const group = this.gl.xr.getController(index);
-      const ray = new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, 0, -1.5)]), new THREE.LineBasicMaterial({ color: new THREE.Color(this.colours.fg), transparent: true, opacity: 0.6 }));
+      const ray = new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, 0, -1.5)]), new THREE.LineBasicMaterial({ color: new THREE.Color(this.colours.fg), toneMapped: false, transparent: true, opacity: 0.6 }));
       ray.visible = false;
       group.add(ray);
       this.scene.add(group);
@@ -225,6 +265,7 @@ class Driver {
 
   private stop(): void {
     this.stopped = true;
+    if (navigator.webdriver) delete window.__floorspecXr;
     // The 3D view closed under the headset (back to the plan): the session ends with it.
     if (!this.ended) void this.session.end().catch(() => undefined);
     for (const u of this.unsubscribe) u();
@@ -243,6 +284,7 @@ class Driver {
 
   /** Put the headset's space where the rig says. */
   private apply(): void {
+    this.hook({ rig: this.rig });
     if (this.base === null) return;
     const { position: p, orientation: q } = rigPose(this.rig);
     const pose = new XRRigidTransform({ x: p[0], y: p[1], z: p[2] }, { x: q[0], y: q[1], z: q[2], w: q[3] });
@@ -313,6 +355,7 @@ class Driver {
         const { origin, direction } = this.rayOf(h);
         const r = aim(this.world, { x: this.head[0], y: this.head[1], feet: this.rig.floor }, [origin.x, origin.y, origin.z], [direction.x, direction.y, direction.z], h.source.targetRayMode === 'tracked-pointer');
         this.check = r.check;
+        this.hook({ aim: r.check });
         this.showArc(r.path.points, r.check);
         const note = r.check.ok ? HINT : NO_TELEPORT[r.check.reason];
         if (note !== this.menu.note) {
@@ -335,6 +378,11 @@ class Driver {
     // The menu follows lazily: placed again once you have walked away from it.
     const at = this.menu.at;
     if (at !== null && Math.hypot(this.head[0] - at[0], this.head[1] - at[1]) > 1.5) this.placeMenu();
+  }
+
+  private hook(patch: Partial<XrHook>): void {
+    if (!navigator.webdriver) return;
+    window.__floorspecXr = { aim: null, rig: this.rig, menu: null, menuShown: true, ...window.__floorspecXr, ...patch };
   }
 
   private rayOf(h: Hand): { origin: THREE.Vector3; direction: THREE.Vector3 } {
@@ -487,14 +535,9 @@ class Driver {
     const levelName = levels.find((l) => l.id === st.level)?.name ?? '';
     const roomName = st.room === null ? null : labelOf(this.model, st.room);
     const model = { house: this.model.document.project.name, where: roomName === null ? levelName : `${roomName} · ${levelName}`, levels, current: st.level, roofs: st.roofs, note: this.menu.note };
-    const height = menuLayout({ levels }).height;
-    if (this.menu.canvas.height !== height) {
-      this.menu.canvas.height = height;
-      const ratio = height / MENU_PX.width;
-      this.menu.mesh.scale.set(MENU_WIDTH_M, MENU_WIDTH_M * ratio, 1);
-    }
     this.menu.buttons = drawMenu(ctx, model, this.colours, this.menu.hover).buttons;
     this.menu.texture.needsUpdate = true;
+    if (navigator.webdriver) this.hook({ menu: this.menu.canvas.toDataURL('image/png'), menuShown: this.menu.mesh.visible });
   }
 }
 
