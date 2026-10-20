@@ -27,15 +27,36 @@ export function stillThreads(): number {
 /** Whether the compiled thread exists to start (it does not when running from sources). */
 export const canThread = (): boolean => existsSync(fileURLToPath(THREAD));
 
-export async function traceParallel(scene: PtScene, options: TraceOptions, threads = stillThreads()): Promise<{ color: Float32Array; features: Features; threads: number }> {
+/**
+ * Trace on `threads` threads. With a `signal` (FLR-T-14.2: a tour's panorama, cancelled by a person),
+ * aborting it ends the threads at once, mid-pass, and rejects with the signal's reason.
+ */
+export async function traceParallel(scene: PtScene, options: TraceOptions, threads = stillThreads(), signal?: AbortSignal): Promise<{ color: Float32Array; features: Features; threads: number }> {
+  signal?.throwIfAborted();
   const n = Math.min(threads, options.height);
-  if (n <= 1 || !canThread()) return { ...(await trace(scene, options)), threads: 1 };
+  if (n <= 1 || !canThread()) {
+    // In-process (from sources): the passes yield, and a pass after the abort stops it.
+    const onPass = options.onPass;
+    const watched: TraceOptions = signal === undefined ? options : { ...options, onPass: async (done, total) => { signal.throwIfAborted(); await onPass?.(done, total); } };
+    return { ...(await trace(scene, watched)), threads: 1 };
+  }
   const { onPass, ...rest } = options;
   const done = new Array<number>(n).fill(0);
   let reported = 0;
   const workers: Worker[] = [];
+  let stop: (() => void) | undefined;
+  const stopped = new Promise<never>((_, reject) => {
+    stop = () => { reject(signal?.reason instanceof Error ? signal.reason : new Error('the trace was stopped')); };
+  });
+  // Nobody awaits it unless it is raced: no unhandled rejection when the trace ends first.
+  stopped.catch(() => undefined);
+  const onAbort = () => {
+    for (const w of workers) void w.terminate();
+    stop?.();
+  };
+  signal?.addEventListener('abort', onAbort, { once: true });
   try {
-    const shares = await Promise.all(
+    const all = Promise.all(
       Array.from({ length: n }, (_, index) => {
         const worker = new Worker(THREAD, { workerData: { scene, options: { ...rest, rows: { of: n, index } } } });
         workers.push(worker);
@@ -56,6 +77,7 @@ export async function traceParallel(scene: PtScene, options: TraceOptions, threa
         });
       }),
     );
+    const shares = await (signal === undefined ? all : Promise.race([all, stopped]));
     // Each pixel from the thread that traced it: row y belongs to thread y mod n.
     const out = shares[0]!;
     const W = options.width;
@@ -73,6 +95,7 @@ export async function traceParallel(scene: PtScene, options: TraceOptions, threa
     }
     return { ...out, threads: n };
   } finally {
+    signal?.removeEventListener('abort', onAbort);
     for (const w of workers) void w.terminate();
   }
 }

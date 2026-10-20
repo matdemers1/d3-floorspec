@@ -23,6 +23,9 @@ const CALLS: Record<string, { body?: unknown; anonymous: number; stream?: true }
   // Answered, by a route that works: the shared house has no texture, so no digest is the link's to read (FLR-T-9.1).
   'GET /api/share/:token/assets/:sha256': { anonymous: 404 },
   'GET /api/share/:token/findings': { anonymous: 200 },
+  // A tour's (FLR-T-14.2): an ordinary link shows none (tours.test.ts walks one).
+  'GET /api/share/:token/tour': { anonymous: 404 },
+  'GET /api/share/:token/tour/:file': { anonymous: 404 },
   'GET /api/share/:token/coverage': { anonymous: 200 },
   'GET /api/share/:token/comments': { anonymous: 200 },
   'GET /api/share/:token/events': { anonymous: 200, stream: true },
@@ -44,7 +47,7 @@ describe('share links', () => {
   let project: string;
   let head: string;
 
-  const fill = (path: string, token: string, comment = MISSING_COMMENT) => path.replace(':token', token).replace(':commentId', comment).replace(':sha256', 'a'.repeat(64));
+  const fill = (path: string, token: string, comment = MISSING_COMMENT) => path.replace(':token', token).replace(':commentId', comment).replace(':sha256', 'a'.repeat(64)).replace(':file', 'pano-01-liv.jpg');
 
   beforeAll(async () => {
     running = await start({ with: { eventStream: { heartbeatMs: 200 } } });
@@ -180,7 +183,7 @@ describe('share links', () => {
         project: { name: 'Two-storey ranch' },
         sharedBy: OPERATOR.displayName,
         version: { hash: head, seq: 1, pinned: false },
-        shows: { plan: true, threeD: true, findings: true },
+        shows: { plan: true, threeD: true, findings: true, tour: false },
         comments: { allowed: true, signedIn: false, you: null, owner: false },
         expiresAt: expect.any(String) as unknown,
       });

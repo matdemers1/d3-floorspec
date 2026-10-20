@@ -15,6 +15,8 @@ import { renderSavedView, renderShots, type Shot } from '../pathtrace/views.js';
 import { storeZip } from '../export/gltf/zip.js';
 import { FILM_FORMATS, FILM_LIGHTS, FILM_QUALITIES, FILM_RATES, FILM_SIZES, renderFilm, type FilmFormat, type FilmLight, type FilmQuality, type FilmRate, type FilmSize } from '../film/index.js';
 import { timelapseProblem, type Timelapse } from '@floorspec/mesh/sky';
+import { DEFAULT_EYE_HEIGHT, linkedDoorways, MAX_EYE_HEIGHT, MAX_TOUR_ROOMS, MIN_EYE_HEIGHT, TOUR_QUALITIES, TOUR_SIZES, tourAt, type TourQuality, type TourSize } from '@floorspec/mesh';
+import { renderTour, type TourStop } from '../tour/index.js';
 import { daylightStudy, DAYLIGHT_SKIES, type DaylightSky } from '../pathtrace/daylight.js';
 
 export interface JobRow {
@@ -52,6 +54,11 @@ export interface JobFile {
   readonly bytes: Uint8Array;
   /** Anything else worth showing about the file: its sheets, its files. */
   readonly summary?: Record<string, unknown>;
+  /**
+   * More files the job made, each by a path of its own (FLR-T-14.2: a tour's panoramas and plans,
+   * which its manifest — the file — names): stored beside the file and kept as long as it is.
+   */
+  readonly assets?: readonly { readonly path: string; readonly contentType: string; readonly bytes: Uint8Array }[];
 }
 
 export type Handler = (document: object, job: JobRow) => Promise<JobFile>;
@@ -337,6 +344,34 @@ export function filmParams(raw: unknown): FilmParams {
   };
 }
 
+/** The parameters of a virtual tour (FLR-T-14.2), as the api writes them. */
+export interface TourParams {
+  readonly rooms?: readonly TourStop[];
+  readonly size: TourSize;
+  readonly quality: TourQuality;
+  readonly eyeHeight: number;
+  readonly at: string;
+  readonly design?: Record<string, string>;
+  readonly versionSeq: number | null;
+}
+
+export function tourParams(raw: unknown): TourParams {
+  const p = (raw ?? {}) as Record<string, unknown>;
+  const size = typeof p['size'] === 'string' && Object.hasOwn(TOUR_SIZES, p['size']) ? (p['size'] as TourSize) : 'large';
+  const quality = typeof p['quality'] === 'string' && Object.hasOwn(TOUR_QUALITIES, p['quality']) ? (p['quality'] as TourQuality) : 'standard';
+  const eye = p['eyeHeight'];
+  const eyeHeight = typeof eye === 'number' && Number.isInteger(eye) && eye >= MIN_EYE_HEIGHT && eye <= MAX_EYE_HEIGHT ? eye : DEFAULT_EYE_HEIGHT;
+  const at = typeof p['at'] === 'string' && AT_PATTERN.test(p['at']) ? p['at'] : tourAt(new Date().getUTCFullYear());
+  const listed = Array.isArray(p['rooms']) ? p['rooms'] : undefined;
+  const rooms = listed
+    ?.filter((r): r is Record<string, unknown> => isRecord(r) && typeof r['room'] === 'string' && r['room'] !== '')
+    .slice(0, MAX_TOUR_ROOMS)
+    .map((r) => ({ room: r['room'] as string, ...(typeof r['view'] === 'string' && r['view'] !== '' ? { view: r['view'] } : {}) }));
+  const design = designOf(p['design']);
+  const seq = typeof p['versionSeq'] === 'number' && Number.isInteger(p['versionSeq']) ? p['versionSeq'] : null;
+  return { ...(rooms === undefined || rooms.length === 0 ? {} : { rooms }), size, quality, eyeHeight, at, ...(design === undefined ? {} : { design }), versionSeq: seq };
+}
+
 /**
  * A shot list's ZIP (FLR-T-13.10): each still a PNG named for its place and its view —
  * `01-hero-exterior.png` — and what each shot was, for the job's summary.
@@ -595,6 +630,52 @@ export function createHandlers(opts: HandlerOptions = {}): Readonly<Record<strin
           ...(r.timelapse === undefined ? {} : { timelapse: r.timelapse }),
           ...(r.video === null ? {} : { codec: r.video.codec }),
           design: r.design,
+          ms: r.ms,
+        },
+      };
+    },
+    /**
+     * FLR-T-14.2: a virtual tour — a panorama of each room, path-traced, its hotspots and the plans —
+     * whose manifest is the file and whose panoramas and plans are its assets. Reports the panorama,
+     * its face and pass; a cancel stops it at once, mid-face.
+     */
+    'export.tour': async (document, job) => {
+      const p = tourParams(job.params);
+      const images = claimedOnly(job, store.images);
+      const r = await renderTour(document, {
+        ...(p.rooms === undefined ? {} : { rooms: p.rooms }),
+        size: p.size,
+        quality: p.quality,
+        eyeHeight: p.eyeHeight,
+        at: p.at,
+        ...(p.design === undefined ? {} : { design: p.design }),
+        ...(images === undefined ? {} : { images }),
+        version: { hash: job.versionHash, seq: p.versionSeq },
+        ...(job.progress === undefined ? {} : { onPano: (t) => { job.progress?.({ ...t }).catch(() => undefined); } }),
+        ...(job.signal === undefined ? {} : { signal: job.signal }),
+      });
+      const bytes = new TextEncoder().encode(JSON.stringify(r.manifest));
+      return {
+        name: `tour-${slug(r.manifest.project)}-${job.versionHash.slice(0, 8)}.json`,
+        contentType: 'application/json',
+        bytes,
+        assets: r.files,
+        summary: {
+          label: 'Virtual tour — a panorama of each room, path-traced, linked at the doorways',
+          panos: r.manifest.rooms.length,
+          doorways: linkedDoorways(r.manifest),
+          rooms: r.manifest.rooms.map((room) => ({ id: room.id, name: room.name, level: room.level, pano: room.pano, hotspots: room.hotspots.length })),
+          width: r.manifest.width,
+          height: r.manifest.height,
+          quality: r.manifest.quality,
+          samples: r.manifest.samples,
+          eyeHeight: r.manifest.eyeHeight,
+          light: r.manifest.light,
+          sky: r.sky,
+          design: r.design,
+          threads: r.threads,
+          files: r.files.length,
+          bytes: r.files.reduce((sum, f) => sum + f.bytes.byteLength, bytes.byteLength),
           ms: r.ms,
         },
       };
