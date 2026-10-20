@@ -108,6 +108,10 @@ import { defineConfig, devices } from '@playwright/test';
  *                   main, swiped from one camera (the divider dragged and moved by the keys) and side by side (cameras
  *                   linked, unlinked, linked), Flip, the B picker's groups, the Comparing panel, a matched pair rendered
  *                   on the job queue; axe in both themes.
+ *   - `xray`      — FLR-T-14.5: X-ray on the Courtyard House (with a furnace and two terminals added) — the finishes
+ *                   faded, every system drawn and counted, each switched off and on, ⌥X, Fade finishes by the keys,
+ *                   the kitchen's north wall's studs, pipes and circuits, its layers in the inspector, "Section box
+ *                   here" cutting the systems too; axe in both themes.
  *
  * Run with:
  *
@@ -115,7 +119,7 @@ import { defineConfig, devices } from '@playwright/test';
  *
  * The database server defaults to the local test Postgres; E2E_DATABASE_URL points elsewhere (CI).
  * It names the keyboard suite's database; the others are derived from it (`…_main_test`,
- * `…_a11y_test`, `…_program_test`, `…_systems_test`, `…_findings_test`, `…_roofs_test`, `…_exports_test`, `…_options_test`, `…_three_test`, `…_share_test`, `…_assets_test`, `…_sun_test`, `…_package_test`, `…_furniture_test`, `…_templates_test`, `…_moonshots_test`, `…_arcs_test`, `…_lighting_test`, `…_materials_test`, `…_resize_test`, `…_drawers_test`, `…_presentation_test`, `…_panzoom_test`, `…_camera_test`, `…_modes_test`, `…_arrange_test`, `…_rooms_test`, `…_placing_test`, `…_precision_test`, `…_styles_test`, `…_feedback_test`, `…_trace_test`, `…_dimensions_test`, `…_renovation_test`, `…_phrases_test`, `…_keys_test`, `…_section_test`, `…_films_test`, `…_edit3d_test`, `…_compare_test`). E2E_PORT is the keyboard suite's port; the others take the ports after it (modes, +26; arrange, +27; rooms, +31; placing, +33; precision, +34; styles, +37; dimensions, +41; trace, +42; renovation, +43; feedback, +46; phrases, +47; keys, +48; films, +49; section, +50; edit3d, +51; compare, +52).
+ * `…_a11y_test`, `…_program_test`, `…_systems_test`, `…_findings_test`, `…_roofs_test`, `…_exports_test`, `…_options_test`, `…_three_test`, `…_share_test`, `…_assets_test`, `…_sun_test`, `…_package_test`, `…_furniture_test`, `…_templates_test`, `…_moonshots_test`, `…_arcs_test`, `…_lighting_test`, `…_materials_test`, `…_resize_test`, `…_drawers_test`, `…_presentation_test`, `…_panzoom_test`, `…_camera_test`, `…_modes_test`, `…_arrange_test`, `…_rooms_test`, `…_placing_test`, `…_precision_test`, `…_styles_test`, `…_feedback_test`, `…_trace_test`, `…_dimensions_test`, `…_renovation_test`, `…_phrases_test`, `…_keys_test`, `…_section_test`, `…_films_test`, `…_edit3d_test`, `…_compare_test`, `…_xray_test`). E2E_PORT is the keyboard suite's port; the others take the ports after it (modes, +26; arrange, +27; rooms, +31; placing, +33; precision, +34; styles, +37; dimensions, +41; trace, +42; renovation, +43; feedback, +46; phrases, +47; keys, +48; films, +49; section, +50; edit3d, +51; compare, +52; xray, +54).
  */
 
 const PORT = Number(process.env['E2E_PORT'] ?? 3491);
@@ -228,6 +232,8 @@ const SUITES: Suite[] = [
   { name: 'edit3d', spec: 'edit3d.spec.ts', port: PORT + 51, database: databaseFor('edit3d'), setupToken: true, gl: true },
   // FLR-T-14.4: compare in 3D — main and a changeset swiped and side by side from one camera, the B picker, a matched pair, axe.
   { name: 'compare', spec: 'compare.spec.ts', port: PORT + 52, database: databaseFor('compare'), setupToken: true, gl: true },
+  // FLR-T-14.5: X-ray — the finishes faded, each system drawn and toggled, the kitchen wall's studs, pipes and circuits, a section box into it, axe.
+  { name: 'xray', spec: 'xray.spec.ts', port: PORT + 54, database: databaseFor('xray'), setupToken: true, gl: true },
 ];
 
 /**

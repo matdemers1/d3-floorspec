@@ -10,13 +10,14 @@ import { download, stillName, stillPng, stillSvg, styleOf, type StillFormat } fr
 import type { SectionRig } from './rig';
 import type { Drawing } from './SectionOverlay';
 import { toggleCompare, useCompareChoices } from '../compare/CompareOverlay';
+import { XrayButton } from '../xray/XrayPanel';
 import './section.css';
 
 /**
  * The 3D view's second toolbar cluster (FLR-P-14, the read-me "14.9 · Experiences — one system"): the
- * experiences beside the view — Section box (X), Compare (⌥C, FLR-T-14.4), Edit in 3D (E) and the
- * tape measure (⇧M); X-ray (⌥X) and Daylight (⌥D) slot into `EXPERIENCES` as FLR-T-14.5 and 14.7
- * land. Section opens a floating panel anchored to it, as Camera and Sun do on the first cluster;
+ * experiences beside the view — Section box (X), X-ray (⌥X, FLR-T-14.5), Compare (⌥C, FLR-T-14.4),
+ * Edit in 3D (E) and the tape measure (⇧M); Daylight (⌥D) slots into `EXPERIENCES` as FLR-T-14.7
+ * lands. Section opens a floating panel anchored to it, as Camera and Sun do on the first cluster;
  * Compare its bar under the view and its Comparing panel in the right column.
  *
  * FLR-T-14.6's two panels: Section (the box, the plane, its caps and its outside, the board's frame
@@ -37,8 +38,8 @@ export interface ExperienceContext {
   defaults: () => { box: Box; reset: Box; plane: { face: Face; at: number } } | null;
   /** The box around the selection, or null with nothing selected in 3D. */
   fit: () => Box | null;
-  /** Turn the camera to frame a box, as it is facing now. */
-  frame: (box: Box) => void;
+  /** Turn the camera to frame a box, as it is facing now — in what is left of the view right of `beside` CSS pixels (a panel over its left). */
+  frame: (box: Box, beside?: number) => void;
   /** The house's bounds, metres. */
   house: Box;
   /** The level whose floor a height stands on. */
@@ -55,7 +56,8 @@ interface Experience {
 
 const EXPERIENCES: readonly Experience[] = [
   { id: 'section', Button: SectionButton },
-  // FLR-T-14.5 X-ray and FLR-T-14.7 Daylight come here.
+  { id: 'xray', Button: XrayButton },
+  // FLR-T-14.7 Daylight comes here.
   { id: 'compare', Button: CompareButton },
   { id: 'edit', Button: EditButton },
   { id: 'tape', Button: TapeButton },

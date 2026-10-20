@@ -53,6 +53,12 @@ import { changedInB, comparisonDiff, compareModels, useSourceModel } from './com
 import { setPairCamera } from './compare/pair';
 import { viewFromState } from './shot/views';
 import { sunOf } from './sun/study';
+import { XrayScene, type XrayColours } from './xray/XrayScene';
+import { XrayPanel } from './xray/XrayPanel';
+import { XrayLabels } from './xray/XrayLabels';
+import { wallLabels } from './xray/labels';
+import { colourVar, planOf, XRAY_SYSTEMS } from './xray/xray';
+import type { XrayPlan, XrayWall } from '@floorspec/mesh';
 
 /**
  * The 3D view (FLR-T-7.5, FLR-REQ-113, 114), laid out as the board's "08 · Editor — 3D cutaway",
@@ -104,7 +110,11 @@ interface Tokens {
   /** FLR-T-14.6: a cut face's cap, and its hatch (P14/Cut cap). */
   fillQuiet: string;
   fgMuted: string;
+  /** FLR-T-14.5: each X-ray system's colour (its trade mode's, modes.css) and a drain's dashes (fg-muted). */
+  xray: XrayColours;
 }
+
+const XRAY_FALLBACK: XrayColours = { framing: 'orange', insulation: 'orchid', supply: 'skyblue', drain: 'skyblue', electrical: 'gold', ducts: 'orangered', dash: 'gray' };
 
 /** The design system's colours, read where the view sits — so the canvas follows the theme. */
 function useTokens(host: { current: HTMLElement | null }): Tokens {
@@ -117,9 +127,13 @@ function useTokens(host: { current: HTMLElement | null }): Tokens {
       danger: style.getPropertyValue('--color-danger').trim() || 'crimson',
       fillQuiet: style.getPropertyValue('--color-fill-quiet').trim() || 'gainsboro',
       fgMuted: style.getPropertyValue('--color-fg-muted').trim() || 'gray',
+      xray: {
+        ...(Object.fromEntries(XRAY_SYSTEMS.map((x) => [x, style.getPropertyValue(colourVar(x)).trim() || XRAY_FALLBACK[x]])) as Record<keyof typeof XRAY_FALLBACK, string>),
+        dash: style.getPropertyValue('--color-fg-muted').trim() || 'gray',
+      },
     };
   }, [host]);
-  const [tokens, setTokens] = useState<Tokens>({ background: 'black', accent: 'slateblue', danger: 'crimson', fillQuiet: 'gainsboro', fgMuted: 'gray' });
+  const [tokens, setTokens] = useState<Tokens>({ background: 'black', accent: 'slateblue', danger: 'crimson', fillQuiet: 'gainsboro', fgMuted: 'gray', xray: XRAY_FALLBACK });
   useEffect(() => {
     const update = () => { setTokens(read()); };
     update();
@@ -238,12 +252,15 @@ export default function ThreeView({ store, compact = false }: { store: EditorSto
   // FLR-T-14.8: what is drawn moved from where the mesh has it (a drag), and Edit in 3D.
   const motion = useMemo(() => new MotionRig(), []);
   const editTool = useThreeState(store, (s) => s.edit);
+  // FLR-T-14.5: X-ray — the finishes faded, what is inside the walls drawn.
+  const xray = useThreeState(store, (s) => s.xray);
   const houseGroup = useRef<THREE.Group>(null);
   const drawing = useRef<Drawing | null>(null);
   const reduced = useReducedMotion();
   // Presentation's passes are a perspective camera's: the exploded axonometric is drawn as Draft draws.
   // Compare draws its two pictures as Draft does (CompareRender): Presentation's passes are one picture's.
-  const presenting = quality === 'presentation' && !exploding && !comparing;
+  // X-ray draws as Draft too: Presentation's passes (occlusion, reflections) see the faded finishes as opaque.
+  const presenting = quality === 'presentation' && !exploding && !comparing && !xray.on;
   // What Presentation reports: whether its first full frame is drawn, and its frame rate moving.
   const stats = useMemo(() => new StatsStore(), []);
   const originRef = useRef<Vec3 | null>(null);
@@ -418,6 +435,15 @@ export default function ThreeView({ store, compact = false }: { store: EditorSto
     return true;
   };
   const summary = useMemo(() => (ready === null ? '' : describeScene(ready.model, visible.map((b) => b.part))), [ready, visible]);
+  // FLR-T-14.5: X-ray's derivation, while it is on, and the levels it draws in (those shown).
+  const xrayShown = xray.on && !walking && !exploding && !comparing;
+  const xrayed = useMemo<XrayPlan | null>(() => (ready === null || !xray.on || ready.model.derived === null ? null : planOf(ready.model.view, ready.model.derived)), [ready, xray.on]);
+  const shownLevels = useMemo(() => new Set(visible.map((b) => b.part.level)), [visible]);
+  // Its callouts on the selected wall.
+  const xrayLabels = useMemo(
+    () => (ready === null || xrayed === null || selection === null || !xrayShown ? [] : wallLabels(xrayed, ready.model.view, selection, ready.mesh.origin, store.units, (id) => labelOf(ready.model, id))),
+    [ready, xrayed, selection, xrayShown, store],
+  );
   // Furniture (FLR-T-8.3): each item's glTF model in place of its fallback box, once the model is drawn.
   const furniture = useFurnitureModels(store.projectId, ready?.model ?? null);
   const partsShown = useMemo(() => withoutModelled(visible, furniture.drawn), [visible, furniture.drawn]);
@@ -428,6 +454,7 @@ export default function ThreeView({ store, compact = false }: { store: EditorSto
   const shadowKey = useMemo(() => ({ partsShown, drawn: furniture.drawn, lamps }), [partsShown, furniture.drawn, lamps]);
 
   useTestHook(store, three, ctl, ready, host, built, visible, textures, sectionRig, motion, edit);
+  useXrayHook(three, host, xrayed);
 
   // FLR-T-14.6: what the Section and Exploded panels need of the view.
   const units = useEditor(store, () => store.units);
@@ -477,7 +504,16 @@ export default function ThreeView({ store, compact = false }: { store: EditorSto
         const sel = selectionBox();
         return sel === null ? null : defaultBox(houseBox, sel.box, band(sel.level));
       },
-      frame: (box) => { ctl.reframe(box); },
+      frame: (box, beside = 0) => {
+        const { width, height } = ctl.size;
+        if (beside <= 0 || width - beside < width / 3) {
+          ctl.reframe(box);
+          return;
+        }
+        // Framed for the part of the view the panel leaves, then moved into it.
+        ctl.reframe(box, (width - beside) / Math.max(1, height));
+        ctl.pan(beside / 2, 0);
+      },
     };
   }, [ready, houseBox, bands, store, sectionRig, units, project, levelName, selectionBox, ctl]);
   // ── Compare (FLR-T-14.4): each side's model, what B changes, and B's own camera when the cameras are unlinked.
@@ -687,6 +723,13 @@ export default function ThreeView({ store, compact = false }: { store: EditorSto
   }, [ctl, three, ready]);
 
   const onKeyDown = (e: React.KeyboardEvent) => {
+    // FLR-T-14.5: ⌥X, X-ray.
+    if (e.altKey && !e.metaKey && !e.ctrlKey && e.code === 'KeyX' && !walking && !compact && !exploding) {
+      e.preventDefault();
+      e.stopPropagation();
+      three.toggleXray();
+      return;
+    }
     // FLR-T-14.4: ⌥C, Compare.
     if (e.altKey && !e.metaKey && !e.ctrlKey && e.code === 'KeyC' && !walking && !compact && !exploding) {
       e.preventDefault();
@@ -821,7 +864,7 @@ export default function ThreeView({ store, compact = false }: { store: EditorSto
   const name = walking ? `Walkthrough of ${project}` : `3D view of ${project}`;
   const hint = walking
     ? 'W, A, S and D or the arrow keys walk and turn; drag to look around; Shift walks faster; Escape ends the walk.'
-    : 'Arrow keys orbit, Shift and the arrows pan, plus and minus zoom, Page Up and Page Down change the level, Home frames the house, X opens the section box, E edits items and openings in 3D (Tab then reaches the selection’s move and rotate handles), Shift M measures. Use the plan view for full keyboard editing.';
+    : 'Arrow keys orbit, Shift and the arrows pan, plus and minus zoom, Page Up and Page Down change the level, Home frames the house, X opens the section box, Alt X X-rays the walls, E edits items and openings in 3D (Tab then reaches the selection’s move and rotate handles), Shift M measures. Use the plan view for full keyboard editing.';
 
   let body: ReactNode;
   if (model === null || state.status === 'loading') {
@@ -881,6 +924,8 @@ export default function ThreeView({ store, compact = false }: { store: EditorSto
             <Parts visible={partsShown} rig={sectionRig} motion={motion} reno={renoStyles} danger={tokens.danger} selection={walking ? null : comparing && compare.focus !== null ? compare.focus : selection} accent={tokens.accent} textures={textures} lit={lightsOn} glows={glows} quality={comparing ? 'draft' : quality} onClick={onClick} onDoubleClick={onDoubleClick} onHover={onHover} onLeave={() => { if (tip !== null) setTip(null); }} outlined={comparing && compare.b.kind === 'main' ? changed : undefined} />
             {ready !== null ? <FurnitureScene furniture={furniture} mesh={ready.mesh} visibleIds={extensionIds} selection={walking ? null : selection} accent={tokens.accent} clearances={clearancesShown && !walking} onClick={onClick} register={(id, g) => registerItem(sectionRig, ready.mesh, id, g)} move={(id, g) => motion.register(id, g)} /> : null}
           </group>
+          {/* FLR-T-14.5: inside the house's group, so the section box cuts it as it cuts the house. */}
+          {ready !== null && xrayShown ? <XrayScene plan={xrayed} origin={ready.mesh.origin} state={xray} levels={shownLevels} fade={mainGroup} colours={tokens.xray} /> : null}
           {comparing && compare.a.kind !== 'main' && aModel !== null ? (
             <CompareModel key={`a:${sourceKey(compare.a)}`} side="a" model={aModel} originRef={originRef} setGroup={setCompareGroup} levels={levels} roof={roof} level={levelId} accent={tokens.accent} danger={tokens.danger} textures={textures} lit={lightsOn} glows={glows} outlined={undefined} focus={compare.focus} projectId={store.projectId} onState={onCompareState} />
           ) : null}
@@ -965,6 +1010,7 @@ export default function ThreeView({ store, compact = false }: { store: EditorSto
       {ready !== null && !walking && !compact && houseBox !== null && sectionOpen && !exploding && section.mode !== 'off' ? (
         <SectionOverlay rig={sectionRig} three={three} section={section} house={houseBox} units={units} levelName={levelName} />
       ) : null}
+      {ready !== null && xrayShown && !compact && xrayLabels.length > 0 ? <XrayLabels rig={sectionRig} labels={xrayLabels} /> : null}
       {ready !== null && exploding ? <ExplodedOverlay rig={sectionRig} explode={explode} labels={labels} drawing={drawing} /> : null}
       {ready !== null ? <Motions store={store} motion={motion} meshed={ready.model} origin={ready.mesh.origin} k={ready.mesh.unitsPerMetre} /> : null}
       {ready !== null && editing ? <EditOverlay ctl={edit} store={store} rig={sectionRig} motion={motion} boxOf={boxOf} k={ready.mesh.unitsPerMetre} /> : null}
@@ -978,6 +1024,7 @@ export default function ThreeView({ store, compact = false }: { store: EditorSto
           </div>
           {ctx !== null ? <SectionPanel ctx={ctx} /> : null}
           {ctx !== null ? <ExplodedPanel ctx={ctx} /> : null}
+          {ctx !== null ? <XrayPanel ctx={ctx} plan={xrayed} /> : null}
           <ViewCube ctl={ctl} preset={preset} />
           <StillButton store={store} preset={preset} level={levels === 'house' ? null : levelId} only={levels === 'only'} roof={roof} current={currentView} />
           <SunPanel store={store} model={ready.model} />
@@ -2156,6 +2203,78 @@ function useCompareHook(three: ThreeStore, compare: CompareState, groupOf: (side
       if (window.__floorspecCompare === hook) delete window.__floorspecCompare;
     };
   }, [three, compare.a, compare.b, groupOf, changed, built]);
+}
+
+/** FLR-T-14.5: X-ray as the view draws it, for the xray e2e suite. */
+interface XrayHook {
+  on: boolean;
+  fade: number;
+  systems: Record<string, boolean>;
+  counts: XrayPlan['counts'] | null;
+  /** What is drawn now, by system: meshes shown, the pieces in them, their triangles, and whether the section cuts them. */
+  drawn: Record<string, { meshes: number; pieces: number; triangles: number; clipped: number }>;
+  /** The house's materials faded now, and the least and greatest opacity among them. */
+  faded: { materials: number; min: number | null; max: number | null };
+  /** What X-ray finds in a wall. */
+  wall(id: string): XrayWall | null;
+}
+
+declare global {
+  interface Window {
+    __floorspecXray?: XrayHook;
+  }
+}
+
+/** Under automation only (navigator.webdriver): X-ray, for the xray e2e suite. */
+function useXrayHook(three: ThreeStore, el: { current: HTMLDivElement | null }, plan: XrayPlan | null) {
+  useEffect(() => {
+    if (!navigator.webdriver) return;
+    const scene = () => {
+      const canvas = el.current?.querySelector('canvas');
+      return canvas === null || canvas === undefined ? undefined : sceneOf.get(canvas)?.scene;
+    };
+    const shown = (o: THREE.Object3D): boolean => {
+      for (let p: THREE.Object3D | null = o; p !== null; p = p.parent) if (!p.visible) return false;
+      return true;
+    };
+    const hook: XrayHook = {
+      get on() { return three.get().xray.on; },
+      get fade() { return three.get().xray.fade; },
+      get systems() { return { ...three.get().xray.systems }; },
+      counts: plan?.counts ?? null,
+      get drawn() {
+        const out: XrayHook['drawn'] = {};
+        scene()?.traverse((o) => {
+          const u = o.userData as { xray?: string; pieces?: number };
+          if (u.xray === undefined || !(o instanceof THREE.Mesh) || !shown(o)) return;
+          const d = (out[u.xray] ??= { meshes: 0, pieces: 0, triangles: 0, clipped: 0 });
+          d.meshes++;
+          if (((o.material as THREE.Material).clippingPlanes?.length ?? 0) > 0) d.clipped++;
+          d.pieces += u.pieces ?? 0;
+          d.triangles += (o.geometry as THREE.BufferGeometry).getAttribute('position').count / 3;
+        });
+        return out;
+      },
+      get faded() {
+        const seen = new Set<THREE.Material>();
+        scene()?.traverse((o) => {
+          if (!(o instanceof THREE.Mesh)) return;
+          const list = (Array.isArray(o.material) ? o.material : [o.material]) as THREE.Material[];
+          for (const m of list) {
+            const tag = (m.userData as { xray?: unknown }).xray;
+            if (tag !== undefined && tag !== 'system') seen.add(m);
+          }
+        });
+        const ops = [...seen].map((m) => m.opacity);
+        return { materials: seen.size, min: ops.length === 0 ? null : Math.min(...ops), max: ops.length === 0 ? null : Math.max(...ops) };
+      },
+      wall: (id) => plan?.walls[id] ?? null,
+    };
+    window.__floorspecXray = hook;
+    return () => {
+      if (window.__floorspecXray === hook) delete window.__floorspecXray;
+    };
+  }, [three, el, plan]);
 }
 
 /** Registered by the scene: what screenPoint needs from inside the canvas. */

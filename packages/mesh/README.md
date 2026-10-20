@@ -111,6 +111,32 @@ the files of their maps in `materials/` (`SOURCES.json`, `NOTICE.md`, `scripts/p
 texture at true scale where Core 18.3 does not: a roof along its slopes, the rest by a box
 projection, square roots only. See `docs/materials.md`.
 
+## X-ray (FLR-T-14.5)
+
+What is inside the walls, floors and ceilings, derived from the document — a view, never stored and
+never normative. `xrayPlan(doc, derived)` needs no WASM; `xrayMeshes(plan, origin)` turns its pieces
+into one flat-shaded triangle list per system, level and style, in Float32 metres about the same
+origin a `HouseMesh` uses:
+
+```ts
+const plan = xrayPlan(doc, derived);          // pieces, walls, runs, counts
+plan.walls['W24'];                            // layers, framing, studs, what runs in it
+for (const m of xrayMeshes(plan, house.origin)) m.system; // framing, insulation, supply, drain, electrical, ducts
+```
+
+| system | rule |
+|---|---|
+| `framing` | each wall's `core` layer: FS_structural's framing on the wall (member, spacing; `solid`, `panels` and masonry as a slab), else **2x studs 16″ on centre** (Core's wall types carry no spacing); a stud at each end and one every spacing from the start, a single bottom plate (cut out under a door), a double top plate, king and jack studs, a header (FS_structural's, else 9¼″), a rough sill and cripples at each opening; `substrate` layers as sheathing |
+| `insulation` | batts in every free cell of a core whose material's ID or name says "insulat"; `insulation` layers as boards |
+| `supply` | each fixture's cold and hot from its water heater (`hotFrom`, else the first by ID): down the heater's wall, under the floor east–west then north–south, up the fixture's wall to its stub-out |
+| `drain` | each fixture's drain down its wall and under the floor to its stack (or floor drain), its vent up the wall to the ceiling; a stack at its first water closet's connection, from under its lowest level to the top of its highest |
+| `electrical` | each circuit from its panel along the walls (Dijkstra over the level's wall graph, ties by ID) at 7′6″, daisy-chained nearest-first, a drop to each wall device's box, across the ceiling to a ceiling light |
+| `ducts` | each supply or return terminal from its equipment: over the ceiling (or under the floor for a low terminal), east–west then north–south; supply 8″ × 6″, return 14″ × 8″ |
+
+A fixture connects to the wall nearest its placement (within 2′), in the middle of the wall's core.
+Arithmetic is + − × ÷ and `Math.sqrt` on the engine's integers, with a written-out hexagon for round
+runs, so Node and a browser give the same bytes (`test/determinism.browser.test.ts`).
+
 ## manifold-3d
 
 Pinned at **3.2.1**, the newest release with no dependencies (3.3 onwards pulls in the manifoldCAD

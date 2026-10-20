@@ -14,6 +14,11 @@
  * fell together for a red-blind eye (ΔE 1.8), and sky blue and blue for every eye (ΔE 5.9). When
  * the design system gains categorical tokens, these move to them (the owner was asked whether to add
  * tokens or record an ADR).
+ *
+ * The 3D view's X-ray (FLR-T-14.5) draws each building system in its trade's colour from here —
+ * framing in Construction's, plumbing in Plumbing's, wiring in Electrical's, ducts in Mechanical's,
+ * insulation in the reddish purple — so a colour means the same thing in 2D and 3D; the colour-blind
+ * test holds X-ray's set to the same bar.
  */
 :root {
   --fs-mode-construction: #a87301; /* d3-allow: an Okabe-Ito trade colour; @d3cloud/ui has no categorical token (FLR-T-18.3) */
