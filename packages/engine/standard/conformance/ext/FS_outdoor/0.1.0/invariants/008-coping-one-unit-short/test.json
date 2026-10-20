@@ -1,0 +1,7 @@
+{
+  "description": "The plunge pool's coping is a base unit less than 4': a basin two base units wide. Valid.",
+  "covers": [
+    "FS-OUTD-2.2.1",
+    "FS-OUTD-6.1.1"
+  ]
+}

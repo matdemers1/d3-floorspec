@@ -9,6 +9,7 @@
  */
 import { gradeAt, type DrawSurface, type SiteDrawing } from '@floorspec/engine';
 import { GRASS_TILE, lawnMacro } from './sky/grass.js';
+import { inHoles } from './ground-holes.js';
 
 const BU = 1_280_000; // base units a metre
 const FT = 390_144;
@@ -48,6 +49,11 @@ export interface TerrainOptions {
   readonly majorEvery?: number;
   /** The slope a graded outline is graded back to the ground at: run per rise (default 4, 1:4). */
   readonly batter?: number;
+  /**
+   * FLR-T-15.2: outlines in plan (base units) the ground opens for — a sunken pool's (ground-holes.ts).
+   * A cell whose centre lies inside one is left out; the pool's coping covers the jagged edge.
+   */
+  readonly holes?: readonly (readonly (readonly [number, number])[])[];
 }
 
 type XY = readonly [number, number];
@@ -215,11 +221,14 @@ export function terrainMesh(site: SiteDrawing, options: TerrainOptions): Terrain
     }
   for (let k = W * H; k < nv; k++) normals[k * 3 + 2] = 1;
   const index: number[] = [];
+  const holes = options.holes ?? [];
   for (let j = 0; j < ny; j++)
     for (let i = 0; i < nx; i++) {
+      if (holes.length > 0 && inHoles(x0 + (i + 0.5) * cell, y0 + (j + 0.5) * cell, holes)) continue;
       const a = j * W + i;
       index.push(a, a + 1, a + W + 1, a, a + W + 1, a + W);
     }
+  const gridIndices = index.length;
   for (let k = 0; k < border.length; k++) {
     const a = border[k]!;
     const b = border[(k + 1) % border.length]!;
@@ -240,7 +249,7 @@ export function terrainMesh(site: SiteDrawing, options: TerrainOptions): Terrain
       for (let q = first; q <= last; q++) {
         const level = q * interval - site.benchmark;
         const out = every > 0 && q % every === 0 ? majors : lines;
-        for (let t = 0; t < index.length && t < nx * ny * 6; t += 3) {
+        for (let t = 0; t < gridIndices; t += 3) {
           const tri = [index[t]!, index[t + 1]!, index[t + 2]!];
           const cross: number[] = [];
           for (let e = 0; e < 3; e++) {

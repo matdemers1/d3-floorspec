@@ -1,0 +1,19 @@
+{
+  "description": "The Phase 15 back terrace, read by an implementation of FS_outdoor that knows it: a pergola over the patio, a plunge pool south of it, a spa on the walled courtyard's floor, an outdoor kitchen turned to face the patio, a fire pit in the garden and a privacy fence with a gate where the side path crosses. It is valid, reports nothing - the spa is in the courtyard, which is exterior - and derives each pool's basin, water depth, area and volume, the pergola's bays, spacing and posts, the kitchen's run, the fire pit, and the fence's length, posts and gate.",
+  "covers": [
+    "FS-OUTD-1.2.1",
+    "FS-OUTD-1.2.3",
+    "FS-OUTD-1.2.4",
+    "FS-OUTD-1.3.1",
+    "FS-OUTD-2.2.1",
+    "FS-OUTD-2.2.2",
+    "FS-OUTD-2.3.1",
+    "FS-OUTD-2.3.2",
+    "FS-OUTD-2.4.1",
+    "FS-OUTD-2.4.2",
+    "FS-OUTD-2.4.3",
+    "FS-OUTD-3.2.1",
+    "FS-OUTD-3.4.1",
+    "FS-OUTD-6.1.1"
+  ]
+}

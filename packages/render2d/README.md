@@ -87,6 +87,13 @@ renderPlan(doc, { reader: { extensions: ['FS_electrical'], knownExtensions } });
   paving (never colour alone), the spots with their heights, and the lot with each edge's bearing and
   length and the setback line — four plan layers, `site`, `contours`, `grading` and `spots`, on in
   Landscape mode. `siteLayers` is exported so the editor's canvas draws the same SVG.
+- **Outdoor rooms (FLR-T-15.2, FS_outdoor)** are drawn from their own parameters through the engine's
+  `outdoor` helpers, so the posts drawn are the posts derived: a pool's water inside its coping, a
+  fence's line in timber with its posts and each gate's leaf and swing, a kitchen's appliances along its
+  run, a fire's flame — over the floors — and a shelter last of all, its posts solid and its beams and
+  rafters (a porch's roof, a sail) dashed, overhead. One plan layer, `outdoor`, on in Landscape mode and
+  ghosted in the Decorator and Electrical modes; `outdoorOf` and `outdoorLayers` are exported so the
+  editor's canvas draws the same SVG.
 
 PNG output lives in the worker (`apps/worker/src/render`): `renderPlanPng(doc, { width, ...opts })`
 rasterises with resvg and the bundled Inter / JetBrains Mono, never the host's fonts.

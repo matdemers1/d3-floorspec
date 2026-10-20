@@ -7,6 +7,7 @@ import { embedMaterialOps, libraryFilesAdded, materialFileBytes, materialsText, 
 import { LIBRARY_FILES, LIBRARY_MATERIALS } from '@floorspec/mesh/materials';
 import { CatalogueError, fillFurniture, FS_FURNITURE, furnitureText, libraryFileBytes, namesFurniture, type FurnitureFill, type LibraryFile } from './furniture.js';
 import { fillLandscape, FS_LANDSCAPE, LandscapeError, namesLandscape } from './landscape.js';
+import { fillOutdoor, FS_OUTDOOR, namesOutdoor, OutdoorError } from './outdoor.js';
 import { wells } from './stairwell.js';
 import { Batch, Lock, LOCK_BY_REFERENCE, OP_BY_NAME_ONLY } from './ops-schema.js';
 import { hintsFor } from './hints.js';
@@ -158,6 +159,8 @@ interface Prepared {
   readonly furniture: readonly string[];
   /** The FS_landscape starter sizes planted by their catalogue ID, and the elements boxed round their geometry. */
   readonly landscape: { readonly items: readonly string[]; readonly boxed: readonly string[] };
+  /** The FS_outdoor starter items placed by their catalogue ID, and the fences boxed round their line. */
+  readonly outdoor: { readonly items: readonly string[]; readonly boxed: readonly string[] };
   /** Anything the agent should know about the embedding: a library file the store did not take. */
   readonly notes: readonly string[];
 }
@@ -180,9 +183,10 @@ async function prepare(client: FloorspecClient, projectId: string, changeset: st
   const types = namesLibraryTypes(batch);
   const furnished = namesFurniture(batch);
   const landscaped = namesLandscape(batch);
+  const outdoors = namesOutdoor(batch);
   const materials = namesLibraryMaterials(batch);
   const handFiles = libraryFilesAdded(batch);
-  if (!types && !furnished && !landscaped && !materials && handFiles.length === 0) return { batch, prefix: [], own: batch, embedded: [], furniture: [], landscape: { items: [], boxed: [] }, notes: [] };
+  if (!types && !furnished && !landscaped && !outdoors && !materials && handFiles.length === 0) return { batch, prefix: [], own: batch, embedded: [], furniture: [], landscape: { items: [], boxed: [] }, outdoor: { items: [], boxed: [] }, notes: [] };
   let head: string | undefined;
   if (changeset !== undefined) {
     try {
@@ -210,13 +214,22 @@ async function prepare(client: FloorspecClient, projectId: string, changeset: st
       throw error;
     }
   }
-  const own = planted.batch;
+  let built = { prefix: [] as readonly Op[], batch: planted.batch, items: [] as readonly string[], boxed: [] as readonly string[] };
+  if (outdoors) {
+    try {
+      built = fillOutdoor(model.document, planted.batch);
+    } catch (error) {
+      if (error instanceof OutdoorError) throw new ToolError(error.message);
+      throw error;
+    }
+  }
+  const own = built.batch;
   const ids = types ? missingLibraryTypes(model.document, own) : [];
   // FLR-T-13.6: the material library's materials the batch names, embedded with their maps' assets.
   const mats = materials ? missingLibraryMaterials(model.document, own) : [];
-  const prefix = [...(ids.length === 0 ? [] : embedOps(model.document, own, ids)), ...(mats.length === 0 ? [] : embedMaterialOps(model.document, mats)), ...placed.prefix, ...planted.prefix];
+  const prefix = [...(ids.length === 0 ? [] : embedOps(model.document, own, ids)), ...(mats.length === 0 ? [] : embedMaterialOps(model.document, mats)), ...placed.prefix, ...planted.prefix, ...built.prefix];
   const notes = [...(await storeLibraryFiles(client, projectId, placed.files)), ...(await storeMaterialFiles(client, projectId, libraryFilesAdded([...prefix, ...own])))];
-  return { batch: [...prefix, ...own], prefix, own, embedded: [...ids, ...mats], furniture: placed.items, landscape: { items: planted.items, boxed: planted.boxed }, notes };
+  return { batch: [...prefix, ...own], prefix, own, embedded: [...ids, ...mats], furniture: placed.items, landscape: { items: planted.items, boxed: planted.boxed }, outdoor: { items: built.items, boxed: built.boxed }, notes };
 }
 
 /**
@@ -362,6 +375,8 @@ function embeddedText(prepared: Prepared): string {
     prepared.furniture.length === 0 ? '' : ` Filled in from the FS_furniture starter library ${FS_FURNITURE.version} (members, box, envelopes, model and symbol): ${prepared.furniture.join(', ')}.`,
     prepared.landscape.items.length === 0 ? '' : ` Planted from the FS_landscape ${FS_LANDSCAPE.version} starter sizes (form, name, box): ${prepared.landscape.items.join(', ')}.`,
     prepared.landscape.boxed.length === 0 ? '' : ` Boxed round their geometry (FS_landscape 3.3): ${prepared.landscape.boxed.join(', ')}.`,
+    prepared.outdoor.items.length === 0 ? '' : ` Filled in from the FS_outdoor ${FS_OUTDOOR.version} starter library (members, name, box): ${prepared.outdoor.items.join(', ')}.`,
+    prepared.outdoor.boxed.length === 0 ? '' : ` Fences boxed round their line (FS_outdoor 3.3): ${prepared.outdoor.boxed.join(', ')}.`,
     ...prepared.notes.map((n) => ` ${n}`),
   ].join('');
 }
@@ -369,7 +384,7 @@ function embeddedText(prepared: Prepared): string {
 /** What the structured result says was embedded: US starter types, then furniture library items. */
 function embeddedMember(prepared: Prepared | null): Record<string, unknown> {
   if (prepared === null) return {};
-  const all = [...prepared.embedded, ...prepared.furniture, ...prepared.landscape.items];
+  const all = [...prepared.embedded, ...prepared.furniture, ...prepared.landscape.items, ...prepared.outdoor.items];
   return all.length === 0 ? {} : { embedded: all };
 }
 

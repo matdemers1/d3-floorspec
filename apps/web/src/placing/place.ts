@@ -20,7 +20,9 @@ import type { Ghost } from './ghost';
  * - a door or a window: addOpening on the ghost's wall, at its offset (or "centered"), with the
  *   type — a starter embedded in the same batch — and the hinge and swing the ghost was turned to;
  * - an FS_landscape plant or bed: FS_landscape declared when it is not yet, then placeElement with a
- *   `free` host on the level (FS_landscape 3.1: a garden is not in a room).
+ *   `free` host on the level (FS_landscape 3.1: a garden is not in a room);
+ * - an FS_outdoor pool, shelter, kitchen or fire (FLR-T-15.2): FS_outdoor declared when it is not yet,
+ *   then placeElement with a `free` host, as a plant is.
  */
 
 const messageOf = (e: unknown): string => (e instanceof Error ? e.message : String(e));
@@ -33,6 +35,21 @@ export function placeLandscape(document: FloorspecDocument, collection: 'plants'
     {
       op: 'placeElement',
       extension: 'FS_landscape',
+      collection,
+      host: { mode: 'free', level: host.level, at: host.at, ...(host.rotation === undefined || host.rotation === 0 ? {} : { rotation: host.rotation }) },
+      element: structuredClone(element),
+    },
+  ];
+}
+
+/** The batch that places an FS_outdoor pool, shelter, kitchen or fire with a free host: one op (the board's "one op each"). */
+export function placeOutdoor(document: FloorspecDocument, collection: string, element: Record<string, unknown>, host: HostRef): Batch {
+  if (host.mode !== 'free') return [];
+  return [
+    ...declarationOps(document, 'FS_outdoor'),
+    {
+      op: 'placeElement',
+      extension: 'FS_outdoor',
       collection,
       host: { mode: 'free', level: host.level, at: host.at, ...(host.rotation === undefined || host.rotation === 0 ? {} : { rotation: host.rotation }) },
       element: structuredClone(element),
@@ -72,6 +89,8 @@ export function batchFor(model: EditorModel, entry: Entry, ghost: Ghost, options
       return ghost.host === null ? null : placeDevice(doc, src.device, ghost.host, options.receptacle === undefined ? {} : options.receptacle);
     case 'landscape':
       return ghost.host === null ? null : placeLandscape(doc, src.collection, src.element, ghost.host);
+    case 'outdoor':
+      return ghost.host === null ? null : placeOutdoor(doc, src.collection, src.element, ghost.host);
     case 'furniture': {
       const files = options.files;
       if (ghost.host === null || files === undefined) return null;

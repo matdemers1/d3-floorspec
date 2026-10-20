@@ -4,7 +4,7 @@ import { useThree } from '@react-three/fiber';
 import { Switch, IconButton, SegmentedControl, Tooltip } from '@d3cloud/ui';
 import { Mountain, X } from 'lucide-react';
 import { gradeAt, type DerivedSite } from '@floorspec/engine';
-import { terrainMesh, type TerrainMesh } from '@floorspec/mesh';
+import { sunkenOutlines, terrainMesh, type TerrainMesh } from '@floorspec/mesh';
 import type { EditorStore } from '../../store';
 import type { EditorModel } from '../../model';
 import { siteDrawingOf } from '../../site/Layer';
@@ -44,7 +44,9 @@ export function terrainOf(model: EditorModel, origin: readonly [number, number, 
     meshes.set(model, m);
   }
   const key = `${origin.join(',')}|${String(interval)}`;
-  if (!m.has(key)) m.set(key, terrainMesh(siteDrawingOf(model), { origin, interval: interval * FT }));
+  // FLR-T-15.2: the ground opens for a sunken pool (its holes follow the model, which keys this cache).
+  const holes = sunkenOutlines(model.document, model.derived).map((s) => s.ring);
+  if (!m.has(key)) m.set(key, terrainMesh(siteDrawingOf(model), { origin, interval: interval * FT, holes }));
   return m.get(key) ?? null;
 }
 

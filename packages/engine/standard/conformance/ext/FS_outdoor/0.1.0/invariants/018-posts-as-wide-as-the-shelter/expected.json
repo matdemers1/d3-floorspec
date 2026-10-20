@@ -1,0 +1,10 @@
+{
+  "valid": false,
+  "diagnostics": [
+    {
+      "code": "FS-OUTD-INV-008",
+      "severity": "error",
+      "elements": ["X3"]
+    }
+  ]
+}

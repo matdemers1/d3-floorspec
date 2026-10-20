@@ -1,0 +1,8 @@
+{
+  "description": "resizeElement stretches the pergola from 12' to 20' deep, from its back: only its box changes, and its posts re-space - 19' 6\" between the outer centres is three bays of 78\", ten posts.",
+  "covers": [
+    "FS-OUTD-2.4.1",
+    "FS-OUTD-6.1.1",
+    "FS-OPS-4.11.1"
+  ]
+}

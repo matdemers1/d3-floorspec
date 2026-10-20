@@ -1,0 +1,32 @@
+{
+  "status": "committed",
+  "diagnostics": [],
+  "hash": "fc8044ef3b6c6043068fdafbe22ce8fd12c8e0e6111a3e1572587c39318cec89",
+  "created": [],
+  "removed": [],
+  "resolved": [
+    {
+      "op": "setProperty",
+      "id": "X3",
+      "path": "/fallback/box",
+      "value": {
+        "max": [5462016, 1950720, 3706368],
+        "min": [-2340864, -1950720, 0]
+      }
+    }
+  ],
+  "inverse": [
+    {
+      "op": "setProperty",
+      "id": "X3",
+      "path": "/fallback",
+      "value": {
+        "level": "L1",
+        "box": {
+          "max": [2340864, 1950720, 3706368],
+          "min": [-2340864, -1950720, 0]
+        }
+      }
+    }
+  ]
+}

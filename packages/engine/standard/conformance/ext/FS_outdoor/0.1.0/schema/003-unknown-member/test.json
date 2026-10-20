@@ -1,0 +1,6 @@
+{
+  "description": "A pool has a member a pool does not define: `shape`.",
+  "covers": [
+    "FS-OUTD-1.3.1"
+  ]
+}

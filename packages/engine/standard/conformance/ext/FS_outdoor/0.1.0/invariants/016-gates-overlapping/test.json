@@ -1,0 +1,6 @@
+{
+  "description": "A second gate at 42', 3' wide: it overlaps the first, which runs to 44'.",
+  "covers": [
+    "FS-OUTD-2.3.2"
+  ]
+}

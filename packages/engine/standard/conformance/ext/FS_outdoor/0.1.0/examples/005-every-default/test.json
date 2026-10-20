@@ -1,0 +1,8 @@
+{
+  "description": "A pool, a fence and a shelter with only the members they must have: the pool's coping is 300 mm and its water line 150 mm, the fence's posts at most 2,400 mm apart, the shelter's posts 150 mm square at most 2,400 mm apart, open slats, freestanding (chapter 2's defaults).",
+  "covers": [
+    "FS-OUTD-2.2.1",
+    "FS-OUTD-2.4.1",
+    "FS-OUTD-6.1.1"
+  ]
+}

@@ -10,6 +10,7 @@
  * before a ray is cast; a still that runs past its time budget is stopped with a reason. Seeded: the
  * same version and options always give the same PNG.
  */
+import { GroundGatherer, platePoints, type Hole } from '../render3d/sunken.js';
 import { buildScene, type Scene, type SceneOptions, type Vec3 } from '../export/gltf/scene.js';
 import type { ImageSource } from '../export/gltf/glb.js';
 import { withLibrary } from '../export/gltf/library.js';
@@ -202,7 +203,7 @@ export function lampsOf(scene: Scene, drawn: (level: string) => boolean = () => 
 }
 
 /** The scene's triangles as the tracer reads them, cut away above `level`, on a ground plate — with its lamps, when they are on. */
-export function ptScene(scene: Scene, options: { level?: string; only?: boolean; textures?: ReadonlyMap<number, Texture | MaterialMaps>; lights?: Lights; plate?: boolean; lampScale?: number } = {}): PtScene & { readonly floor: number; readonly plate: boolean } {
+export function ptScene(scene: Scene, options: { level?: string; only?: boolean; textures?: ReadonlyMap<number, Texture | MaterialMaps>; lights?: Lights; plate?: boolean; lampScale?: number } = {}): PtScene & { readonly floor: number; readonly plate: boolean; readonly plateCount: number; readonly holes: readonly Hole[] } {
   const up = Math.min(1, Math.max(0, options.lampScale ?? 1));
   const order = new Map(scene.levels.map((l, i) => [l.id, i]));
   const cut = options.level === undefined ? undefined : order.get(options.level);
@@ -232,8 +233,9 @@ export function ptScene(scene: Scene, options: { level?: string; only?: boolean;
       ...(m.emissive === undefined || options.lights === 'off' || up <= 0 ? {} : { emission: [m.emissive[0] * LENS * up, m.emissive[1] * LENS * up, m.emissive[2] * LENS * up] as Vec3 }),
     };
   });
-  const min: Vec3 = [Infinity, Infinity, Infinity];
-  const max: Vec3 = [-Infinity, -Infinity, -Infinity];
+  // FLR-T-15.2: the ground under everything but a sunken pool, open over one (render3d/sunken.ts).
+  const gathered = new GroundGatherer();
+  const { min, max } = gathered;
   for (const level of scene.levels) {
     const at = order.get(level.id)!;
     if (cut !== undefined && at > cut) continue;
@@ -247,12 +249,8 @@ export function ptScene(scene: Scene, options: { level?: string; only?: boolean;
         for (let k = 0; k < p.indices.length; k += 3) {
           for (let j = 0; j < 3; j++) {
             const i = p.indices[k + j]!;
-            for (let c = 0; c < 3; c++) {
-              const v = P[3 * i + c]!;
-              pos.push(v);
-              if (v < min[c]!) min[c] = v;
-              if (v > max[c]!) max[c] = v;
-            }
+            pos.push(P[3 * i]!, P[3 * i + 1]!, P[3 * i + 2]!);
+            gathered.add(node, P[3 * i]!, P[3 * i + 1]!, P[3 * i + 2]!);
             if (U === null) uv.push(NaN, NaN);
             else uv.push(U[2 * i]!, U[2 * i + 1]!);
           }
@@ -265,21 +263,19 @@ export function ptScene(scene: Scene, options: { level?: string; only?: boolean;
   // The ground: a plate under the house out to the horizon, as the headless render's — unless the
   // tracer is given the ground as a plane of its own (FLR-T-13.4).
   const plate = options.plate !== false && Number.isFinite(min[0]);
+  const holes = gathered.holes;
+  let plateCount = 0;
+  const floor = Number.isFinite(min[1]) ? gathered.ground - 0.003 : 0;
   if (plate) {
     const groundMat = materials.length;
     materials.push({ rgb: GROUND, glass: false });
     const cx = (min[0] + max[0]) / 2;
     const cz = (min[2] + max[2]) / 2;
     const r = 40 * Math.max(5, Math.hypot(max[0] - min[0], max[2] - min[2]));
-    const y = min[1] - 0.003;
-    const q: Vec3[] = [
-      [cx - r, y, cz + r],
-      [cx + r, y, cz + r],
-      [cx + r, y, cz - r],
-      [cx - r, y, cz - r],
-    ];
-    for (const [a, b, c] of [[0, 1, 2], [0, 2, 3]] as const) {
-      pos.push(...q[a]!, ...q[b]!, ...q[c]!);
+    const points = platePoints(cx, cz, r, floor, holes);
+    plateCount = points.length;
+    for (const [a, b, c] of points) {
+      pos.push(...a!, ...b!, ...c!);
       uv.push(NaN, NaN, NaN, NaN, NaN, NaN);
       mat.push(groundMat);
       own.push(-1);
@@ -299,11 +295,11 @@ export function ptScene(scene: Scene, options: { level?: string; only?: boolean;
     normals[3 * t + 2] = nz / l;
   }
   const lamps = options.lights === 'on' && up > 0 ? lampsOf(scene, (l) => cut === undefined || ((order.get(l) ?? Infinity) <= cut && (!alone || order.get(l) === cut))).map((l) => (up === 1 ? l : { ...l, intensity: [l.intensity[0] * up, l.intensity[1] * up, l.intensity[2] * up] as Vec3 })) : [];
-  return { count, positions, normals, material: Int32Array.from(mat), uvs: Float32Array.from(uv), materials, floor: Number.isFinite(min[1]) ? min[1] - 0.003 : 0, plate, ...(lamps.length === 0 ? {} : { lamps, owner: Int32Array.from(own) }) };
+  return { count, positions, normals, material: Int32Array.from(mat), uvs: Float32Array.from(uv), materials, floor, plate, plateCount, holes, ...(lamps.length === 0 ? {} : { lamps, owner: Int32Array.from(own) }) };
 }
 
 /** The camera a still looks from: a named view framed on what is drawn, or a room. */
-function cameraFor(scene: Scene, pt: PtScene & { readonly plate: boolean }, options: StillOptions, aspect: number): Camera {
+function cameraFor(scene: Scene, pt: PtScene & { readonly plateCount: number }, options: StillOptions, aspect: number): Camera {
   if (options.room !== undefined) {
     const room = findRoom(scene.rooms, options.room);
     if (room === undefined) {
@@ -312,10 +308,10 @@ function cameraFor(scene: Scene, pt: PtScene & { readonly plate: boolean }, opti
     }
     return roomCamera(room, scene.doors, scene.obstacles);
   }
-  // Framed on the house, not the ground plate (its last two triangles, when it has one).
+  // Framed on the house, not the ground plate (its last triangles, when it has one).
   const min: Vec3 = [Infinity, Infinity, Infinity];
   const max: Vec3 = [-Infinity, -Infinity, -Infinity];
-  for (let i = 0; i < 9 * Math.max(0, pt.count - (pt.plate ? 2 : 0)); i += 3)
+  for (let i = 0; i < 9 * Math.max(0, pt.count - pt.plateCount); i += 3)
     for (let c = 0; c < 3; c++) {
       min[c] = Math.min(min[c]!, pt.positions[i + c]!);
       max[c] = Math.max(max[c]!, pt.positions[i + c]!);
@@ -404,7 +400,7 @@ export async function renderSceneStill(scene: Scene, options: StillOptions & { t
     sun,
     seed: SEED,
     budgetMs: options.budgetMs ?? BUDGET_MS,
-    ...(sky !== undefined ? { field: { sky: sky.field, unit: LUX_PER_UNIT }, ground: { y: pt.floor, ...groundOf(sky.light) } } : time === 'day' ? {} : { sky: SKY[time] }),
+    ...(sky !== undefined ? { field: { sky: sky.field, unit: LUX_PER_UNIT }, ground: { y: pt.floor, ...(pt.holes.length === 0 ? {} : { holes: pt.holes }), ...groundOf(sky.light) } } : time === 'day' ? {} : { sky: SKY[time] }),
     // A firefly's cap, in what the picture shows: the same after the least exposure by day and by night.
     ...(exposure === undefined ? {} : { clamp: 12 * (EXPOSURE.day.min / (typeof exposure === 'number' ? exposure : exposure.min)) }),
     ...(lit ? { bounces: LIT_BOUNCES } : {}),

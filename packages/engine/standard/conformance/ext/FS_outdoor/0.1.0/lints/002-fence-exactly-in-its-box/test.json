@@ -1,0 +1,6 @@
+{
+  "description": "The fence's box is exactly its line grown by 2\": no lint.",
+  "covers": [
+    "FS-OUTD-1.2.3"
+  ]
+}

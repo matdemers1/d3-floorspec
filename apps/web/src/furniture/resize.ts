@@ -1,4 +1,4 @@
-import { furniture } from '@floorspec/engine';
+import { furniture, outdoor } from '@floorspec/engine';
 import { islandBays } from '@floorspec/mesh';
 import type { Operation, ResizeAnchor } from '@floorspec/ops';
 import type { Point } from '../editor/model';
@@ -48,6 +48,7 @@ const RESIZABLE: Readonly<Record<string, readonly string[]>> = {
   FS_plumbing: ['fixtures', 'waterHeaters'],
   FS_mechanical: ['equipment', 'gasAppliances'],
   FS_landscape: ['plants', 'beds'],
+  FS_outdoor: ['pools', 'shelters', 'kitchens', 'fires'],
 };
 
 /** Whether an element is one the editor resizes: furniture, casework, appliances, fixtures, a bed of plants. */
@@ -166,8 +167,72 @@ const RUG: SizeRule = {
   notes: {},
 };
 
+/** FS_outdoor's rooms (FLR-T-15.2): 6" steps, and the sizes the starter library and builders use. */
+const SIX = 6 * IN;
+const OUTDOOR_RULES: Readonly<Record<string, SizeRule>> = {
+  pools: {
+    step: SIX,
+    stepLabel: '6" pool module',
+    limits: {},
+    common: [
+      { label: "8×14' plunge", depth: 8 * FT, width: 14 * FT },
+      { label: "12×24'", depth: 12 * FT, width: 24 * FT },
+      { label: "16×32'", depth: 16 * FT, width: 32 * FT },
+      { label: "7×7' spa", depth: 7 * FT, width: 7 * FT },
+    ],
+    notes: { height: 'From the basin floor to the top of the coping' },
+  },
+  shelters: {
+    step: SIX,
+    stepLabel: '6" grid',
+    limits: {},
+    common: [
+      { label: "10×12'", depth: 10 * FT, width: 12 * FT },
+      { label: "12×16'", depth: 12 * FT, width: 16 * FT },
+      { label: "12×20'", depth: 12 * FT, width: 20 * FT },
+    ],
+    notes: { height: 'From the posts\' feet to the top of the roof' },
+  },
+  kitchens: {
+    step: SIX,
+    stepLabel: '6" run',
+    limits: {},
+    common: [
+      { label: "6' run", width: 6 * FT },
+      { label: "8' run", width: 8 * FT },
+      { label: "10' run", width: 10 * FT },
+      { label: "12' run", width: 12 * FT },
+    ],
+    notes: { height: 'Counter height: 36"' },
+  },
+  fires: { step: SIX, stepLabel: '6" grid', limits: {}, common: [{ label: "4' pit", width: 4 * FT, depth: 4 * FT }], notes: {} },
+};
+
+/** Which FS_outdoor kind an element is, by the members only it has (the resize table has no collection). */
+export function outdoorKindOf(element: Json): 'pools' | 'shelters' | 'kitchens' | 'fires' | null {
+  const form = element['form'];
+  if (form === 'pool' || form === 'plunge' || form === 'spa') return 'pools';
+  if (form === 'pit' || form === 'bowl' || form === 'table' || form === 'fireplace') return 'fires';
+  if (Array.isArray(element['appliances'])) return 'kitchens';
+  if (element['form'] === undefined && element['points'] === undefined) return 'shelters';
+  return null;
+}
+
+/**
+ * A shelter's posts at a size (FS_outdoor 6.4), as the plan and the 3D model draw them: "6 posts at
+ * 6′ 6″ o.c." — a longer pergola gets more posts, re-spaced, never wider ones.
+ */
+export function shelterPostsAt(element: Json, size: Size): { posts: number; spacing: [number, number]; bays: [number, number] } {
+  const el = { ...element, fallback: { box: { min: [0, 0, 0], max: [size.depth, size.width, size.height] } } } as Parameters<typeof outdoor.shelterLayout>[0];
+  return outdoor.shelterLayout(el);
+}
+
 /** The sizes an item comes in: by its category, and a rug by its catalogue (a rug is decor of category `other`). */
 export function ruleFor(d: { extension: string; element: Json }): SizeRule {
+  if (d.extension === 'FS_outdoor') {
+    const k = outdoorKindOf(d.element);
+    return k === null ? ANY : (OUTDOOR_RULES[k] ?? ANY);
+  }
   if (d.extension !== 'FS_furniture') return ANY;
   const category = typeof d.element['category'] === 'string' ? d.element['category'] : '';
   const catalogue = typeof d.element['catalogue'] === 'string' ? d.element['catalogue'] : '';

@@ -1,0 +1,6 @@
+{
+  "description": "A Core invariant breaks - the spa's floor position is outside the courtyard - and so does FS_outdoor's schema: Core's error is reported, and FS_outdoor is not evaluated.",
+  "covers": [
+    "FS-OUTD-1.2.2"
+  ]
+}

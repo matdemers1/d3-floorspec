@@ -1,0 +1,10 @@
+{
+  "batch": [
+    {
+      "op": "resizeElement",
+      "element": "Pergola",
+      "anchor": "back",
+      "depth": "20'"
+    }
+  ]
+}

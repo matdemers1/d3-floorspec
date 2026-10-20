@@ -34,6 +34,7 @@ export { ARC_04_HINT, ARC_FIT_HINT, ARC_ROUTE_HINT, hintsFor, LIBRARY_03_HINT, N
 export { libraryText, libraryTypes, missingLibraryTypes, US_STARTER } from './library.js';
 export { fillFurniture, FS_FURNITURE, furnitureItems, furnitureText, libraryFileBytes, vendoredFurniture, type FurnitureFill, type LibraryFile } from './furniture.js';
 export { fillLandscape, FS_LANDSCAPE, landscapeItems, landscapeText, vendoredLandscape, type LandscapeFill } from './landscape.js';
+export { fillOutdoor, FS_OUTDOOR, outdoorItems, outdoorText, vendoredOutdoor, type OutdoorFill } from './outdoor.js';
 export { landings, wells, type Landing, type Well } from './stairwell.js';
 export { ROOM_FUNCTIONS, ROOM_FUNCTION_MAPPINGS, ROOM_FUNCTIONS_TEXT } from './vocabulary.js';
 export { query } from './query.js';

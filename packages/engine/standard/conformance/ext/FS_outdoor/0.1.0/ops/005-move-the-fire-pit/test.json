@@ -1,0 +1,8 @@
+{
+  "description": "moveElement moves the fire pit onto the courtyard's floor, beside the spa: it is in R4 now, an exterior room. It commits.",
+  "covers": [
+    "FS-OUTD-1.2.1",
+    "FS-OUTD-6.1.1",
+    "FS-OPS-4.10.1"
+  ]
+}

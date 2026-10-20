@@ -1,0 +1,9 @@
+{
+  "description": "The terrace with no plunge pool; placeElement puts the starter item plunge-pool-8x14 (chapter 7) south of the patio with a free host. It commits, valid under FS_outdoor: its basin 6' x 12', its water 5' deep.",
+  "covers": [
+    "FS-OUTD-1.2.1",
+    "FS-OUTD-3.2.1",
+    "FS-OUTD-6.1.1",
+    "FS-OPS-4.10.1"
+  ]
+}

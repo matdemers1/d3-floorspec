@@ -1,0 +1,7 @@
+{
+  "description": "A collection FS_outdoor does not define, `decks`, with no element in it: FS_outdoor's registry entry names no such kind, so Core 12.4.1 reports it (FS-INV-604), and FS_outdoor is not evaluated.",
+  "covers": [
+    "FS-OUTD-1.2.2",
+    "FS-CORE-12.4.1"
+  ]
+}

@@ -12,7 +12,7 @@
    guarantees, as packages/engine does, and a runtime check would be an unreachable branch. */
 import { landings } from '../stairwell.js';
 import { describeLens, savedViewsOf } from '@floorspec/mesh';
-import { type DerivedSite, analyseCirculation, deriveEvaluation, hasOptions, membership, optionsOf, z765, effectiveClearOpening, evaluate, extElements, OFFICIAL_READER, polylineLength, predicates, type Diagnostic, type Evaluation, type FloorspecDocument, type LevelGeometry } from '@floorspec/engine';
+import { type DerivedOutdoor, type DerivedSite, analyseCirculation, deriveEvaluation, hasOptions, membership, optionsOf, z765, effectiveClearOpening, evaluate, extElements, OFFICIAL_READER, polylineLength, predicates, type Diagnostic, type Evaluation, type FloorspecDocument, type LevelGeometry } from '@floorspec/engine';
 import { halfString, length, segmentLength, squareFeet, type Length } from './units.js';
 
 export type Side = 'north' | 'east' | 'south' | 'west';
@@ -347,7 +347,46 @@ export interface DocumentSummary {
   readonly scenes?: readonly LightSceneSummary[];
   /** FS_views' saved views (FLR-T-13.10), in ID order; absent when there are none. */
   readonly views?: readonly SavedViewSummary[];
+  /** FS_outdoor's outdoor rooms (FLR-T-15.2), as the extension derives them; absent when it has none. */
+  readonly outdoor?: OutdoorSummary;
   readonly diagnostics: readonly DiagnosticSummary[];
+}
+
+/**
+ * FS_outdoor (chapter 6), as an agent reads it: lengths in ft-in, a pool's water in gallons and litres
+ * (estimates, rounded). Nothing here says a pool barrier or a fence's height is enough: that is a rule
+ * pack's finding, advisory.
+ */
+export interface OutdoorSummary {
+  readonly pools: readonly { readonly id: string; readonly name?: string; readonly form: string; readonly basin: readonly [string, string]; readonly waterDepth: string; readonly gallons: number; readonly litres: number; readonly room?: string }[];
+  readonly fences: readonly { readonly id: string; readonly name?: string; readonly form: string; readonly length: string; readonly posts: number; readonly gates: readonly (readonly [string, string])[] }[];
+  readonly shelters: readonly { readonly id: string; readonly name?: string; readonly top: string; readonly bays: readonly [number, number]; readonly spacing: readonly [string, string]; readonly posts: number; readonly room?: string }[];
+  readonly kitchens: readonly { readonly id: string; readonly name?: string; readonly run: string; readonly appliances: readonly string[]; readonly room?: string }[];
+  readonly fires: readonly { readonly id: string; readonly name?: string; readonly form: string; readonly room?: string }[];
+}
+
+/** One US gallon (231 in³) and one litre (10⁶ mm³), in cubic base units. */
+const GALLON = 231n * 32512n ** 3n;
+const LITRE = 1_000_000n * 1280n ** 3n;
+
+/** FS_outdoor's derived values, summarised; undefined when it derived nothing. */
+export function outdoorSummary(doc: FloorspecDocument, x: DerivedOutdoor | undefined): OutdoorSummary | undefined {
+  if (x === undefined) return undefined;
+  const colls = ((doc.extensions as Record<string, { collections?: Record<string, Record<string, { name?: unknown }>> }> | undefined)?.['FS_outdoor'])?.collections ?? {};
+  const named = (c: string, id: string): { id: string; name?: string } => {
+    const n = colls[c]?.[id]?.name;
+    return typeof n === 'string' ? { id, name: n } : { id };
+  };
+  const ft = (v: number): string => length(BigInt(v)).ftIn;
+  const room = (r: string | undefined) => (r === undefined ? {} : { room: r });
+  const out: OutdoorSummary = {
+    pools: Object.entries(x.pools).map(([id, p]) => ({ ...named('pools', id), form: p.form, basin: [ft(p.basin[0]), ft(p.basin[1])] as const, waterDepth: ft(p.depth), gallons: Number((2n * BigInt(p.volume) + GALLON) / (2n * GALLON)), litres: Number((2n * BigInt(p.volume) + LITRE) / (2n * LITRE)), ...room(p.room) })),
+    fences: Object.entries(x.fences).map(([id, f]) => ({ ...named('fences', id), form: f.form, length: ft(f.length), posts: f.posts, gates: f.gates.map(([a, b]) => [ft(a), ft(b)] as const) })),
+    shelters: Object.entries(x.shelters).map(([id, s]) => ({ ...named('shelters', id), top: s.top, bays: s.bays, spacing: [ft(s.spacing[0]), ft(s.spacing[1])] as const, posts: s.posts, ...room(s.room) })),
+    kitchens: Object.entries(x.kitchens).map(([id, k]) => ({ ...named('kitchens', id), run: ft(k.run), appliances: k.appliances, ...room(k.room) })),
+    fires: Object.entries(x.fires).map(([id, f]) => ({ ...named('fires', id), form: f.form, ...room(f.room) })),
+  };
+  return Object.values(out).some((v: readonly unknown[]) => v.length > 0) ? out : undefined;
 }
 
 /** A saved view (FS_views 2.1), as an agent reads it: its name, its lens in words and what it shows. */
@@ -1082,7 +1121,8 @@ export function describeJson(document: string | Uint8Array | object, options: De
   const site = siteSummary(doc, (derived?.extensions as { FS_site?: DerivedSite } | undefined)?.FS_site, diagnostics);
   const scenes = options.room === undefined && options.level === undefined ? sceneSummaries(doc) : undefined;
   const views = options.room === undefined && options.level === undefined ? viewSummaries(doc) : undefined;
-  return { project: doc.project.name, valid: ev.valid, ...(site && { site }), levels, ...(program && { program }), ...(circulation && { circulation }), ...(area && { area }), ...(optionSets && { options: optionSets }), ...(scenes && { scenes }), ...(views && { views }), diagnostics: diags };
+  const outdoor = options.room === undefined && options.level === undefined ? outdoorSummary(doc, (derived?.extensions as { FS_outdoor?: DerivedOutdoor } | undefined)?.FS_outdoor) : undefined;
+  return { project: doc.project.name, valid: ev.valid, ...(site && { site }), levels, ...(program && { program }), ...(circulation && { circulation }), ...(area && { area }), ...(optionSets && { options: optionSets }), ...(scenes && { scenes }), ...(views && { views }), ...(outdoor && { outdoor }), diagnostics: diags };
 }
 
 const COMPASS = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW'] as const;

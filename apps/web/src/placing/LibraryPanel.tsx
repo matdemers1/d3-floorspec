@@ -2,7 +2,7 @@ import './placing.css';
 import { useEffect, useMemo, useRef, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { Button, SearchField, TabPanel, Tabs } from '@d3cloud/ui';
-import { Flower2, LayoutGrid, Shrub, Sprout, Star, TreeDeciduous, Upload, Wheat } from 'lucide-react';
+import { ChefHat, Flame, Flower2, LayoutGrid, Shrub, Sprout, Star, Tent, TreeDeciduous, Upload, WavesLadder, Wheat } from 'lucide-react';
 import { useEditor, type EditorStore } from '../editor/store';
 import { DoorIcon, PlugIcon, WindowIcon } from '../editor/icons';
 import { DEVICE_ICONS } from '../editor/ModeSwitcher';
@@ -29,7 +29,7 @@ export function Thumb({ entry }: { entry: Entry }): ReactNode {
   else if (src.kind === 'landscape') {
     const form = typeof src.element['form'] === 'string' ? src.element['form'] : '';
     icon = src.collection === 'beds' ? <Flower2 /> : form === 'tree' ? <TreeDeciduous /> : form === 'shrub' ? <Shrub /> : form === 'grass' ? <Wheat /> : <Sprout />;
-  }
+  } else if (src.kind === 'outdoor') icon = src.collection === 'pools' ? <WavesLadder /> : src.collection === 'shelters' ? <Tent /> : src.collection === 'kitchens' ? <ChefHat /> : <Flame />;
   return (
     <span className="fs-lib-card__icon" aria-hidden="true">
       {icon}

@@ -9,7 +9,7 @@ import { angleOf, type DeviceHover } from './placement';
 import { membersFor, systemOfExtension, type DeviceKind, type ReceptacleOptions } from './catalog';
 import { compareIds } from './view';
 import { FIXTURE_CLASS, fixtureParts, SymbolParts } from '../plansymbols';
-import { beamOf, exteriorMembers, exteriorOf, landscapeLayers, landscapeOf, PALETTES, type Beam, type SceneLandscape } from '@floorspec/render2d';
+import { beamOf, exteriorMembers, exteriorOf, landscapeLayers, landscapeOf, outdoorLayers, outdoorOf, PALETTES, type Beam, type SceneLandscape, type SceneOutdoor } from '@floorspec/render2d';
 import type { PlanLook } from '../planStyle';
 import type { UnitSystem } from '../units';
 import { beamLabel } from './exterior';
@@ -279,8 +279,8 @@ export function SystemsLayer({ view, level, document, derived, layers, selection
       </g>
       <LandscapeShapes view={view} devices={shown} selection={selection} look={look} />
       {layers.electrical && layers.beams !== false ? <Beams view={view} devices={shown} selection={selection} units={units} /> : null}
-      {/* FS_furniture draws its own items, with their plan symbols (furniture/Plan.tsx); FS_landscape its plants, beds, lawns and lines (above). */}
-      {shown.filter((d) => d.extension !== 'FS_furniture' && d.extension !== 'FS_landscape').map((d) => {
+      {/* FS_furniture draws its own items, with their plan symbols (furniture/Plan.tsx); FS_landscape its plants, beds, lawns and lines, and FS_outdoor its outdoor rooms (above). */}
+      {shown.filter((d) => d.extension !== 'FS_furniture' && d.extension !== 'FS_landscape' && d.extension !== 'FS_outdoor').map((d) => {
         // FLR-T-18.3: a load carries its circuit's tone, which the Electrical mode draws it in (modes.css).
         const tone = tones.get(d.id);
         return (
@@ -301,18 +301,27 @@ export function SystemsLayer({ view, level, document, derived, layers, selection
  * design-system token, so they are render2d's own, light and dark.
  */
 function LandscapeShapes({ view, devices, selection, look }: { view: Viewport; devices: readonly DeviceView[]; selection: string | null; look: PlanLook | null }) {
+  const where = (d: DeviceView) => (d.placement === null ? undefined : { point: d.placement.point, facing: d.placement.facing });
   const items = devices.flatMap((d): [string, SceneLandscape][] => {
     if (d.extension !== 'FS_landscape') return [];
-    const x = landscapeOf(d.collection, d.element, d.placement === null ? undefined : { point: d.placement.point, facing: d.placement.facing });
+    const x = landscapeOf(d.collection, d.element, where(d));
     return x === undefined ? [] : [[d.id, x]];
   });
-  if (items.length === 0) return null;
+  // FLR-T-15.2: FS_outdoor's pools, fences, kitchens and fires on the ground, its shelters overhead, dashed.
+  const rooms = devices.flatMap((d): [string, SceneOutdoor][] => {
+    if (d.extension !== 'FS_outdoor') return [];
+    const x = outdoorOf(d.collection, d.element, where(d));
+    return x === undefined ? [] : [[d.id, x]];
+  });
+  if (items.length === 0 && rooms.length === 0) return null;
   const dark = typeof document !== 'undefined' && document.documentElement.dataset['theme'] === 'dark';
   // FLR-T-18.5: in the plan's style, its lawn and planting colours (or its lines, with the landscape detail off).
   const palette = look === null ? PALETTES[dark ? 'dark' : 'light'] : look.details.landscape ? look.theme : { ...look.theme, lawn: look.theme.room, meadow: look.theme.room, bed: look.theme.room, paving: look.theme.room, canopy: look.theme.hairline, canopyDark: look.theme.hairline };
-  const { lawns, ground, plants } = landscapeLayers(items, { s: view.s, P: (p) => S(view, p) }, palette, (id) => id === selection);
+  const f = { s: view.s, P: (p: readonly [number, number]) => S(view, p) };
+  const { lawns, ground, plants } = landscapeLayers(items, f, palette, (id) => id === selection);
+  const outdoor = outdoorLayers(rooms, f, palette, (id) => id === selection);
   // render2d writes the SVG, the same text the plan render serves: markup of numbers and palette colours only
-  return <g className="fs-landscape" dangerouslySetInnerHTML={{ __html: lawns + ground + plants }} />;
+  return <g className="fs-landscape" dangerouslySetInnerHTML={{ __html: lawns + ground + outdoor.ground + plants + outdoor.overhead }} />;
 }
 
 /** An exterior light's beam, from its element and where it stands (render2d's `beamOf`). */

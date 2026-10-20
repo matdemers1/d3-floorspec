@@ -1,0 +1,6 @@
+{
+  "description": "A gate always says where it is along its line.",
+  "covers": [
+    "FS-OUTD-1.3.1"
+  ]
+}

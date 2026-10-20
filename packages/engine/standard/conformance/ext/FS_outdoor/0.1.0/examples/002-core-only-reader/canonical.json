@@ -1,0 +1,465 @@
+{
+  "buildings": {
+    "B1": {}
+  },
+  "extensions": {
+    "FS_outdoor": {
+      "collections": {
+        "fences": {
+          "X6": {
+            "fallback": {
+              "box": {
+                "max": [
+                  3966464,
+                  1625600,
+                  2340864
+                ],
+                "min": [
+                  -3966464,
+                  -11769344,
+                  0
+                ]
+              },
+              "level": "L1"
+            },
+            "form": "fence",
+            "gates": [
+              {
+                "name": "Side path",
+                "offset": 15605760,
+                "selfClosing": true,
+                "swing": "left",
+                "width": 1560576
+              }
+            ],
+            "material": "timber",
+            "name": "Side fence",
+            "points": [
+              [
+                -3901440,
+                1560576
+              ],
+              [
+                -3901440,
+                -11704320
+              ],
+              [
+                3901440,
+                -11704320
+              ]
+            ],
+            "postSpacing": 3121152,
+            "style": "privacy",
+            "width": 130048
+          }
+        },
+        "fires": {
+          "X5": {
+            "fallback": {
+              "box": {
+                "max": [
+                  780288,
+                  780288,
+                  585216
+                ],
+                "min": [
+                  -780288,
+                  -780288,
+                  0
+                ]
+              },
+              "level": "L1"
+            },
+            "form": "pit",
+            "fuel": "gas",
+            "host": {
+              "level": "L1",
+              "mode": "free",
+              "position": [
+                -2340864,
+                -3121152
+              ]
+            }
+          }
+        },
+        "kitchens": {
+          "X4": {
+            "appliances": [
+              "grill",
+              "sink",
+              "refrigerator"
+            ],
+            "counter": "stone",
+            "fallback": {
+              "box": {
+                "max": [
+                  487680,
+                  1950720,
+                  1170432
+                ],
+                "min": [
+                  -487680,
+                  -1950720,
+                  0
+                ]
+              },
+              "level": "L1"
+            },
+            "fuel": "gas",
+            "host": {
+              "level": "L1",
+              "mode": "free",
+              "position": [
+                5852160,
+                -1950720
+              ],
+              "rotation": 180000000
+            },
+            "name": "Outdoor kitchen"
+          }
+        },
+        "pools": {
+          "X1": {
+            "catalogue": "plunge-pool-8x14",
+            "coping": 390144,
+            "copingMaterial": "stone",
+            "fallback": {
+              "box": {
+                "max": [
+                  1560576,
+                  2731008,
+                  0
+                ],
+                "min": [
+                  -1560576,
+                  -2731008,
+                  -2145792
+                ]
+              },
+              "level": "L1"
+            },
+            "form": "plunge",
+            "heated": true,
+            "host": {
+              "level": "L1",
+              "mode": "free",
+              "position": [
+                2731008,
+                -7022592
+              ]
+            },
+            "interior": "plaster",
+            "name": "Plunge pool",
+            "waterLine": 195072
+          },
+          "X2": {
+            "coping": 195072,
+            "fallback": {
+              "box": {
+                "max": [
+                  1365504,
+                  1365504,
+                  585216
+                ],
+                "min": [
+                  -1365504,
+                  -1365504,
+                  -780288
+                ]
+              },
+              "level": "L1"
+            },
+            "form": "spa",
+            "heated": true,
+            "host": {
+              "mode": "surface",
+              "position": [
+                9363456,
+                2340864
+              ],
+              "room": "R4",
+              "surface": "floor"
+            },
+            "interior": "tile",
+            "name": "Spa",
+            "waterLine": 130048
+          }
+        },
+        "shelters": {
+          "X3": {
+            "clearHeight": 3121152,
+            "fallback": {
+              "box": {
+                "max": [
+                  2340864,
+                  1950720,
+                  3706368
+                ],
+                "min": [
+                  -2340864,
+                  -1950720,
+                  0
+                ]
+              },
+              "level": "L1"
+            },
+            "host": {
+              "level": "L1",
+              "mode": "free",
+              "position": [
+                2731008,
+                -2145792
+              ]
+            },
+            "material": "timber",
+            "name": "Pergola",
+            "postSize": 195072,
+            "postSpacing": 3121152,
+            "rafterSpacing": 780288,
+            "top": "slats"
+          }
+        }
+      }
+    }
+  },
+  "extensionsUsed": {
+    "FS_outdoor": "0.1.0"
+  },
+  "floorspec": "0.4",
+  "junctions": {
+    "J1": {
+      "level": "L1",
+      "position": [
+        0,
+        0
+      ]
+    },
+    "J10": {
+      "level": "L1",
+      "position": [
+        10924032,
+        0
+      ]
+    },
+    "J2": {
+      "level": "L1",
+      "position": [
+        0,
+        4681728
+      ]
+    },
+    "J3": {
+      "level": "L1",
+      "position": [
+        4681728,
+        4681728
+      ]
+    },
+    "J4": {
+      "level": "L1",
+      "position": [
+        7802880,
+        4681728
+      ]
+    },
+    "J5": {
+      "level": "L1",
+      "position": [
+        7802880,
+        0
+      ]
+    },
+    "J6": {
+      "level": "L1",
+      "position": [
+        4681728,
+        0
+      ]
+    },
+    "J7": {
+      "level": "L1",
+      "position": [
+        4681728,
+        2340864
+      ]
+    },
+    "J8": {
+      "level": "L1",
+      "position": [
+        7802880,
+        2340864
+      ]
+    },
+    "J9": {
+      "level": "L1",
+      "position": [
+        10924032,
+        4681728
+      ]
+    }
+  },
+  "levels": {
+    "L1": {
+      "building": "B1",
+      "elevation": 0,
+      "height": 3456000
+    }
+  },
+  "project": {
+    "name": "Phase 15 back terrace"
+  },
+  "rooms": {
+    "R1": {
+      "anchor": [
+        2340864,
+        2340864
+      ],
+      "function": "kitchen",
+      "level": "L1",
+      "name": "Kitchen"
+    },
+    "R2": {
+      "anchor": [
+        6242304,
+        3511296
+      ],
+      "function": "bath",
+      "level": "L1",
+      "name": "Bath"
+    },
+    "R3": {
+      "anchor": [
+        6242304,
+        1170432
+      ],
+      "function": "mechanical",
+      "level": "L1",
+      "name": "Utility"
+    },
+    "R4": {
+      "anchor": [
+        9363456,
+        2340864
+      ],
+      "function": "exterior",
+      "level": "L1",
+      "name": "Courtyard"
+    }
+  },
+  "slabs": {
+    "S1": {
+      "boundary": [
+        [
+          780288,
+          -3901440
+        ],
+        [
+          4681728,
+          -3901440
+        ],
+        [
+          4681728,
+          -390144
+        ],
+        [
+          780288,
+          -390144
+        ]
+      ],
+      "level": "L1",
+      "name": "Patio",
+      "thickness": 128000
+    }
+  },
+  "types": {
+    "WT": {
+      "kind": "wallType",
+      "layers": [
+        {
+          "function": "core",
+          "thickness": 128000
+        }
+      ]
+    }
+  },
+  "walls": {
+    "W1": {
+      "end": "J2",
+      "level": "L1",
+      "start": "J1",
+      "type": "WT"
+    },
+    "W10": {
+      "end": "J8",
+      "level": "L1",
+      "start": "J7",
+      "type": "WT"
+    },
+    "W11": {
+      "end": "J9",
+      "level": "L1",
+      "start": "J4",
+      "type": "WT"
+    },
+    "W12": {
+      "end": "J10",
+      "level": "L1",
+      "start": "J9",
+      "type": "WT"
+    },
+    "W13": {
+      "end": "J5",
+      "level": "L1",
+      "start": "J10",
+      "type": "WT"
+    },
+    "W2": {
+      "end": "J3",
+      "level": "L1",
+      "start": "J2",
+      "type": "WT"
+    },
+    "W3": {
+      "end": "J4",
+      "level": "L1",
+      "start": "J3",
+      "type": "WT"
+    },
+    "W4": {
+      "end": "J8",
+      "level": "L1",
+      "start": "J4",
+      "type": "WT"
+    },
+    "W5": {
+      "end": "J5",
+      "level": "L1",
+      "start": "J8",
+      "type": "WT"
+    },
+    "W6": {
+      "end": "J6",
+      "level": "L1",
+      "start": "J5",
+      "type": "WT"
+    },
+    "W7": {
+      "end": "J1",
+      "level": "L1",
+      "start": "J6",
+      "type": "WT"
+    },
+    "W8": {
+      "end": "J7",
+      "level": "L1",
+      "start": "J6",
+      "type": "WT"
+    },
+    "W9": {
+      "end": "J3",
+      "level": "L1",
+      "start": "J7",
+      "type": "WT"
+    }
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "batch": [
+    {
+      "op": "setProperty",
+      "id": "X6",
+      "path": "/gates",
+      "value": [
+        {
+          "offset": 15605760,
+          "width": 1560576,
+          "swing": "left",
+          "selfClosing": true,
+          "name": "Side path"
+        },
+        {
+          "offset": 3901440,
+          "width": 3901440,
+          "leaves": 2,
+          "swing": "right",
+          "name": "Drive"
+        }
+      ]
+    }
+  ]
+}

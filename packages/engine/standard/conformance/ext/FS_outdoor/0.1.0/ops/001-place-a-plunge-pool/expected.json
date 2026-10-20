@@ -1,0 +1,43 @@
+{
+  "status": "committed",
+  "diagnostics": [],
+  "hash": "d267cdb9e2945b24ecbe52ddce16ec4fd8b8bbbf20796ccc0328d1bc649bfdad",
+  "created": ["X7"],
+  "removed": [],
+  "resolved": [
+    {
+      "op": "addElement",
+      "collection": "pools",
+      "id": "X7",
+      "element": {
+        "catalogue": "plunge-pool-8x14",
+        "coping": 390144,
+        "copingMaterial": "stone",
+        "fallback": {
+          "level": "L1",
+          "box": {
+            "max": [1560576, 2731008, 0],
+            "min": [-1560576, -2731008, -2145792]
+          }
+        },
+        "form": "plunge",
+        "heated": true,
+        "host": {
+          "level": "L1",
+          "position": [2731008, -7022592],
+          "mode": "free"
+        },
+        "interior": "plaster",
+        "name": "Plunge pool, 8′ × 14′",
+        "waterLine": 195072
+      },
+      "extension": "FS_outdoor"
+    }
+  ],
+  "inverse": [
+    {
+      "op": "removeElement",
+      "id": "X7"
+    }
+  ]
+}

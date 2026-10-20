@@ -28,6 +28,7 @@ const toPt = (p: readonly [bigint, bigint]): Pt => [Number(p[0]), Number(p[1])];
 import { columnRadius, newelOutline } from './symbols.js';
 import type { BoxFrame } from './plansymbols.js';
 import { landscapeOf, type SceneLandscape } from './landscape.js';
+import { outdoorOf, type SceneOutdoor } from './outdoor.js';
 import { beamOf, type Beam } from './exterior.js';
 import { finishSource, wallClassOf, type FinishSource, type WallClass } from './styles.js';
 
@@ -133,6 +134,8 @@ export interface SceneFallback {
   readonly symbol?: { readonly id: string; readonly sha256: string; readonly mediaType: string };
   /** An FS_landscape element's own geometry in plan (FLR-T-13.5): a plant's canopy, an outline, a line. */
   readonly landscape?: SceneLandscape;
+  /** An FS_outdoor element's own geometry in plan (FLR-T-15.2): a pool's coping and water, a fence's line, posts and gates, a shelter's posts and beams. */
+  readonly outdoor?: SceneOutdoor;
   /** An exterior light's beam (FLR-T-15.5): where its light lands, a picture of the fixture. */
   readonly beam?: Beam;
 }
@@ -349,6 +352,7 @@ export function sceneOf(ev: Evaluation, level?: string, given?: Derived): Scene 
     const category = element === undefined ? undefined : categoryOf(element);
     const symbol = element === undefined ? undefined : symbolOf(doc, element);
     const landscape = element === undefined || fb.extension !== 'FS_landscape' ? undefined : landscapeOf(fb.collection, element, derived.placements?.[id]);
+    const outdoor = element === undefined || fb.extension !== 'FS_outdoor' ? undefined : outdoorOf(fb.collection, element, derived.placements?.[id]);
     const catalogue = element !== undefined && typeof element['catalogue'] === 'string' ? element['catalogue'] : undefined;
     const beam = element === undefined || fb.extension !== 'FS_electrical' || fb.collection !== 'lights' ? null : beamOf(id, element, derived.placements?.[id]);
     fallbacks.set(id, {
@@ -361,6 +365,7 @@ export function sceneOf(ev: Evaluation, level?: string, given?: Derived): Scene 
       ...(frame === undefined ? {} : { frame }),
       ...(symbol === undefined ? {} : { symbol }),
       ...(landscape === undefined ? {} : { landscape }),
+      ...(outdoor === undefined ? {} : { outdoor }),
       ...(beam === null ? {} : { beam }),
     });
   }

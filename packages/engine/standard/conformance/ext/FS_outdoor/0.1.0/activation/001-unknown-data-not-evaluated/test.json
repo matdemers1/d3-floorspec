@@ -1,0 +1,6 @@
+{
+  "description": "The plunge pool's form is \"pond\", which FS_outdoor's schema does not allow, but no extension is known: nothing of it is evaluated, and the document is valid.",
+  "covers": [
+    "FS-OUTD-1.2.1"
+  ]
+}

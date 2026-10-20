@@ -1,0 +1,10 @@
+{
+  "description": "Courtyard options A and B as Core 0.3 design options (Core 19): the spa in A, the primary, and a fire table in B. FS_outdoor's data matches its schema with the elements' `option` members, and it is evaluated in each checked design; the primary design is derived, with A's spa.",
+  "covers": [
+    "FS-OUTD-1.2.1",
+    "FS-OUTD-1.2.4",
+    "FS-OUTD-1.3.1",
+    "FS-OUTD-6.1.1",
+    "FS-CORE-19.3.1"
+  ]
+}

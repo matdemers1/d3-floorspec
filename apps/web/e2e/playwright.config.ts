@@ -139,6 +139,10 @@ import { defineConfig, devices } from '@playwright/test';
  *                   the electrical assistant's exterior card and the walks' dark stretches, "Review as changeset"
  *                   opening a pending changeset while main keeps its lights; the 3D view's "Night exterior" look
  *                   lighting the grounds within the texture-unit budget; axe in both themes.
+ *   - `outdoor`   — FLR-T-15.2: outdoor rooms on the Courtyard House on its lot — a plunge pool dropped from the
+ *                   library's Outdoor shelf, a privacy fence drawn with the fence tool (⇧F) and a gate added in
+ *                   its line, a pergola over the back terrace stretched by its front handle (its posts re-space,
+ *                   8 to 10), an outdoor kitchen placed; the back terrace in 3D; axe in both themes.
  *
  * Run with:
  *
@@ -146,7 +150,7 @@ import { defineConfig, devices } from '@playwright/test';
  *
  * The database server defaults to the local test Postgres; E2E_DATABASE_URL points elsewhere (CI).
  * It names the keyboard suite's database; the others are derived from it (`…_main_test`,
- * `…_a11y_test`, `…_program_test`, `…_systems_test`, `…_findings_test`, `…_roofs_test`, `…_exports_test`, `…_options_test`, `…_three_test`, `…_share_test`, `…_assets_test`, `…_sun_test`, `…_package_test`, `…_furniture_test`, `…_templates_test`, `…_moonshots_test`, `…_arcs_test`, `…_lighting_test`, `…_materials_test`, `…_resize_test`, `…_drawers_test`, `…_presentation_test`, `…_panzoom_test`, `…_camera_test`, `…_modes_test`, `…_arrange_test`, `…_rooms_test`, `…_placing_test`, `…_precision_test`, `…_styles_test`, `…_feedback_test`, `…_trace_test`, `…_dimensions_test`, `…_renovation_test`, `…_phrases_test`, `…_keys_test`, `…_section_test`, `…_films_test`, `…_edit3d_test`, `…_compare_test`, `…_xray_test`, `…_daylight_test`, `…_tour_test`, `…_xr_test`, `…_seasons_test`, `…_site_test`, `…_extlighting_test`). E2E_PORT is the keyboard suite's port; the others take the ports after it (modes, +26; arrange, +27; rooms, +31; placing, +33; precision, +34; styles, +37; dimensions, +41; trace, +42; renovation, +43; feedback, +46; phrases, +47; keys, +48; films, +49; section, +50; edit3d, +51; compare, +52; daylight, +53; xray, +54; tour, +55; xr, +56; site, +57; seasons, +58; extlighting, +59).
+ * `…_a11y_test`, `…_program_test`, `…_systems_test`, `…_findings_test`, `…_roofs_test`, `…_exports_test`, `…_options_test`, `…_three_test`, `…_share_test`, `…_assets_test`, `…_sun_test`, `…_package_test`, `…_furniture_test`, `…_templates_test`, `…_moonshots_test`, `…_arcs_test`, `…_lighting_test`, `…_materials_test`, `…_resize_test`, `…_drawers_test`, `…_presentation_test`, `…_panzoom_test`, `…_camera_test`, `…_modes_test`, `…_arrange_test`, `…_rooms_test`, `…_placing_test`, `…_precision_test`, `…_styles_test`, `…_feedback_test`, `…_trace_test`, `…_dimensions_test`, `…_renovation_test`, `…_phrases_test`, `…_keys_test`, `…_section_test`, `…_films_test`, `…_edit3d_test`, `…_compare_test`, `…_xray_test`, `…_daylight_test`, `…_tour_test`, `…_xr_test`, `…_seasons_test`, `…_site_test`, `…_extlighting_test`, `…_outdoor_test`). E2E_PORT is the keyboard suite's port; the others take the ports after it (modes, +26; arrange, +27; rooms, +31; placing, +33; precision, +34; styles, +37; dimensions, +41; trace, +42; renovation, +43; feedback, +46; phrases, +47; keys, +48; films, +49; section, +50; edit3d, +51; compare, +52; daylight, +53; xray, +54; tour, +55; xr, +56; site, +57; seasons, +58; extlighting, +59; outdoor, +60).
  */
 
 const PORT = Number(process.env['E2E_PORT'] ?? 3491);
@@ -273,6 +277,8 @@ const SUITES: Suite[] = [
   { name: 'seasons', spec: 'seasons.spec.ts', port: PORT + 58, database: databaseFor('seasons'), setupToken: true, gl: true },
   // FLR-T-15.5: exterior lighting — path lights and an uplight placed with their beams, the assistant's exterior changeset, the night look.
   { name: 'extlighting', spec: 'extlighting.spec.ts', port: PORT + 59, database: databaseFor('extlighting'), setupToken: true, gl: true },
+  // FLR-T-15.2: outdoor rooms — a plunge pool, a fence with a gate, a pergola stretched (posts re-space), an outdoor kitchen, the terrace in 3D, axe.
+  { name: 'outdoor', spec: 'outdoor.spec.ts', port: PORT + 60, database: databaseFor('outdoor'), setupToken: true, gl: true },
 ];
 
 /**

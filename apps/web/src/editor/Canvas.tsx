@@ -683,14 +683,14 @@ function ToolOverlay({ store, view, level, model }: { store: EditorStore; view: 
   if (draft.tool === 'wand') return <WandOverlay store={store} view={view} level={level} />;
   if ('drag' in draft && (draft.drag?.kind === 'roomSide' || draft.drag?.kind === 'room')) return <RoomDragGhost store={store} view={view} level={level} units={store.units} />;
   if (draft.tool === 'stair') return <StairDraft view={view} foot={draft.foot} cursor={draft.cursor} />;
-  if (draft.tool === 'slab' || draft.tool === 'roof' || draft.tool === 'lot' || draft.tool === 'pad' || draft.tool === 'contour') {
+  if (draft.tool === 'slab' || draft.tool === 'roof' || draft.tool === 'lot' || draft.tool === 'pad' || draft.tool === 'contour' || draft.tool === 'fence') {
     const chain = draft.chain.map((v) => v.point);
     const cursor = draft.cursor;
     const all = cursor !== null && chain.length > 0 ? [...chain, cursor.point] : chain;
     const screen = all.map((p) => S(view, p));
     return (
       <g className="fs-draw" aria-hidden="true">
-        {screen.length > 2 && draft.tool !== 'contour' ? <polygon className="fs-draw__slab" points={screen.map((p) => p.map((n) => n.toFixed(1)).join(',')).join(' ')} /> : null}
+        {screen.length > 2 && draft.tool !== 'contour' && draft.tool !== 'fence' ? <polygon className="fs-draw__slab" points={screen.map((p) => p.map((n) => n.toFixed(1)).join(',')).join(' ')} /> : null}
         {screen.length > 1 ? <polyline className="fs-draw__line" points={screen.map((p) => p.map((n) => n.toFixed(1)).join(',')).join(' ')} /> : null}
         {chain.map((p, i) => {
           const q = S(view, p);

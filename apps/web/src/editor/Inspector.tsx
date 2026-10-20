@@ -1,3 +1,4 @@
+import { FencePanel } from './outdoor/Panel';
 import { SitePanel } from './site/Panel';
 import type { ReactNode } from 'react';
 import { RenovationSection } from './renovation';
@@ -121,6 +122,8 @@ export function Inspector({ store, tools }: { store: EditorStore; tools: ToolCon
   // The measure tool (FLR-T-18.9) draws nothing: the inspector stays on the selection.
   // FLR-T-15.1: the site's tools draw with the Site panel beside them: its heights, the lot, the cut and fill.
   const lvl = model.levels.find((l) => l.id === levelId);
+  // FLR-T-15.2: the fence tool draws with its style beside it.
+  if (tool === 'fence' && readOnly === null) return <FencePanel store={store} readOnly={false} />;
   if ((tool === 'lot' || tool === 'setback' || tool === 'spot' || tool === 'contour' || tool === 'pad') && readOnly === null && lvl !== undefined)
     return (
       <div className="fs-inspector__body">

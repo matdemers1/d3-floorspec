@@ -38,6 +38,7 @@
  * (@floorspec/mesh lights.ts) — approximate lighting, which is what the screen says. Seeded (rng.ts),
  * so the same scene and options give the same picture.
  */
+import { inHoles, type Hole } from '../render3d/sunken.js';
 import { GLASS_IOR, groundAt, hazeAt, skyRadiance as fieldRadiance, type GroundArea, type SkyField } from '@floorspec/mesh/sky';
 import type { Vec3 } from '../export/gltf/scene.js';
 import type { Camera } from '../render3d/camera.js';
@@ -143,6 +144,11 @@ export interface TraceOptions {
   readonly ground?: {
     readonly y: number;
     readonly areas?: readonly GroundArea[];
+    /**
+     * FLR-T-15.2: where the plane is open — a sunken pool's outline in plan, `[x, z]` (render3d/sunken.ts):
+     * a ray that meets the plane inside one goes on, to the pool's coping, water and basin.
+     */
+    readonly holes?: readonly Hole[];
     /** The studio's floor, or light snow (FLR-T-15.4), instead of the lawn. */
     readonly floor?: Vec3;
     /** FLR-T-15.4: the lawn's season and wetness, a multiplier on it (linear RGB); absent, as it is. */
@@ -252,6 +258,7 @@ export async function trace(scene: PtScene, options: TraceOptions): Promise<{ co
   const unit = field?.unit ?? 1;
   const ground = options.ground;
   const areas = ground?.areas ?? [];
+  const holes = ground?.holes ?? [];
   const look = new Float64Array(3);
   /** The sky along a direction, in the tracer's units, scaled: the field's, else the gradient. */
   const skyAlong = (x: number, y: number, z: number, out: Float64Array): void => {
@@ -576,7 +583,8 @@ export async function trace(scene: PtScene, options: TraceOptions): Promise<{ co
         let db = 0;
         for (;;) {
           // The ground plane, when there is one: nothing past it is seen.
-          const tGround = ground !== undefined && dy < 0 && oy > ground.y ? (ground.y - oy) / dy : Infinity;
+          let tGround = ground !== undefined && dy < 0 && oy > ground.y ? (ground.y - oy) / dy : Infinity;
+          if (tGround !== Infinity && holes.length > 0 && inHoles(ox + dx * tGround, oz + dz * tGround, holes)) tGround = Infinity;
           const onGround = !bvh.intersect(ox, oy, oz, dx, dy, dz, tMin, tGround, hit);
           if (onGround && tGround === Infinity) {
             skyAlong(dx, dy, dz, sky);

@@ -60,6 +60,13 @@ export interface Palette {
   readonly fill: string;
   readonly lotLine: string;
   readonly setback: string;
+  /** FS_outdoor (FLR-T-15.2): a pool's water and its edge, its coping; a fence's and a pergola's timber; what is overhead (a shelter's beams, dashed); a fire's flame. */
+  readonly water: string;
+  readonly waterEdge: string;
+  readonly coping: string;
+  readonly timber: string;
+  readonly overhead: string;
+  readonly flame: string;
 }
 
 /** The Floorspec accent, the same in both themes. */
@@ -99,6 +106,12 @@ export const PALETTES: Readonly<Record<ThemeName, Palette>> = {
     fill: '#2f6fb0',
     lotLine: '#5432be',
     setback: '#8a5a00',
+    water: '#a9cfe8',
+    waterEdge: '#2f6fb0',
+    coping: '#e6e0d3',
+    timber: '#8a6a55',
+    overhead: '#6b543f',
+    flame: '#c8641e',
   },
   dark: {
     paper: '#101117',
@@ -133,5 +146,11 @@ export const PALETTES: Readonly<Record<ThemeName, Palette>> = {
     fill: '#87c3ff',
     lotLine: '#a99dff',
     setback: '#e7b45d',
+    water: '#1f4a6b',
+    waterEdge: '#87c3ff',
+    coping: '#4a4740',
+    timber: '#a07c62',
+    overhead: '#c9a98a',
+    flame: '#e7934d',
   },
 };
