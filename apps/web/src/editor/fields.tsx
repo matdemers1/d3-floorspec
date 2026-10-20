@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useId, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import { Input } from '@d3cloud/ui';
 import { formatLen, parseLen, type UnitSystem } from './units';
 
@@ -6,6 +6,11 @@ import { formatLen, parseLen, type UnitSystem } from './units';
  * Inspector fields. A length field takes anything the Ops reference grammar does — `12'6-1/2"`,
  * `3810mm`, `3.81 m` — parsed by `@floorspec/ops` itself, and commits an exact integer on Enter or
  * when focus leaves (FLR-T-3.4). Nothing is sent until the value parses.
+ *
+ * A field follows its value until the person types in it — focus alone does not hold it. A field
+ * focused while the model was still catching up (Enter on a handle goes to the typed size the moment
+ * the press is sent) would otherwise keep the old value, and send it back when focus left: the press
+ * undone (FLR-T-18.19).
  */
 
 export function Row({ label, htmlFor, children }: { label: string; htmlFor?: string; children: ReactNode }) {
@@ -56,13 +61,23 @@ export function LengthField({ label, value, units, onCommit, allowEmpty = false,
   const editing = useRef(false);
   /** The text last sent, so Enter followed by blur sends once. */
   const sent = useRef<string | null>(null);
+  const input = useRef<HTMLInputElement>(null);
+  /** The whole text was selected (Enter on a handle selects it) when the value moved: select the new one. */
+  const reselect = useRef(false);
   useEffect(() => {
     sent.current = null;
     if (!editing.current) {
+      const el = input.current;
+      reselect.current = el !== null && document.activeElement === el && el.value !== '' && el.selectionStart === 0 && el.selectionEnd === el.value.length;
       setText(shown);
       setError(null);
     }
   }, [shown]);
+  useLayoutEffect(() => {
+    if (!reselect.current) return;
+    reselect.current = false;
+    input.current?.select();
+  }, [text]);
 
   const commit = () => {
     editing.current = false;
@@ -104,6 +119,7 @@ export function LengthField({ label, value, units, onCommit, allowEmpty = false,
   return (
     <Row label={label} htmlFor={id}>
       <Input
+        ref={input}
         id={id}
         appearance="filled"
         className="fs-mono-input"
@@ -115,9 +131,6 @@ export function LengthField({ label, value, units, onCommit, allowEmpty = false,
         aria-describedby={error !== null || hint !== undefined ? `${id}-help` : undefined}
         spellCheck={false}
         autoComplete="off"
-        onFocus={() => {
-          editing.current = true;
-        }}
         onChange={(e) => {
           editing.current = true;
           setText(e.target.value);
@@ -178,9 +191,6 @@ export function TextField({ label, value, onCommit, disabled, placeholder, autoF
         disabled={disabled}
         placeholder={placeholder}
         maxLength={maxLength}
-        onFocus={() => {
-          editing.current = true;
-        }}
         onChange={(e) => {
           editing.current = true;
           setText(e.target.value);
@@ -261,7 +271,6 @@ export function InlineIntInput({ label, value, onCommit, disabled, min, max, pla
         invalid={error !== null}
         aria-describedby={error !== null ? `${id}-help` : undefined}
         autoComplete="off"
-        onFocus={() => { editing.current = true; }}
         onChange={(e) => {
           editing.current = true;
           setText(e.target.value);
@@ -337,7 +346,6 @@ export function IntField({ label, value, onCommit, disabled, min, max, unit, pla
         invalid={error !== null}
         aria-describedby={error !== null ? `${id}-help` : undefined}
         autoComplete="off"
-        onFocus={() => { editing.current = true; }}
         onChange={(e) => {
           editing.current = true;
           setText(e.target.value);
