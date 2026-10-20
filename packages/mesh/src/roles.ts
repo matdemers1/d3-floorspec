@@ -41,6 +41,8 @@ export const MODEL_ROLES = [
   'cedar', 'coping', 'poolInterior', 'water', 'sail', 'roofing', 'ember',
   // FS_context (FLR-T-15.3): one neutral, matte context style — never a material of the design.
   'contextMass', 'contextRoof', 'contextPave', 'contextCurb', 'contextWalk', 'contextVerge', 'contextTrunk', 'contextCrown', 'contextConifer', 'contextAutumn',
+  // FS_energy (FLR-T-16.1): a solar module's dark glass, and a rack's aluminium.
+  'pvModule', 'pvFrame',
 ] as const;
 
 /**
@@ -56,6 +58,9 @@ export type ModelRole = (typeof MODEL_ROLES)[number];
 
 /** The roles only FS_context's context is drawn in (FLR-T-15.3): neutral and matte, so a street and a neighbour never read as the design. */
 export const CONTEXT_ROLES: readonly ModelRole[] = ['contextMass', 'contextRoof', 'contextPave', 'contextCurb', 'contextWalk', 'contextVerge', 'contextTrunk', 'contextCrown', 'contextConifer', 'contextAutumn'];
+
+/** The roles only FS_energy's arrays are drawn in (FLR-T-16.1): a house without solar has none of them. */
+export const SOLAR_ROLES: readonly ModelRole[] = ['pvModule', 'pvFrame'];
 
 /** The roles only FS_outdoor's models are made of (FLR-T-15.2): a house without outdoor rooms has none of them. */
 export const OUTDOOR_ROLES: readonly ModelRole[] = ['cedar', 'coping', 'poolInterior', 'water', 'sail', 'roofing', 'ember'];
@@ -233,4 +238,9 @@ export const ROLE_LOOKS: Readonly<Record<ModelRole, RoleLook>> = {
   contextConifer: { color: '#7c877a', metallic: 0, roughness: 1 },
   /** A deciduous tree's crown in autumn: a warm grey, still neutral. */
   contextAutumn: { color: '#a99d89', metallic: 0, roughness: 1 },
+  // ─── FS_energy (FLR-T-16.1): no texture — a module reads as its dark blue glass ───
+  /** A solar module: dark blue glass, a little glossy. */
+  pvModule: { color: '#1d3a5f', metallic: 0.1, roughness: 0.28 },
+  /** A rack's legs: anodised aluminium. */
+  pvFrame: { color: '#a3aab3', metallic: 0.6, roughness: 0.45 },
 };
