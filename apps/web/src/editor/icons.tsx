@@ -67,3 +67,24 @@ export const SparklesIcon = icon(
 export const PencilIcon = icon('pencil', <path d="M11.333 2a1.886 1.886 0 0 1 2.667 2.667L5 13.667 1.333 14.667 2.333 11 11.333 2Z" />);
 export const JunctionIcon = icon('junction', <path d="M8 2v4M8 10v4M2 8h4M10 8h4" />);
 export const DataIcon = icon('data', <path d="M8 2.667 13.333 12.667H2.667L8 2.667ZM8 7.333v2.667" />);
+
+/** The P14 icons (FLR-T-14.9), drawn on lucide's 24-unit grid as the board draws them, at lucide's stroke. */
+function icon24(name: string, paths: ReactNode) {
+  const Icon = (props: SVGProps<SVGSVGElement>) => (
+    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false" {...props}>
+      {paths}
+    </svg>
+  );
+  Icon.displayName = `FsIcon(${name})`;
+  return Icon;
+}
+
+/** Icon/fs/headset (FLR-T-14.3): Enter VR. */
+export const HeadsetIcon = icon24(
+  'headset',
+  <path d="M2 9a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2h-4l-2-3h-4l-2 3H4a2 2 0 0 1-2-2V9ZM9 11.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0ZM18 11.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0Z" />,
+);
+/** Icon/fs/view-in-ar (FLR-T-14.3): a cube in a camera's frame. */
+export const ViewInArIcon = icon24('view-in-ar', <path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2M12 7l4 2v5l-4 2-4-2V9l4-2ZM8 9l4 2 4-2M12 11v5" />);
+/** Icon/fs/teleport (FLR-T-14.3): an arc to a spot on the floor. */
+export const TeleportIcon = icon24('teleport', <path d="M4 18C6 10 14 6 20 8M17 5l3 3-3 3M10 20c0 .828-1.791 1.5-4 1.5S2 20.828 2 20s1.791-1.5 4-1.5 4 .672 4 1.5Z" />);
