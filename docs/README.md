@@ -13,3 +13,6 @@ Skeleton. See FLR in Foreman for the tasks that fill this directory.
   as a shift lens, depth of field, exposure compensation, framing guides and the shot list (FLR-T-13.10).
 - [renovation.md](renovation.md) — remodels (FS_renovation): existing, demolish and new; the Existing,
   Demolition, Proposed and Combined plans in the editor, 3D, PDF and DXF; remodel areas and quantities (FLR-T-18.13).
+- [daylight.md](daylight.md) — daylight you can see: illuminance on every floor's work plane in four
+  named bands, sun-hours that day and a year, glare at desks and beds; how the worker path-traces it,
+  and how accurate it is (FLR-T-14.7). Advisory, always.

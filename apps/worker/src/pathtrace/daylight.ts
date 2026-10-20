@@ -1,7 +1,7 @@
 /**
  * Daylight you can see (FLR-T-14.7): illuminance on every floor's work plane at a date and time,
  * sun-hours that day and over a year, and the desks and beds direct sun reaches — computed by the
- * path tracer's own pieces on the scene its stills draw (FLR-ADR on the method; docs/daylight.md).
+ * path tracer's own pieces on the scene its stills draw (FLR-ADR-055; docs/daylight.md).
  *
  * - **The scene** is the house's architecture alone — walls with their openings, floors, ceilings,
  *   slabs, roofs, stairs, doors and glazing — as `ptScene` gives the tracer it, with no furniture,

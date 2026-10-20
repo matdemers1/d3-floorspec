@@ -3,7 +3,7 @@
  * four named bands, the work plane, the grid, the sun-hours schedule, the desks and beds a glare
  * flag is pinned to, and the words every view and MCP use. The numbers themselves are the worker's
  * (apps/worker `pathtrace/daylight.ts`): path-traced irradiance gathers over the same scene the
- * stills draw (FLR-ADR on the method; docs/daylight.md for its accuracy).
+ * stills draw (FLR-ADR-055; docs/daylight.md for its accuracy).
  *
  * Isomorphic (FLR-ADR-010) and deterministic. Advisory, always (FLR-ADR-011): a band says what the
  * light is like — never that a room passes or fails (the word FLR-ADR-011 forbids is never printed).
