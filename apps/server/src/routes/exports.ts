@@ -60,6 +60,12 @@ import { MAX_PENDING_RENDERS } from './checks.js';
  * budget. It takes a render place as a film does. Its file is the tour's manifest, and its panoramas
  * and plans are kept beside it as the job's assets; the download is a ZIP of them all. A share link
  * shows it (share/routes.ts), and keeps its files for as long as the link lives.
+ *
+ * A USDZ is tuned for AR Quick Look (FLR-T-14.3): `ar` asks for true scale (on the lot, the default)
+ * or a table's 1:50, and what it includes besides its levels — roofs, furniture, fixtures and lights
+ * (on unless said otherwise) and the lawn and site (off unless asked for). Its file is served inline
+ * when asked (`?inline=1`), so an iPhone's or iPad's `<a rel="ar">` opens it in AR Quick Look; a link
+ * of its own (share/routes.ts) sends it to a phone.
  */
 
 const KINDS = ['pdf', 'dxf', 'ifc', 'gltf', 'usdz', 'still', 'shots', 'film', 'pair', 'tour'] as const;
@@ -149,6 +155,15 @@ const TourBody = z.strictObject({
 });
 export const PAGE_NAMES = ['tabloid', 'arch-c', 'arch-d', 'letter', 'a4', 'a3'] as const;
 
+/** A USDZ for AR Quick Look (FLR-T-14.3): its scale, and what it includes besides its levels. */
+const ArBody = z.strictObject({
+  scale: z.enum(['true', 'table']).default('true'),
+  roofs: z.boolean().optional(),
+  furniture: z.boolean().optional(),
+  fixtures: z.boolean().optional(),
+  site: z.boolean().optional(),
+});
+
 const ExportBody = z.strictObject({
   kind: z.enum(KINDS),
   /** A version of this project, by hash. Default: main's head. */
@@ -187,6 +202,8 @@ const ExportBody = z.strictObject({
     .strictObject({ on: z.record(z.string().regex(ID), z.strictObject({ output: z.int().min(1).max(100).optional(), cct: z.int().min(1000).max(10000).optional() })) })
     .refine((l) => Object.keys(l.on).length <= 2000, 'at most 2000 lights')
     .optional(),
+  /** USDZ (FLR-T-14.3): for AR Quick Look — true scale or 1:50, and what it includes. */
+  ar: ArBody.optional(),
 });
 
 /** How many exports a project may have waiting or running at once. */
@@ -242,6 +259,8 @@ type Params = {
   readonly rooms?: { room: string; name: string; view?: string }[];
   readonly eyeHeight?: number;
   readonly at?: string;
+  /** A USDZ for AR Quick Look (FLR-T-14.3). */
+  readonly ar?: { scale: 'true' | 'table'; roofs?: boolean; furniture?: boolean; fixtures?: boolean; site?: boolean };
 };
 
 /** The largest still the editor may save: a 4K PNG with room to spare. */
@@ -321,6 +340,8 @@ export function exportView(projectId: string, job: Job) {
       job.kind === 'export.film'
         ? { id: p.film ?? null, name: p.filmName ?? p.film ?? null, quality: p.quality ?? 'draft', format: p.format ?? 'mp4', size: p.size ?? '1080p', fps: p.fps ?? 30, frames: p.frames ?? null, light: p.light ?? 'timeline', timelapse: p.timelapse ?? null, ...(p.samples === undefined ? {} : { samples: p.samples }) }
         : null,
+    /** A USDZ for AR Quick Look (FLR-T-14.3): its scale and what it includes; true scale, all but the site, when not asked. */
+    ar: job.kind === 'export.usdz' ? { scale: p.ar?.scale ?? 'true', roofs: p.ar?.roofs ?? true, furniture: p.ar?.furniture ?? true, fixtures: p.ar?.fixtures ?? true, site: p.ar?.site ?? false } : null,
     /** Stopped by a person (FLR-T-14.1) rather than failed. */
     cancelled: job.status === 'failed' && (job.result as { cancelled?: unknown } | null)?.cancelled === true,
     progress: job.status === 'running' ? (job.progress ?? null) : null,
@@ -498,6 +519,7 @@ export function exportRoutes(db: Db): Routes {
       if (body.tour !== undefined && body.kind !== 'tour') throw new HttpError(400, 'only a tour takes tour options');
       if (body.doors !== undefined && body.kind !== 'gltf' && body.kind !== 'usdz') throw new HttpError(400, 'only a glTF or USDZ model takes doors');
       if (body.lighting !== undefined && body.kind !== 'gltf' && body.kind !== 'usdz') throw new HttpError(400, 'only a glTF or USDZ model takes a lighting');
+      if (body.ar !== undefined && body.kind !== 'usdz') throw new HttpError(400, 'only a USDZ is made for AR Quick Look: only it takes ar options');
       if ((body.mode !== undefined || body.layers !== undefined) && body.kind !== 'pdf' && body.kind !== 'dxf') throw new HttpError(400, 'a mode is a view of the plan: only a PDF or DXF drawing takes one');
       if (body.renovation !== undefined && body.kind !== 'pdf' && body.kind !== 'dxf') throw new HttpError(400, 'a renovation plan is a drawing: only a PDF or DXF takes one');
       if (body.style !== undefined && body.kind !== 'pdf') throw new HttpError(400, 'a plan style is how a sheet is drawn: only a PDF takes one');
@@ -612,6 +634,7 @@ export function exportRoutes(db: Db): Routes {
         ...(body.style === undefined ? {} : { style: body.style }),
         ...(body.renovation === undefined ? {} : { renovation: body.renovation }),
         ...(body.doors === undefined ? {} : { doors: body.doors }),
+        ...(body.ar === undefined ? {} : { ar: { scale: body.ar.scale, ...(body.ar.roofs === undefined ? {} : { roofs: body.ar.roofs }), ...(body.ar.furniture === undefined ? {} : { furniture: body.ar.furniture }), ...(body.ar.fixtures === undefined ? {} : { fixtures: body.ar.fixtures }), ...(body.ar.site === undefined ? {} : { site: body.ar.site }) } }),
         ...(body.lighting === undefined ? {} : { lighting: { on: Object.fromEntries(Object.entries(body.lighting.on).map(([id, s]) => [id, { ...(s.output === undefined ? {} : { output: s.output }), ...(s.cct === undefined ? {} : { cct: s.cct }) }])) } }),
         ...(shots === undefined ? {} : { ...(shots.views === undefined ? {} : { views: [...new Set(shots.views)] }), size: shots.size, quality: shots.quality }),
         ...(tourBody === undefined || tour === undefined ? {} : { rooms: tour.rooms, size: tourBody.size, quality: tourBody.quality, eyeHeight: tourBody.eyeHeight, at: tour.at }),
@@ -644,7 +667,7 @@ export function exportRoutes(db: Db): Routes {
       });
       return {
         reply: (res) => res.status(202).location(`/api/projects/${project.id}/exports/${job.id}`).json({ export: exportView(project.id, job) }),
-        audit: { action: 'export.request', targetType: 'job', targetId: job.id, detail: { projectId: project.id, kind: body.kind, version: version.hash, levels: params.levels ?? null, page: params.page ?? null, ...(params.design === undefined ? {} : { design: params.design }), ...(params.mode === undefined ? {} : { mode: params.mode }), ...(params.style === undefined ? {} : { style: params.style }), ...(params.renovation === undefined ? {} : { renovation: params.renovation }), ...(params.doors === undefined ? {} : { doors: params.doors }), ...(still === undefined ? {} : { still: { camera: params.camera ?? null, room: params.room ?? null, level: params.level ?? null, size: params.size, quality: params.quality } }), ...(shots === undefined ? {} : { shots: { views: params.views ?? null, size: params.size, quality: params.quality } }), ...(film === undefined ? {} : { film: { id: film.id, quality: params.quality, format: params.format, size: params.size, fps: params.fps, frames: film.frames, light: params.light } }), ...(tour === undefined ? {} : { tour: { rooms: tour.rooms.map((r) => r.room), size: params.size, quality: params.quality, eyeHeight: params.eyeHeight } }) } },
+        audit: { action: 'export.request', targetType: 'job', targetId: job.id, detail: { projectId: project.id, kind: body.kind, version: version.hash, levels: params.levels ?? null, page: params.page ?? null, ...(params.design === undefined ? {} : { design: params.design }), ...(params.mode === undefined ? {} : { mode: params.mode }), ...(params.style === undefined ? {} : { style: params.style }), ...(params.renovation === undefined ? {} : { renovation: params.renovation }), ...(params.doors === undefined ? {} : { doors: params.doors }), ...(params.ar === undefined ? {} : { ar: params.ar }), ...(still === undefined ? {} : { still: { camera: params.camera ?? null, room: params.room ?? null, level: params.level ?? null, size: params.size, quality: params.quality } }), ...(shots === undefined ? {} : { shots: { views: params.views ?? null, size: params.size, quality: params.quality } }), ...(film === undefined ? {} : { film: { id: film.id, quality: params.quality, format: params.format, size: params.size, fps: params.fps, frames: film.frames, light: params.light } }), ...(tour === undefined ? {} : { tour: { rooms: tour.rooms.map((r) => r.room), size: params.size, quality: params.quality, eyeHeight: params.eyeHeight } }) } },
       };
     },
     { token: 'read' },
@@ -811,7 +834,9 @@ export function exportRoutes(db: Db): Routes {
         return;
       }
       res.setHeader('Content-Type', output.contentType);
-      res.setHeader('Content-Disposition', `attachment; filename="${output.name.replace(/[^\w.-]/g, '_')}"`);
+      // A USDZ asked for `?inline=1` (FLR-T-14.3): what an iPhone's or iPad's `<a rel="ar">` opens in AR Quick Look.
+      const inline = job.kind === 'export.usdz' && req.query['inline'] === '1';
+      res.setHeader('Content-Disposition', `${inline ? 'inline' : 'attachment'}; filename="${output.name.replace(/[^\w.-]/g, '_')}"`);
       res.setHeader('ETag', `"${output.sha256}"`);
       res.setHeader('Cache-Control', 'private, max-age=3600');
       res.send(Buffer.from(output.bytes));

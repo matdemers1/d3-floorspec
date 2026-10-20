@@ -10,8 +10,16 @@
  * its maps as `UsdUVTexture`s reading `st` when their PNG or JPEG bytes are given.
  *
  * AR Quick Look puts the stage's origin on the floor it finds, so the model is moved: the centre of
- * its footprint to the origin and its lowest point to y = 0. The translation is on the root prim and
- * in `customLayerData`, so the document's coordinates can be recovered.
+ * its footprint to the origin and its lowest level's floor to y = 0 — the house's ground floor on
+ * the ground the phone sees, what is under it (a slab, a footing) below it (FLR-T-14.3). The
+ * translation is on the root prim and in `customLayerData`, so the document's coordinates can be
+ * recovered.
+ *
+ * Tuned for AR Quick Look (FLR-T-14.3, ar.ts): the root prim asks to be anchored on a horizontal
+ * plane (RealityKit's `Preliminary_AnchoringAPI`), and is scaled for a table (1:50) or not at all
+ * (true scale) — the scale written in `customLayerData` too. Points are written to a tenth of a
+ * millimetre and normals per vertex (a vertex is shared only within one flat face, so this is the
+ * face's normal), which keeps the root layer a phone can open; maps are at most 2048 px.
  *
  * An extension element's fallback model (Core 12.6) is not converted from glTF to USD: the element
  * keeps its fallback box, and an Xform under it marks where the model goes (its translation and its
@@ -21,10 +29,13 @@
 import type { ImageSource, ModelsReport } from './glb.js';
 import type { Scene, SceneMaterial, Vec3 } from './scene.js';
 import { storeZip, type ZipEntry } from './zip.js';
+import { capTexture, MAX_AR_TEXTURE, SCALE_FACTOR, SCALE_LABEL, type ArScale } from './ar.js';
 
 export interface UsdzOptions {
   readonly about?: Record<string, unknown>;
   readonly images?: ImageSource;
+  /** True scale (default) or a table's 1:50 (FLR-T-14.3). */
+  readonly scale?: ArScale;
 }
 
 export interface UsdzResult {
@@ -91,34 +102,48 @@ export function writeUsdz(scene: Scene, options: UsdzOptions = {}): UsdzResult {
     if (info !== undefined) {
       const ext = EXT[info.mediaType];
       const bytes = ext === undefined ? undefined : options.images?.({ id: asset, sha256: info.sha256, mediaType: info.mediaType });
+      // At most 2048 px a side (FLR-T-14.3): a larger map is drawn smaller, as a PNG.
+      const capped = ext === undefined || bytes === undefined ? undefined : capTexture(bytes, info.mediaType, MAX_AR_TEXTURE);
       if (ext === undefined) omitted.push({ asset, reason: `AR Quick Look does not read ${info.mediaType}` });
       else if (bytes === undefined) omitted.push({ asset, reason: 'its bytes were not available to the exporter' });
+      else if (capped === undefined) omitted.push({ asset, reason: 'it is not an image the exporter can read' });
       else {
-        file = `textures/${asset.replace(/[^A-Za-z0-9._-]/g, '_')}.${ext}`;
-        files.push({ name: file, bytes });
+        file = `textures/${asset.replace(/[^A-Za-z0-9._-]/g, '_')}.${EXT[capped.mediaType] ?? ext}`;
+        files.push({ name: file, bytes: capped.bytes });
         embedded.push(asset);
       }
     }
     fileOf.set(asset, file);
     return file;
   };
-  const usda = usdaOf(scene, options.about ?? {}, textureFile);
+  const usda = usdaOf(scene, options.about ?? {}, textureFile, options.scale ?? 'true');
   const triangles = scene.levels.reduce((n, l) => n + l.nodes.reduce((m, node) => m + node.primitives.reduce((k, p) => k + p.indices.length / 3, 0), 0), 0);
   const bytes = storeZip([{ name: 'model.usda', bytes: new TextEncoder().encode(usda) }, ...files]);
   const marked = [...new Set(scene.levels.flatMap((l) => l.nodes.flatMap((n) => (n.model === undefined || n.primitives.length === 0 ? [] : [n.model.asset]))))].sort();
   return { bytes, usda, triangles, materials: scene.materials.length, embedded, omitted, models: { merged: [], omitted: marked.map((asset) => ({ asset, reason: USDZ_MODEL_REASON })) } };
 }
 
-/** The root layer's text. `textureFile` names a map's file in the package, or null without one. */
-export function usdaOf(scene: Scene, about: Record<string, unknown>, textureFile: (asset: string) => string | null = () => null): string {
-  // The footprint's centre to the origin, the lowest point to the floor.
+/** Where the stage's origin goes: the footprint's centre, and the lowest level's floor (else the lowest point). */
+export function groundShift(scene: Scene): Vec3 {
   const b = scene.bounds ?? { min: [0, 0, 0] as Vec3, max: [0, 0, 0] as Vec3 };
-  const shift: Vec3 = [-(b.min[0] + b.max[0]) / 2, -b.min[1], -(b.min[2] + b.max[2]) / 2];
+  const floor = scene.levels.length === 0 ? b.min[1] : Math.min(...scene.levels.map((l) => l.elevation));
+  return [-(b.min[0] + b.max[0]) / 2, -floor, -(b.min[2] + b.max[2]) / 2];
+}
+
+/** The root layer's text. `textureFile` names a map's file in the package, or null without one. */
+export function usdaOf(scene: Scene, about: Record<string, unknown>, textureFile: (asset: string) => string | null = () => null, scale: ArScale = 'true'): string {
+  // The footprint's centre to the origin, the lowest floor to the ground.
+  const shift = groundShift(scene);
+  const factor = SCALE_FACTOR[scale];
   const out: string[] = [];
   out.push('#usda 1.0');
   out.push('(');
   out.push('    customLayerData = {');
-  out.push(`        dictionary floorspec = {\n${dictionary({ ...about, design: scene.design ?? undefined, origin: `translate ${shift.map((v) => num(v)).join(' ')} undoes this to the document's frame` }, '            ')}\n        }`);
+  // RealityKit's newer image-based lighting: a house's whites stay white in AR Quick Look.
+  out.push('        dictionary Apple = {\n            int preferredIblVersion = 2\n        }');
+  out.push(
+    `        dictionary floorspec = {\n${dictionary({ ...about, design: scene.design ?? undefined, origin: `translate ${shift.map((v) => num(v)).join(' ')} undoes this to the document's frame`, scale: SCALE_LABEL[scale], grounded: "the lowest level's floor at y = 0" }, '            ')}\n        }`,
+  );
   out.push('    }');
   out.push('    defaultPrim = "Model"');
   out.push('    doc = "Exported by D3 Floorspec from a Floorspec model: metres, +Y up."');
@@ -127,12 +152,21 @@ export function usdaOf(scene: Scene, about: Record<string, unknown>, textureFile
   out.push(')');
   out.push('');
   out.push('def Xform "Model" (');
+  out.push('    prepend apiSchemas = ["Preliminary_AnchoringAPI"]');
   out.push(`    assetInfo = {\n        string name = ${str(scene.project)}\n    }`);
   out.push('    kind = "component"');
   out.push(')');
   out.push('{');
+  // Placed on a floor or a table the device finds (RealityKit's anchoring, which AR Quick Look reads).
+  out.push('    uniform token preliminary:anchoring:type = "plane"');
+  out.push('    uniform token preliminary:planeAnchoring:alignment = "horizontal"');
   out.push(`    double3 xformOp:translate = (${shift.map((v) => num(v)).join(', ')})`);
-  out.push('    uniform token[] xformOpOrder = ["xformOp:translate"]');
+  if (factor === 1) out.push('    uniform token[] xformOpOrder = ["xformOp:translate"]');
+  else {
+    // Moved to the origin first, then made smaller about it: the first op is applied last.
+    out.push(`    float3 xformOp:scale = (${num(factor)}, ${num(factor)}, ${num(factor)})`);
+    out.push('    uniform token[] xformOpOrder = ["xformOp:scale", "xformOp:translate"]');
+  }
   out.push('');
 
   const matName = namer();
@@ -161,14 +195,13 @@ export function usdaOf(scene: Scene, about: Record<string, unknown>, textureFile
       const meshName = namer();
       for (const p of node.primitives) {
         const n = p.indices.length / 3;
+        // To a tenth of a millimetre: finer than any phone can show, and a third of the text.
         const pts: string[] = [];
-        for (let i = 0; i < p.positions.length; i += 3) pts.push(`(${num(p.positions[i]!)}, ${num(p.positions[i + 1]!)}, ${num(p.positions[i + 2]!)})`);
-        // Face-varying normals: a flat face's normal at each of its corners, so nothing is smoothed.
+        for (let i = 0; i < p.positions.length; i += 3) pts.push(`(${num(p.positions[i]!, 4)}, ${num(p.positions[i + 1]!, 4)}, ${num(p.positions[i + 2]!, 4)})`);
+        // A normal per vertex: a vertex is shared only within one flat face, so this is the face's
+        // normal at each of its corners and nothing is smoothed (a round piece's are its own).
         const normals: string[] = [];
-        for (let k = 0; k < p.indices.length; k++) {
-          const v = p.indices[k]!;
-          normals.push(`(${num(p.normals[3 * v]!)}, ${num(p.normals[3 * v + 1]!)}, ${num(p.normals[3 * v + 2]!)})`);
-        }
+        for (let i = 0; i < p.normals.length; i += 3) normals.push(`(${num(p.normals[i]!, 4)}, ${num(p.normals[i + 1]!, 4)}, ${num(p.normals[i + 2]!, 4)})`);
         let lo: Vec3 = [Infinity, Infinity, Infinity];
         let hi: Vec3 = [-Infinity, -Infinity, -Infinity];
         for (let i = 0; i < p.positions.length; i += 3)
@@ -182,16 +215,17 @@ export function usdaOf(scene: Scene, about: Record<string, unknown>, textureFile
         out.push('            )');
         out.push('            {');
         out.push('                uniform bool doubleSided = 0');
-        out.push(`                float3[] extent = [(${lo.map((v) => num(v)).join(', ')}), (${hi.map((v) => num(v)).join(', ')})]`);
+        // Round outwards, so the points as written are inside it.
+        out.push(`                float3[] extent = [(${lo.map((v) => num(Math.floor(v * 1e4) / 1e4, 4)).join(', ')}), (${hi.map((v) => num(Math.ceil(v * 1e4) / 1e4, 4)).join(', ')})]`);
         out.push(`                int[] faceVertexCounts = [${new Array<string>(n).fill('3').join(', ')}]`);
         out.push(`                int[] faceVertexIndices = [${Array.from(p.indices).join(', ')}]`);
         out.push(`                rel material:binding = <${matPaths[p.material]!}>`);
-        out.push(`                normal3f[] normals = [${normals.join(', ')}] (\n                    interpolation = "faceVarying"\n                )`);
+        out.push(`                normal3f[] normals = [${normals.join(', ')}] (\n                    interpolation = "vertex"\n                )`);
         out.push(`                point3f[] points = [${pts.join(', ')}]`);
         if (p.uvs !== null) {
           // USD's t runs up the image, glTF's v down it.
           const st: string[] = [];
-          for (let i = 0; i < p.uvs.length; i += 2) st.push(`(${num(p.uvs[i]!)}, ${num(-p.uvs[i + 1]!)})`);
+          for (let i = 0; i < p.uvs.length; i += 2) st.push(`(${num(p.uvs[i]!, 5)}, ${num(-p.uvs[i + 1]!, 5)})`);
           out.push(`                texCoord2f[] primvars:st = [${st.join(', ')}] (\n                    interpolation = "vertex"\n                )`);
         }
         out.push('                uniform token subdivisionScheme = "none"');

@@ -212,7 +212,8 @@ function inRing(x: number, y: number, ring: readonly P2[]): boolean {
   return inside;
 }
 
-function inSurface(x: number, y: number, s: Surface): boolean {
+/** Whether a point in plan is on a surface: inside its outline and out of its holes. */
+export function inSurface(x: number, y: number, s: Surface): boolean {
   if (x < s.box.minX || x > s.box.maxX || y < s.box.minY || y > s.box.maxY) return false;
   return inRing(x, y, s.outer) && !s.holes.some((h) => inRing(x, y, h));
 }

@@ -5,7 +5,7 @@
 import { isRenovationFilter, type RenovationFilter } from '@floorspec/render2d';
 import { exportDxf, exportPdf, PAGES, type PageName } from '../export/drawings/index.js';
 import { exportIfc } from '../export/ifc/index.js';
-import { assetDirImages, assetDirModels, exportGltf, exportUsdz, type ImageSource } from '../export/gltf/index.js';
+import { AR_SCALES, assetDirImages, assetDirModels, exportGltf, exportUsdz, type ArOptions, type ArScale, type ImageSource } from '../export/gltf/index.js';
 import { PRESETS, render3dCompare, render3dPng, type Preset } from '../render3d/index.js';
 import { renderPair } from '../pathtrace/pair.js';
 import { normalizeOn, type Lighting } from '@floorspec/mesh';
@@ -83,6 +83,17 @@ export interface ExportParams {
   readonly style?: PlanStyle;
   /** A PDF's or DXF's renovation plan (FLR-T-18.13). */
   readonly renovation?: RenovationFilter;
+  /** A USDZ for AR Quick Look (FLR-T-14.3): true scale or 1:50, and what it includes. */
+  readonly ar?: ArOptions;
+}
+
+/** A USDZ's AR options from a job row (FLR-T-14.3): a known scale and booleans, or nothing. */
+export function arOf(raw: unknown): ArOptions | undefined {
+  if (typeof raw !== 'object' || raw === null || Array.isArray(raw)) return undefined;
+  const r = raw as Record<string, unknown>;
+  if (!(AR_SCALES as readonly unknown[]).includes(r['scale'])) return undefined;
+  const flag = (k: 'roofs' | 'furniture' | 'fixtures' | 'site') => (typeof r[k] === 'boolean' ? { [k]: r[k] } : {});
+  return { scale: r['scale'] as ArScale, ...flag('roofs'), ...flag('furniture'), ...flag('fixtures'), ...flag('site') };
 }
 
 /** Layer states from a job row (FLR-T-18.3): known layers with known states, or nothing. */
@@ -127,6 +138,7 @@ export function exportParams(raw: unknown): ExportParams {
   const layers = layersOf(p['layers']);
   const style = isPlanStyle(p['style']) ? p['style'] : undefined;
   const renovation = isRenovationFilter(p['renovation']) ? p['renovation'] : undefined;
+  const ar = arOf(p['ar']);
   return {
     ...(levels === undefined ? {} : { levels }),
     ...(page === undefined ? {} : { page }),
@@ -139,6 +151,7 @@ export function exportParams(raw: unknown): ExportParams {
     ...(layers === undefined ? {} : { layers }),
     ...(style === undefined ? {} : { style }),
     ...(renovation === undefined ? {} : { renovation }),
+    ...(ar === undefined ? {} : { ar }),
   };
 }
 
@@ -425,6 +438,7 @@ function modelOptions(job: JobRow, store: { images: ImageSource | undefined; mod
     ...(p.design === undefined ? {} : { design: p.design }),
     ...(p.doors === undefined ? {} : { doors: p.doors }),
     ...(p.lighting === undefined ? {} : { lighting: p.lighting }),
+    ...(p.ar === undefined ? {} : { ar: p.ar }),
     ...(images === undefined ? {} : { images }),
     ...(models === undefined ? {} : { models }),
   };

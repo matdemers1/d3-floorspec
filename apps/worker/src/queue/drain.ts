@@ -182,10 +182,10 @@ export function createDrain(options: DrainOptions): Drain {
       await runJob(job);
       n++;
     }
-    // A file a live share link shows (FLR-T-14.2: a tour) is kept while the link lives.
-    const live = `not exists (select 1 from share_links s where s.tour_job_id = %s and s.revoked_at is null and s.expires_at > now())`;
-    await pool.query(`delete from job_outputs o where o.created_at < now() - interval '${String(KEEP_DAYS)} days' and ${live.replace('%s', 'o.job_id')}`);
-    await pool.query(`delete from job_assets a where a.created_at < now() - interval '${String(KEEP_DAYS)} days' and ${live.replace('%s', 'a.job_id')}`);
+    // A file a live share link shows (FLR-T-14.2: a tour; FLR-T-14.3: an AR model) is kept while the link lives.
+    const live = `not exists (select 1 from share_links s where (s.tour_job_id = %s or s.ar_job_id = %s) and s.revoked_at is null and s.expires_at > now())`;
+    await pool.query(`delete from job_outputs o where o.created_at < now() - interval '${String(KEEP_DAYS)} days' and ${live.replaceAll('%s', 'o.job_id')}`);
+    await pool.query(`delete from job_assets a where a.created_at < now() - interval '${String(KEEP_DAYS)} days' and ${live.replaceAll('%s', 'a.job_id')}`);
     return n;
   }
 

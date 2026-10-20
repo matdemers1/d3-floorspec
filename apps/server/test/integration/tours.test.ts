@@ -78,7 +78,7 @@ describe('virtual tours (FLR-T-14.2)', () => {
     expect(url).toBe(`${running.config.PUBLIC_URL}/s/${token}/tour`);
     expect(link).toMatchObject({ tour: queued.id, shows: { plan: false, threeD: false, findings: false }, comments: false });
     const anon = new Browser(running.url);
-    expect(((await anon.get(`/api/share/${token}`)).body as { shows: unknown }).shows).toEqual({ plan: false, threeD: false, findings: false, tour: true });
+    expect(((await anon.get(`/api/share/${token}`)).body as { shows: unknown }).shows).toEqual({ plan: false, threeD: false, findings: false, tour: true, ar: false });
     expect((await anon.get(`/api/share/${token}/tour`)).body).toEqual({ status: 'queued', panos: 2, done: 0 });
 
     expect(await drain.runOnce()).toBe(1);

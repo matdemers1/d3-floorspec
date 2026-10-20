@@ -180,6 +180,8 @@ export interface ExportJob {
   film?: FilmFacts | null;
   /** A virtual tour's (FLR-T-14.2); null for any other export. */
   tour?: TourFacts | null;
+  /** A USDZ's, for AR Quick Look (FLR-T-14.3); null for any other export. */
+  ar?: Required<ArRequest> | null;
   /** Stopped by a person rather than failed (FLR-T-14.1). */
   cancelled?: boolean;
   /**
@@ -216,6 +218,9 @@ export interface ExportJob {
     /** A tour's (FLR-T-14.2): its panoramas and the doorways they link. */
     panos?: number;
     doorways?: number;
+    /** A USDZ's (FLR-T-14.3): its triangles, and how it was made for AR Quick Look. */
+    triangles?: number;
+    ar?: { scale: ArScale; ratio: string; roofs: boolean; furniture: boolean; fixtures: boolean; site: boolean; bytes: number };
   } | null;
   createdAt: string;
   finishedAt: string | null;
@@ -230,6 +235,18 @@ export const PAGES: { value: PageName; label: string }[] = [
   { value: 'a3', label: 'A3 · 420 × 297 mm' },
   { value: 'a4', label: 'A4 · 297 × 210 mm' },
 ];
+
+/** AR Quick Look's two scales (FLR-T-14.3): on the lot at 1:1, or on a table at 1:50. */
+export type ArScale = 'true' | 'table';
+
+/** A USDZ for AR Quick Look (FLR-T-14.3): its scale, and what it includes besides its levels. */
+export interface ArRequest {
+  scale: ArScale;
+  roofs?: boolean;
+  furniture?: boolean;
+  fixtures?: boolean;
+  site?: boolean;
+}
 
 export interface ExportRequest {
   kind: ExportKind;
@@ -247,6 +264,8 @@ export interface ExportRequest {
   pair?: PairRequest;
   /** A virtual tour's (FLR-T-14.2). */
   tour?: TourRequest;
+  /** A USDZ for AR Quick Look (FLR-T-14.3): true scale or 1:50, and what it includes. */
+  ar?: ArRequest;
   /** glTF and USDZ: the doors closed (default) or open (FLR-T-13.8). */
   doors?: 'open' | 'closed';
   /** glTF and USDZ (FLR-T-13.12): the lights on, each at an output and colour temperature; default every one at full. */

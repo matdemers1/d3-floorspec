@@ -10,6 +10,8 @@ const TTL_MS = 30 * 60_000;
 export const SHARE_PATH = /^\/s\/([A-Za-z0-9_-]{43})$/;
 /** A virtual tour's link (FLR-T-14.2): `/s/<token>/tour`. */
 export const TOUR_PATH = /^\/s\/([A-Za-z0-9_-]{43})\/tour$/;
+/** An AR model's link (FLR-T-14.3): `/s/<token>/ar`. */
+export const AR_PATH = /^\/s\/([A-Za-z0-9_-]{43})\/ar$/;
 
 export function rememberReturn(path: string): void {
   if (!SHARE_PATH.test(path)) return;

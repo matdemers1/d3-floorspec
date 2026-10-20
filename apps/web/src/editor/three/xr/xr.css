@@ -1,0 +1,64 @@
+/* FLR-T-14.3 · Walk it in VR: its panel, and the screen beside the headset. */
+
+.fs-sun.fs-section.fs-vr {
+  width: 324px;
+}
+.fs-vr__ready {
+  padding: var(--space-8) var(--space-12);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-bg);
+  font-size: var(--text-12);
+}
+.fs-vr__field {
+  display: grid;
+  grid-template-columns: 84px minmax(0, 1fr);
+  align-items: center;
+  gap: var(--space-8);
+}
+.fs-vr__gestures {
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr);
+  gap: var(--space-8) var(--space-12);
+  margin: 0;
+  font-size: var(--text-12);
+  line-height: var(--leading-12);
+}
+.fs-vr__gestures dt {
+  color: var(--color-fg);
+  font-weight: var(--weight-medium);
+}
+.fs-vr__gestures dd {
+  margin: 0;
+  color: var(--color-fg-muted);
+}
+
+/* While the headset shows the house: a bar over the view. */
+.fs-vr-status {
+  position: absolute;
+  top: var(--space-16);
+  left: var(--space-16);
+  right: var(--space-16);
+  z-index: 2;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-8);
+  padding: var(--space-8) var(--space-12);
+  border: 1px solid var(--color-border-float);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-raised);
+  box-shadow: var(--shadow-float);
+}
+.fs-vr-status__title {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-6);
+  color: var(--color-fg);
+  font-size: var(--text-13);
+  font-weight: var(--weight-medium);
+}
+.fs-vr-status__note {
+  color: var(--color-fg-muted);
+  font-size: var(--text-12);
+}

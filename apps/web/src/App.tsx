@@ -28,7 +28,7 @@ import { FindingsReportScreen } from './findings/Report';
 import { Coverage } from './findings/Coverage';
 import { Setup } from './screens/Setup';
 import { SignIn } from './screens/SignIn';
-import { SHARE_PATH, takeReturn, TOUR_PATH } from './share/returnTo';
+import { AR_PATH, SHARE_PATH, takeReturn, TOUR_PATH } from './share/returnTo';
 
 const Editor = lazy(() => import('./editor/Editor'));
 const Program = lazy(() => import('./program/Program'));
@@ -36,6 +36,8 @@ const Program = lazy(() => import('./program/Program'));
 const ShareViewer = lazy(() => import('./share/Viewer'));
 // A virtual tour (FLR-T-14.2): a chunk of its own too, opened on phones with no account.
 const TourViewer = lazy(() => import('./share/tour/TourViewer'));
+// FLR-T-14.3: an AR model's page, opened on a phone to place the house with AR Quick Look.
+const ArPage = lazy(() => import('./exports/ar/ArPage'));
 // The profile builder carries the rules engine's checker: a chunk of its own (FLR-T-6.8).
 const Jurisdictions = lazy(() => import('./profiles/Jurisdictions').then((m) => ({ default: m.Jurisdictions })));
 
@@ -89,6 +91,14 @@ function Root() {
     return (
       <Suspense fallback={<Spinner label="Opening the tour" />}>
         <TourViewer key={toured} token={toured} />
+      </Suspense>
+    );
+  }
+  const modelled = AR_PATH.exec(path)?.[1];
+  if (modelled !== undefined) {
+    return (
+      <Suspense fallback={<Spinner label="Opening the AR model" />}>
+        <ArPage key={modelled} token={modelled} />
       </Suspense>
     );
   }

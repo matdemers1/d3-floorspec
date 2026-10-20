@@ -62,6 +62,9 @@ import { XrayLabels } from './xray/XrayLabels';
 import { wallLabels } from './xray/labels';
 import { colourVar, planOf, XRAY_SYSTEMS } from './xray/xray';
 import type { XrayPlan, XrayWall } from '@floorspec/mesh';
+import { XrScene } from './xr/XrScene';
+import { VrPanel, VrStatus } from './xr/VrPanel';
+import { useXr } from './xr/state';
 
 /**
  * The 3D view (FLR-T-7.5, FLR-REQ-113, 114), laid out as the board's "08 · Editor — 3D cutaway",
@@ -233,7 +236,12 @@ export default function ThreeView({ store, compact = false }: { store: EditorSto
   const project = useEditor(store, (s) => s.model?.document.project.name ?? s.project?.name ?? 'the house');
   const selection = useEditor(store, (s) => s.selection);
   const levelId = useEditor(store, (s) => s.level);
-  const walking = useThreeState(store, (s) => s.walking);
+  const walkMode = useThreeState(store, (s) => s.walking);
+  // FLR-T-14.3: in the headset the house is walked as on a walk — every level, doors open, nothing
+  // selected, the panels stepped aside — drawn as Draft draws it, with no lamps: a headset wants 72–90 fps.
+  const inXr = useXr(store, (s) => s.session !== null);
+  const xrRoofs = useXr(store, (s) => s.roofs);
+  const walking = walkMode || inXr;
   const walkFrom = useThreeState(store, (s) => s.walkFrom);
   const levels = useThreeState(store, (s) => s.levels);
   const roof = useThreeState(store, (s) => s.roof);
@@ -263,7 +271,7 @@ export default function ThreeView({ store, compact = false }: { store: EditorSto
   // Presentation's passes are a perspective camera's: the exploded axonometric is drawn as Draft draws.
   // Compare draws its two pictures as Draft does (CompareRender): Presentation's passes are one picture's.
   // X-ray draws as Draft too: Presentation's passes (occlusion, reflections) see the faded finishes as opaque.
-  const presenting = quality === 'presentation' && !exploding && !comparing && !xray.on;
+  const presenting = quality === 'presentation' && !exploding && !comparing && !xray.on && !inXr;
   // What Presentation reports: whether its first full frame is drawn, and its frame rate moving.
   const stats = useMemo(() => new StatsStore(), []);
   const originRef = useRef<Vec3 | null>(null);
@@ -365,7 +373,7 @@ export default function ThreeView({ store, compact = false }: { store: EditorSto
 
   // Walking: start where asked, or at the entry; stop and the orbit camera is where it was.
   useEffect(() => {
-    if (!walking) {
+    if (!walkMode) {
       ctl.walker = null;
       ctl.keys.clear();
       ctl.invalidate();
@@ -380,7 +388,7 @@ export default function ThreeView({ store, compact = false }: { store: EditorSto
     }
     if (ctl.walker === null) three.stopWalking();
     ctl.invalidate();
-  }, [walking, walkFrom, ready, ctl, three, levelId]);
+  }, [walkMode, walkFrom, ready, ctl, three, levelId]);
 
   const order = useMemo(() => (ready === null ? new Map<string, number>() : levelOrder(ready.model)), [ready]);
   // Each level's band of height, metres about the mesh's origin, lowest first (FLR-T-14.6).
@@ -388,8 +396,13 @@ export default function ThreeView({ store, compact = false }: { store: EditorSto
   // In the exploded view: what the section keeps, by level (its height), when it is asked to.
   const keptLevels = useMemo(() => (exploding && explode.keep ? keptByHeight(section, bands) : null), [exploding, explode.keep, section, bands]);
   const visible = useMemo(
-    () => built.filter((b) => (exploding ? explodedVisible(b.part, explode, keptLevels) : isVisible(b.part, { walking, levels, roof, level: levelId, order }))),
-    [built, walking, levels, roof, levelId, order, exploding, explode, keptLevels],
+    () =>
+      built.filter((b) =>
+        exploding
+          ? explodedVisible(b.part, explode, keptLevels)
+          : isVisible(b.part, { walking, levels, roof, level: levelId, order }) && !(inXr && !xrRoofs && (b.part.kind === 'roof' || b.part.kind === 'roofGable')),
+      ),
+    [built, walking, levels, roof, levelId, order, exploding, explode, keptLevels, inXr, xrRoofs],
   );
   // FLR-T-14.7: the levels whose floors the daylight study is laid on — the level cut at, or every
   // level in the whole house and on a walk; none in the exploded view.
@@ -413,14 +426,14 @@ export default function ThreeView({ store, compact = false }: { store: EditorSto
   // FLR-T-12.22: the light fixtures as lamps, on the levels shown, when the Lights toggle is on.
   const lamps = useMemo(
     () => {
-      if (ready === null || !lightsOn || exploding) return [];
+      if (ready === null || !lightsOn || exploding || inXr) return [];
       // Presentation samples the sky's reflection map beside a surface's maps: one shadowed lamp fewer (FLR-T-13.7).
       const budget = shadowBudget(textureUnits, MATERIAL_TEXTURE_UNITS, presenting ? PRESENTATION_SCENE_TEXTURE_UNITS : SCENE_TEXTURE_UNITS);
       const lit = viewLights(ready.model, ready.mesh, { level: levelId, cutaway: levels !== 'house' && !walking, order }, lighting, budget);
       // One level alone (FLR-T-13.2): its own lamps only — the cutaway's, less those below it.
       return levels === 'only' && !walking ? lit.filter((l) => l.level === levelId) : lit;
     },
-    [ready, lightsOn, levelId, levels, walking, order, lighting, textureUnits, presenting, exploding],
+    [ready, lightsOn, levelId, levels, walking, order, lighting, textureUnits, presenting, exploding, inXr],
   );
   // FLR-T-13.12: every light of the house, and the lenses the lighting turns off, dims or recolours.
   const allLights = useMemo(() => (ready === null ? [] : houseLights(ready.model)), [ready]);
@@ -808,7 +821,7 @@ export default function ThreeView({ store, compact = false }: { store: EditorSto
 
   // ── Walking keys: on the window, ahead of the editor's own shortcuts, while walking.
   useEffect(() => {
-    if (!walking) return;
+    if (!walkMode) return;
     const MOVE = new Set(['KeyW', 'KeyA', 'KeyS', 'KeyD', 'KeyQ', 'KeyE', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'ShiftLeft', 'ShiftRight']);
     const typing = (t: EventTarget | null) => t instanceof HTMLElement && (t.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(t.tagName));
     const down = (e: KeyboardEvent) => {
@@ -843,7 +856,7 @@ export default function ThreeView({ store, compact = false }: { store: EditorSto
       ctl.keys.clear();
       if (document.pointerLockElement !== null) document.exitPointerLock();
     };
-  }, [walking, ctl, three]);
+  }, [walkMode, ctl, three]);
 
   // ── Picking.
   const onClick = (e: ThreeEvent<MouseEvent>) => {
@@ -876,8 +889,10 @@ export default function ThreeView({ store, compact = false }: { store: EditorSto
     three.set({ walking: true, walkFrom: null });
   };
 
-  const name = walking ? `Walkthrough of ${project}` : `3D view of ${project}`;
-  const hint = walking
+  const name = inXr ? `${project} in VR` : walking ? `Walkthrough of ${project}` : `3D view of ${project}`;
+  const hint = inXr
+    ? 'The headset walks the house at 1:1; the bar over the view sends it to a level or ends it.'
+    : walking
     ? 'W, A, S and D or the arrow keys walk and turn; drag to look around; Shift walks faster; Escape ends the walk.'
     : 'Arrow keys orbit, Shift and the arrows pan, plus and minus zoom, Page Up and Page Down change the level, Home frames the house, X opens the section box, Alt X X-rays the walls, E edits items and openings in 3D (Tab then reaches the selection’s move and rotate handles), Shift M measures. Use the plan view for full keyboard editing.';
 
@@ -936,7 +951,7 @@ export default function ThreeView({ store, compact = false }: { store: EditorSto
         <SceneBridge />
         <group ref={houseGroup}>
           <group ref={mainGroup}>
-            <Parts visible={partsShown} rig={sectionRig} motion={motion} reno={renoStyles} danger={tokens.danger} selection={walking ? null : comparing && compare.focus !== null ? compare.focus : selection} accent={tokens.accent} textures={textures} lit={lightsOn} glows={glows} quality={comparing ? 'draft' : quality} onClick={onClick} onDoubleClick={onDoubleClick} onHover={onHover} onLeave={() => { if (tip !== null) setTip(null); }} outlined={comparing && compare.b.kind === 'main' ? changed : undefined} />
+            <Parts visible={partsShown} rig={sectionRig} motion={motion} reno={renoStyles} danger={tokens.danger} selection={walking ? null : comparing && compare.focus !== null ? compare.focus : selection} accent={tokens.accent} textures={textures} lit={lightsOn} glows={glows} quality={comparing || inXr ? 'draft' : quality} onClick={onClick} onDoubleClick={onDoubleClick} onHover={onHover} onLeave={() => { if (tip !== null) setTip(null); }} outlined={comparing && compare.b.kind === 'main' ? changed : undefined} />
             {ready !== null ? <FurnitureScene furniture={furniture} mesh={ready.mesh} visibleIds={extensionIds} selection={walking ? null : selection} accent={tokens.accent} clearances={clearancesShown && !walking} onClick={onClick} register={(id, g) => registerItem(sectionRig, ready.mesh, id, g)} move={(id, g) => motion.register(id, g)} /> : null}
           </group>
           {/* FLR-T-14.5: inside the house's group, so the section box cuts it as it cuts the house. */}
@@ -972,6 +987,7 @@ export default function ThreeView({ store, compact = false }: { store: EditorSto
             <FilmMarksTracker marks={filmPath.marks} el={filmMarks} />
           </>
         ) : null}
+        {ready !== null ? <XrScene store={store} world={ready.world} model={ready.model} mesh={ready.mesh} /> : null}
         {presenting ? (
           <Suspense fallback={null}>
             <Presentation stats={stats} model={ready?.model ?? null} mesh={ready?.mesh ?? null} />
@@ -1044,6 +1060,7 @@ export default function ThreeView({ store, compact = false }: { store: EditorSto
           {ctx !== null ? <ExplodedPanel ctx={ctx} /> : null}
           {ctx !== null ? <XrayPanel ctx={ctx} plan={xrayed} /> : null}
           <DaylightPanel store={store} />
+          <VrPanel store={store} model={ready.model} world={ready.world} mesh={ready.mesh} />
           {daylightOn && !daylightOpen && !exploding ? (
             <div className="fs-daylight__plan-legend">
               <Legend measure={daylightMeasure} title={daylightMeasure === 'illuminance' ? 'Work plane 2′-6″ · advisory' : 'Direct sun a year · advisory'} />
@@ -1078,7 +1095,8 @@ export default function ThreeView({ store, compact = false }: { store: EditorSto
           <LevelsControl store={store} three={three} model={ready.model} order={order} levels={levels} level={levelId} />
         </>
       ) : null}
-      {ready !== null && walking ? <WalkOverlay store={store} three={three} ctl={ctl} world={ready.world} model={ready.model} mesh={ready.mesh} /> : null}
+      {ready !== null && walkMode && !inXr ? <WalkOverlay store={store} three={three} ctl={ctl} world={ready.world} model={ready.model} mesh={ready.mesh} /> : null}
+      {ready !== null && inXr ? <VrStatus store={store} model={ready.model} world={ready.world} /> : null}
     </div>
   );
 }
@@ -1276,6 +1294,8 @@ function Rig({ ctl }: { ctl: ThreeController }) {
     invalidate();
   }, [ctl, size, invalidate]);
   useFrame((state, dt) => {
+    // In the headset (FLR-T-14.3) the headset's pose is the camera.
+    if (state.gl.xr.isPresenting) return;
     ctl.frame(state.camera, dt);
   });
   return null;
