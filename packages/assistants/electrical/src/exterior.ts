@@ -146,7 +146,7 @@ export interface ExteriorOptions {
 const cmp = (a: string, b: string): number => (a < b ? -1 : a > b ? 1 : 0);
 const isObject = (v: unknown): v is Json => typeof v === 'object' && v !== null && !Array.isArray(v);
 const sub = (a: Pt, b: Pt): [number, number] => [a[0] - b[0], a[1] - b[1]];
-const len = (v: Pt): number => Math.hypot(v[0], v[1]);
+const len = (v: Pt): number => Math.sqrt(v[0] * v[0] + v[1] * v[1]);
 const grid = (v: number): number => Math.round(v / IN) * IN;
 
 /** A direction as a Core angle in whole degrees, microdegrees, in (−180°, 180°]. */
@@ -200,7 +200,7 @@ export function walksOf(plan: PlanReading, d: ExteriorDefaults, level?: string):
     const kind = d.walkPurposes.includes(purpose) ? 'walk' : d.drivePurposes.includes(purpose) ? 'drive' : null;
     const lvl = String(slab['level']);
     if (kind === null || (level !== undefined && lvl !== level)) continue;
-    const ring = (plan.derived.slabs?.[id]?.outline ?? (slab['boundary'] as Pt[] | undefined) ?? []) as Pt[];
+    const ring = (plan.derived.slabs?.[id]?.outline ?? (slab['boundary'] as Pt[] | undefined) ?? []);
     const sl = ring.length >= 3 ? slabLine(ring) : null;
     if (sl === null) continue;
     const walk: Walk = { id, name: typeof slab['name'] === 'string' ? slab['name'].toLowerCase() : kind, kind, level: lvl, line: sl.line, halfWidth: sl.halfWidth };
@@ -385,7 +385,7 @@ export function proposeExterior(document: string | Uint8Array | FloorspecDocumen
           const q: Pt = [grid(p[0] + n0[0] * off * s), grid(p[1] + n0[1] * off * s)];
           if (onGround(q, walk.level)) {
             spot = q;
-            side = s as 1 | -1;
+            side = s;
             break;
           }
         }
@@ -403,6 +403,7 @@ export function proposeExterior(document: string | Uint8Array | FloorspecDocumen
   const sides = new Map<string, Set<string>>();
   for (const room of plan.rooms) for (const e of room.entries) if (e.hinge !== null) sides.set(e.opening, new Set([...(sides.get(e.opening) ?? []), `${e.wall}/${e.side}`]));
   const seen = new Set<string>();
+  const cramped: string[] = [];
   for (const room of plan.rooms) {
     for (const e of room.entries) {
       if (e.hinge === null || seen.has(e.opening) || (sides.get(e.opening)?.size ?? 0) !== 1) continue;
@@ -424,7 +425,7 @@ export function proposeExterior(document: string | Uint8Array | FloorspecDocumen
       const candidates = e.hinge === 'start' ? [e.to + d.besideDoor + half, e.from - d.besideDoor - half] : [e.from - d.besideDoor - half, e.to + d.besideDoor + half];
       const at = candidates.map((c) => Math.round(c)).find(clear);
       if (at === undefined) {
-        notes.push(`The entry at ${e.opening} has no clear wall beside it for a wall-washer: light it by hand.`);
+        cramped.push(e.opening);
         continue;
       }
       const height = Math.min(EXTERIOR_DEFS.wallWash.height ?? 6 * FT, (plan.derived.walls[e.wall]?.topElevation ?? Infinity) - (plan.derived.walls[e.wall]?.baseElevation ?? 0) - 6 * IN);
@@ -433,6 +434,8 @@ export function proposeExterior(document: string | Uint8Array | FloorspecDocumen
       groups.push({ kind: 'wallWash', where: `entry ${e.opening}`, count: 1, detail: `beside the door, ${lengthText(doc, height)} up` });
     }
   }
+
+  if (cramped.length > 0) notes.push(`${cramped.length === 1 ? `The entry at ${cramped[0] ?? ''} has` : `The entries at ${list(cramped)} have`} no clear wall beside the door for a wall-washer: light ${cramped.length === 1 ? 'it' : 'them'} by hand if ${cramped.length === 1 ? 'it needs' : 'they need'} it.`);
 
   // ── Exterior steps: a step light on each riser of a stair that stands outside every room ──
   for (const [sid, st] of Object.entries(plan.derived.stairs ?? {}).sort(([a], [b]) => cmp(a, b))) {

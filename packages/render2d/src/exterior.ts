@@ -25,7 +25,6 @@ type Pt = readonly [number, number];
 
 const IN = 32_512;
 const FT = 12 * IN;
-const MM = 1_280;
 
 export const EXTERIOR_KINDS = ['path', 'uplight', 'wallWash', 'step', 'string'] as const;
 export type ExteriorKind = (typeof EXTERIOR_KINDS)[number];
@@ -143,12 +142,12 @@ const SIN: readonly number[] = Array.from({ length: 24 }, (_, k) => COS[(k + 18)
 
 /** tan(half a beam), for the spreads the catalogue offers; others by the nearest below. */
 const TAN_HALF: readonly (readonly [number, number])[] = [
-  [15, 0.13165249758739583],
-  [25, 0.22169466264294217],
-  [40, 0.36397023426620234],
-  [60, 0.5773502691896257],
+  [15, 0.131652],
+  [25, 0.221695],
+  [40, 0.36397],
+  [60, 0.57735],
   [90, 1],
-  [120, 1.7320508075688772],
+  [120, 1.732051],
 ];
 const tanHalf = (beam: number): number => {
   let t = TAN_HALF[0]![1];

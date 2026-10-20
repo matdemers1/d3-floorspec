@@ -331,7 +331,7 @@ function exteriorLights(
   const lamps = exteriorLamps(ext, min, max);
   return lamps.map((lamp, i): FixtureLight => {
     const [px, py] = toPlan(lamp.local[0], lamp.local[1]);
-    const position: Vec3 = [Math.round((o[0] ?? 0) + px), Math.round((o[1] ?? 0) + py), Math.round((o[2] ?? 0) + lamp.local[2])];
+    const position: Vec3 = [Math.round(o[0] + px), Math.round(o[1] + py), Math.round(o[2] + lamp.local[2])];
     const aim = lamp.aim === undefined ? undefined : ((): Vec3 => {
       const [ax, ay] = toPlan(lamp.aim[0], lamp.aim[1]);
       return [Number(ax.toFixed(4)), Number(ay.toFixed(4)), lamp.aim[2]];
