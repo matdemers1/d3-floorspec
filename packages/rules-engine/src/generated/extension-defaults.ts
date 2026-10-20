@@ -64,6 +64,28 @@ export const ELEMENT_DEFAULTS: Readonly<Record<string, Readonly<Record<string, R
     "gasAppliances": {},
     "terminals": {}
   },
+  "FS_outdoor": {
+    "fences": {
+      "gates": [],
+      "onSlope": "racked",
+      "postSpacing": 3072000
+    },
+    "fires": {},
+    "kitchens": {
+      "appliances": []
+    },
+    "pools": {
+      "coping": 384000,
+      "waterLine": 192000
+    },
+    "shelters": {
+      "attached": false,
+      "postSize": 192000,
+      "postSpacing": 3072000,
+      "rafterSpacing": 768000,
+      "top": "slats"
+    }
+  },
   "FS_plumbing": {
     "cleanouts": {},
     "drains": {},
@@ -102,6 +124,7 @@ export const RECORD_DEFAULTS: Readonly<Record<string, Readonly<Record<string, Re
       "source": "meter"
     }
   },
+  "FS_outdoor": {},
   "FS_plumbing": {
     "stacks": {
       "stack": "drainWasteVent"
