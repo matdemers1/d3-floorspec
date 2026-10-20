@@ -234,23 +234,38 @@
   overflow: hidden;
   pointer-events: none;
 }
+/* A pin: its dot on the desk or the pillow, its pill above it — lifted (--lift) clear of the others, on a leader. */
 .fs-daylight__pin {
+  --lift: 0px;
   position: absolute;
   top: 0;
   left: 0;
-  display: flex;
-  flex-direction: column-reverse;
-  align-items: center;
-  gap: var(--space-4);
-  /* The pill above its point, the point on the desk or the pillow. */
-  transform: translate(-50%, calc(-100% + 5px));
+  width: 0;
+  height: 0;
 }
 .fs-daylight__dot {
+  position: absolute;
+  left: -5px;
+  top: -5px;
   width: 10px;
   height: 10px;
   border: 2px solid var(--color-surface-raised);
   border-radius: var(--radius-full);
   background: var(--color-danger);
+}
+.fs-daylight__leader {
+  position: absolute;
+  left: -0.5px;
+  bottom: 0;
+  width: 1px;
+  height: calc(var(--lift) + 6px);
+  background: var(--color-danger);
+}
+.fs-daylight__pin > .fs-daylight__flag {
+  position: absolute;
+  left: 0;
+  bottom: calc(6px + var(--lift));
+  transform: translateX(-50%);
 }
 .fs-daylight__plan-compare {
   position: absolute;
@@ -314,21 +329,12 @@
   color: var(--color-fg-muted);
 }
 
-/* ─── In 3D: the flags over the view, and the legend while the panel is closed ───────────────── */
+/* ─── In 3D: the flags over the view ────────────────────────────────────────────────────────── */
 .fs-daylight__marks {
   position: absolute;
   inset: 0;
   overflow: hidden;
   pointer-events: none;
-}
-.fs-daylight__mark {
-  position: absolute;
-  top: 0;
-  left: 0;
-  display: flex;
-  flex-direction: column-reverse;
-  align-items: center;
-  gap: var(--space-4);
 }
 
 /* ─── The room inspector ────────────────────────────────────────────────────────────────────── */

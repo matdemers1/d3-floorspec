@@ -1,4 +1,4 @@
-import { useEffect, useId, useMemo, type ReactNode } from 'react';
+import { useEffect, useId, useLayoutEffect, useMemo, useRef, type ReactNode } from 'react';
 import { Alert, Button, IconButton, Input, SegmentedControl, Spinner, Switch, Tooltip } from '@d3cloud/ui';
 import { Columns2, Info, Pause, Play, Sun, SunMedium, X } from 'lucide-react';
 import {
@@ -21,7 +21,7 @@ import { formatDate, formatTime, parseDate } from '../three/sun/clock';
 import { sunOf, useSunState } from '../three/sun/study';
 import { threeOf, useThreeState } from '../three/mode';
 import { DAYS, dayIn, daylightOf, otherSolstice, useDaylight, type DaylightMeasure, type Study } from './state';
-import { paintGrid, useBandColours } from './paint';
+import { declutter, paintGrid, useBandColours } from './paint';
 import './daylight.css';
 
 /**
@@ -395,6 +395,37 @@ export function DaylightLayer({ store, view, level }: { store: EditorStore; view
   );
 }
 
+/** The glare flags on the plan, each over its desk or bed, no two pills overlapping. */
+function PlanFlags({ flags, view }: { flags: readonly GlareFlag[]; view: Viewport }) {
+  const host = useRef<HTMLDivElement>(null);
+  const points = flags.map((f) => toScreen(view, [f.at[0] * UNITS, f.at[1] * UNITS]));
+  useLayoutEffect(() => {
+    const el = host.current;
+    if (el === null) return;
+    const nodes = [...el.querySelectorAll<HTMLElement>('.fs-daylight__pin')];
+    const lifts = declutter(nodes.map((n, i) => {
+      const chip = n.querySelector<HTMLElement>('.fs-daylight__flag');
+      const [x, y] = points[i] ?? [0, 0];
+      return { x, y, w: chip?.offsetWidth ?? 160, h: chip?.offsetHeight ?? 24 };
+    }));
+    nodes.forEach((n, i) => { n.style.setProperty('--lift', `${String(lifts[i] ?? 0)}px`); });
+  });
+  return (
+    <div className="fs-daylight__flags" aria-label="Glare at desks and beds" role="list" ref={host}>
+      {flags.map((f, i) => {
+        const [x, y] = points[i] ?? [0, 0];
+        return (
+          <span key={f.id} role="listitem" className="fs-daylight__pin" style={{ transform: `translate(${String(x)}px, ${String(y)}px)` }}>
+            <span className="fs-daylight__leader" aria-hidden="true" />
+            <span className="fs-daylight__dot" aria-hidden="true" />
+            <GlareFlagChip flag={f} />
+          </span>
+        );
+      })}
+    </div>
+  );
+}
+
 /** Over the plan while daylight shows: what is shown (a chip), the legend, the glare flags, the comparison. */
 export function PlanDaylight({ store, view, level }: { store: EditorStore; view: Viewport; level: LevelView }) {
   const d = daylightOf(store);
@@ -433,17 +464,7 @@ export function PlanDaylight({ store, view, level }: { store: EditorStore; view:
           {compare ? 'Stop comparing' : `Compare with ${formatDate(otherSolstice(clock.date))}`}
         </Button>
       </div>
-      <div className="fs-daylight__flags" aria-label="Glare at desks and beds" role="list">
-        {flags.map((f) => {
-          const [x, y] = toScreen(view, [f.at[0] * UNITS, f.at[1] * UNITS]);
-          return (
-            <span key={f.id} role="listitem" className="fs-daylight__pin" style={{ left: x, top: y }}>
-              <span className="fs-daylight__dot" aria-hidden="true" />
-              <GlareFlagChip flag={f} />
-            </span>
-          );
-        })}
-      </div>
+      <PlanFlags flags={flags} view={view} />
       <div className="fs-daylight__plan-compare">
         <CompareCard store={store} />
       </div>

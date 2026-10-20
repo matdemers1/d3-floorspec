@@ -104,3 +104,41 @@ export function paintGrid(grid: DaylightGrid, measure: DaylightMeasure, colours:
     }
   return big;
 }
+
+/** A flag's pill on screen: its pin (x, y) and its size, pixels. */
+export interface Pill {
+  readonly x: number;
+  readonly y: number;
+  readonly w: number;
+  readonly h: number;
+}
+
+/** The gap between a pin and its pill, and between two pills, pixels. */
+const GAP = 6;
+
+/**
+ * How far to lift each pill above its pin so no two overlap: the lowest on screen keeps its place,
+ * and each one above it rises past any it would cover. Pills are centred over their pins.
+ */
+export function declutter(pills: readonly Pill[]): number[] {
+  const order = pills.map((p, i) => ({ p, i })).sort((a, b) => b.p.y - a.p.y || a.p.x - b.p.x);
+  const placed: { l: number; r: number; t: number; b: number }[] = [];
+  const lift = new Array<number>(pills.length).fill(0);
+  for (const { p, i } of order) {
+    const l = p.x - p.w / 2;
+    const r = p.x + p.w / 2;
+    let b = p.y - GAP;
+    for (let moved = true, guard = 0; moved && guard < 64; guard++) {
+      moved = false;
+      for (const q of placed) {
+        if (l < q.r + GAP && r > q.l - GAP && b > q.t - GAP && b - p.h < q.b + GAP) {
+          b = q.t - GAP;
+          moved = true;
+        }
+      }
+    }
+    placed.push({ l, r, t: b - p.h, b });
+    lift[i] = p.y - GAP - b;
+  }
+  return lift;
+}

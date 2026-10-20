@@ -4,7 +4,7 @@ import { useFrame, useThree } from '@react-three/fiber';
 import type { DaylightGrid, GlareFlag } from '@floorspec/analysis';
 import type { EditorStore } from '../store';
 import { useDaylight } from './state';
-import { paintGrid, useBandColours, type BandColours } from './paint';
+import { declutter, paintGrid, useBandColours, type BandColours, type Pill } from './paint';
 import type { DaylightMeasure } from './state';
 import { GlareFlagChip } from './Daylight';
 
@@ -67,20 +67,28 @@ export function useGlareFlags(store: EditorStore, levels: ReadonlySet<string>): 
   return useMemo(() => (!on || !glare || study === null ? [] : study.glare.filter((g) => levels.has(g.level))), [on, glare, study, levels]);
 }
 
-/** Inside the canvas: keeps each flag over its point as the camera moves. */
+/** Inside the canvas: keeps each flag over its point as the camera moves, no two pills overlapping. */
 export function GlareTracker({ flags, el, origin, k }: { flags: readonly GlareFlag[]; el: RefObject<HTMLDivElement | null>; origin: readonly [number, number, number]; k: number }) {
   const v = useMemo(() => new THREE.Vector3(), []);
   useFrame(({ camera, size }) => {
     const host = el.current;
     if (host === null) return;
+    const shown: { node: HTMLElement; pill: Pill }[] = [];
     for (const f of flags) {
       const node = host.querySelector<HTMLElement>(`[data-mark="${CSS.escape(f.id)}"]`);
       if (node === null) continue;
       v.set(f.at[0] - origin[0] / k, f.at[1] - origin[1] / k, f.z - origin[2] / k).project(camera);
       const inView = v.z < 1 && Math.abs(v.x) <= 1.02 && Math.abs(v.y) <= 1.02;
       node.style.visibility = inView ? 'visible' : 'hidden';
-      node.style.transform = `translate(${String(((v.x + 1) / 2) * size.width)}px, ${String(((1 - v.y) / 2) * size.height)}px) translate(-50%, calc(-100% + 5px))`;
+      if (!inView) continue;
+      const x = ((v.x + 1) / 2) * size.width;
+      const y = ((1 - v.y) / 2) * size.height;
+      node.style.transform = `translate(${String(x)}px, ${String(y)}px)`;
+      const chip = node.querySelector<HTMLElement>('.fs-daylight__flag');
+      shown.push({ node, pill: { x, y, w: chip?.offsetWidth ?? 160, h: chip?.offsetHeight ?? 24 } });
     }
+    const lifts = declutter(shown.map((s) => s.pill));
+    shown.forEach((s, i) => { s.node.style.setProperty('--lift', `${String(lifts[i] ?? 0)}px`); });
   });
   return null;
 }
@@ -90,7 +98,8 @@ export function GlareMarks({ flags, el }: { flags: readonly GlareFlag[]; el: Ref
   return (
     <div className="fs-daylight__marks" ref={el} role="list" aria-label="Glare at desks and beds">
       {flags.map((f) => (
-        <span key={f.id} role="listitem" className="fs-daylight__mark" data-mark={f.id} style={{ visibility: 'hidden' }}>
+        <span key={f.id} role="listitem" className="fs-daylight__pin" data-mark={f.id} style={{ visibility: 'hidden' }}>
+          <span className="fs-daylight__leader" aria-hidden="true" />
           <span className="fs-daylight__dot" aria-hidden="true" />
           <GlareFlagChip flag={f} />
         </span>
