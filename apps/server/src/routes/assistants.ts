@@ -170,7 +170,7 @@ export function assistantRoutes(db: Db, applier: Applier, store: AssetStore | nu
       if (proposal.batch.length === 0) {
         return {
           reply: (res) => res.status(200).json({ main: main.hash, changeset: null, proposal: view }),
-          audit: { action: 'assistants.staging.propose', targetType: 'project', targetId: project.id, detail: { project: project.id, main: main.hash, changeset: null, ops: 0, ...(body.exterior === true ? { exterior: true } : {}) } },
+          audit: { action: 'assistants.staging.propose', targetType: 'project', targetId: project.id, detail: { project: project.id, main: main.hash, changeset: null, ops: 0 } },
         };
       }
       const stored = await storeLibraryFiles(tx, store, project.id, req, proposal.files);
@@ -269,7 +269,7 @@ export function assistantRoutes(db: Db, applier: Applier, store: AssetStore | nu
       if (proposal.batch.length === 0) {
         return {
           reply: (res) => res.status(200).json({ main: main.hash, changeset: null, proposal: view }),
-          audit: { action: 'assistants.electrical.propose', targetType: 'project', targetId: project.id, detail: { project: project.id, main: main.hash, changeset: null, ops: 0 } },
+          audit: { action: 'assistants.electrical.propose', targetType: 'project', targetId: project.id, detail: { project: project.id, main: main.hash, changeset: null, ops: 0, ...(body.exterior === true ? { exterior: true } : {}) } },
         };
       }
       const pending = await tx.changeset.findMany({ where: { projectId: project.id, status: 'pending' }, select: { name: true } });
