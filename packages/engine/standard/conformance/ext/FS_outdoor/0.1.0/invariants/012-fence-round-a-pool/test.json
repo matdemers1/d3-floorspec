@@ -1,0 +1,7 @@
+{
+  "description": "A fence X7 round the plunge pool, 2' clear of it, ending where it starts: valid; its line closes, so it has as many posts as spaces - 12' in two, 18' in three, 12' in two and 18' in three.",
+  "covers": [
+    "FS-OUTD-3.4.1",
+    "FS-OUTD-6.1.1"
+  ]
+}

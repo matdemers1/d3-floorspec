@@ -1,0 +1,6 @@
+{
+  "description": "The gate moved to 32': it turns the fence's corner at 34'. Valid (2.3).",
+  "covers": [
+    "FS-OUTD-2.3.1"
+  ]
+}

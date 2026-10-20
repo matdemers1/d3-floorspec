@@ -1,0 +1,6 @@
+{
+  "description": "FS_outdoor's top-level data is an array: Core allows any JSON there, FS_outdoor's schema does not.",
+  "covers": [
+    "FS-OUTD-1.3.1"
+  ]
+}

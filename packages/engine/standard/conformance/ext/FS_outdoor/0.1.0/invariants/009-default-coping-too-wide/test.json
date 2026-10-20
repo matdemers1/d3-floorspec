@@ -1,0 +1,6 @@
+{
+  "description": "A spa 600 mm square with no coping given: the default 300 mm on each side leaves nothing.",
+  "covers": [
+    "FS-OUTD-2.2.1"
+  ]
+}

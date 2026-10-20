@@ -1,0 +1,361 @@
+{
+  "floorspec": "0.4",
+  "project": {
+    "name": "Phase 15 back terrace"
+  },
+  "buildings": {
+    "B1": {}
+  },
+  "levels": {
+    "L1": {
+      "building": "B1",
+      "elevation": 0,
+      "height": 3456000
+    }
+  },
+  "types": {
+    "WT": {
+      "kind": "wallType",
+      "layers": [
+        {
+          "thickness": 128000,
+          "function": "core"
+        }
+      ]
+    }
+  },
+  "junctions": {
+    "J1": {
+      "level": "L1",
+      "position": [0, 0]
+    },
+    "J2": {
+      "level": "L1",
+      "position": [0, 4681728]
+    },
+    "J3": {
+      "level": "L1",
+      "position": [4681728, 4681728]
+    },
+    "J4": {
+      "level": "L1",
+      "position": [7802880, 4681728]
+    },
+    "J5": {
+      "level": "L1",
+      "position": [7802880, 0]
+    },
+    "J6": {
+      "level": "L1",
+      "position": [4681728, 0]
+    },
+    "J7": {
+      "level": "L1",
+      "position": [4681728, 2340864]
+    },
+    "J8": {
+      "level": "L1",
+      "position": [7802880, 2340864]
+    },
+    "J9": {
+      "level": "L1",
+      "position": [10924032, 4681728]
+    },
+    "J10": {
+      "level": "L1",
+      "position": [10924032, 0]
+    }
+  },
+  "walls": {
+    "W1": {
+      "level": "L1",
+      "start": "J1",
+      "end": "J2",
+      "type": "WT"
+    },
+    "W2": {
+      "level": "L1",
+      "start": "J2",
+      "end": "J3",
+      "type": "WT"
+    },
+    "W3": {
+      "level": "L1",
+      "start": "J3",
+      "end": "J4",
+      "type": "WT"
+    },
+    "W4": {
+      "level": "L1",
+      "start": "J4",
+      "end": "J8",
+      "type": "WT"
+    },
+    "W5": {
+      "level": "L1",
+      "start": "J8",
+      "end": "J5",
+      "type": "WT"
+    },
+    "W6": {
+      "level": "L1",
+      "start": "J5",
+      "end": "J6",
+      "type": "WT"
+    },
+    "W7": {
+      "level": "L1",
+      "start": "J6",
+      "end": "J1",
+      "type": "WT"
+    },
+    "W8": {
+      "level": "L1",
+      "start": "J6",
+      "end": "J7",
+      "type": "WT"
+    },
+    "W9": {
+      "level": "L1",
+      "start": "J7",
+      "end": "J3",
+      "type": "WT"
+    },
+    "W10": {
+      "level": "L1",
+      "start": "J7",
+      "end": "J8",
+      "type": "WT"
+    },
+    "W11": {
+      "level": "L1",
+      "start": "J4",
+      "end": "J9",
+      "type": "WT"
+    },
+    "W12": {
+      "level": "L1",
+      "start": "J9",
+      "end": "J10",
+      "type": "WT"
+    },
+    "W13": {
+      "level": "L1",
+      "start": "J10",
+      "end": "J5",
+      "type": "WT"
+    }
+  },
+  "rooms": {
+    "R1": {
+      "level": "L1",
+      "anchor": [2340864, 2340864],
+      "name": "Kitchen",
+      "function": "kitchen"
+    },
+    "R2": {
+      "level": "L1",
+      "anchor": [6242304, 3511296],
+      "name": "Bath",
+      "function": "bath"
+    },
+    "R3": {
+      "level": "L1",
+      "anchor": [6242304, 1170432],
+      "name": "Utility",
+      "function": "mechanical"
+    },
+    "R4": {
+      "level": "L1",
+      "anchor": [9363456, 2340864],
+      "name": "Courtyard",
+      "function": "exterior"
+    }
+  },
+  "slabs": {
+    "S1": {
+      "level": "L1",
+      "boundary": [[780288, -3901440], [4681728, -3901440], [4681728, -390144], [780288, -390144]],
+      "thickness": 128000,
+      "name": "Patio"
+    }
+  },
+  "extensionsUsed": {
+    "FS_outdoor": "0.1.0"
+  },
+  "extensions": {
+    "FS_outdoor": {
+      "collections": {
+        "pools": {
+          "X1": {
+            "fallback": {
+              "level": "L1",
+              "box": {
+                "min": [-1560576, -2731008, -2145792],
+                "max": [1560576, 2731008, 0]
+              }
+            },
+            "host": {
+              "mode": "free",
+              "level": "L1",
+              "position": [2731008, -7022592]
+            },
+            "form": "plunge",
+            "coping": 390144,
+            "waterLine": 195072,
+            "copingMaterial": "stone",
+            "interior": "plaster",
+            "heated": true,
+            "catalogue": "plunge-pool-8x14",
+            "name": "Plunge pool"
+          },
+          "X2": {
+            "fallback": {
+              "level": "L1",
+              "box": {
+                "min": [-1365504, -1365504, -780288],
+                "max": [1365504, 1365504, 585216]
+              }
+            },
+            "host": {
+              "mode": "surface",
+              "room": "R4",
+              "surface": "floor",
+              "position": [9363456, 2340864]
+            },
+            "form": "spa",
+            "coping": 195072,
+            "waterLine": 130048,
+            "interior": "tile",
+            "heated": true,
+            "name": "Spa",
+            "option": "OP1"
+          }
+        },
+        "shelters": {
+          "X3": {
+            "fallback": {
+              "level": "L1",
+              "box": {
+                "min": [-2340864, -1950720, 0],
+                "max": [2340864, 1950720, 3706368]
+              }
+            },
+            "host": {
+              "mode": "free",
+              "level": "L1",
+              "position": [2731008, -2145792]
+            },
+            "top": "slats",
+            "material": "timber",
+            "postSize": 195072,
+            "postSpacing": 3121152,
+            "rafterSpacing": 780288,
+            "clearHeight": 3121152,
+            "name": "Pergola"
+          }
+        },
+        "kitchens": {
+          "X4": {
+            "fallback": {
+              "level": "L1",
+              "box": {
+                "min": [-487680, -1950720, 0],
+                "max": [487680, 1950720, 1170432]
+              }
+            },
+            "host": {
+              "mode": "free",
+              "level": "L1",
+              "position": [5852160, -1950720],
+              "rotation": 180000000
+            },
+            "appliances": ["grill", "sink", "refrigerator"],
+            "counter": "stone",
+            "fuel": "gas",
+            "name": "Outdoor kitchen"
+          }
+        },
+        "fires": {
+          "X5": {
+            "fallback": {
+              "level": "L1",
+              "box": {
+                "min": [-780288, -780288, 0],
+                "max": [780288, 780288, 585216]
+              }
+            },
+            "host": {
+              "mode": "free",
+              "level": "L1",
+              "position": [-2340864, -3121152]
+            },
+            "form": "pit",
+            "fuel": "gas"
+          },
+          "X7": {
+            "fallback": {
+              "level": "L1",
+              "box": {
+                "min": [-487680, -975360, 0],
+                "max": [487680, 975360, 780288]
+              }
+            },
+            "host": {
+              "mode": "surface",
+              "room": "R4",
+              "surface": "ceiling",
+              "position": [9363456, 2340864]
+            },
+            "form": "table",
+            "fuel": "propane",
+            "option": "OP2"
+          }
+        },
+        "fences": {
+          "X6": {
+            "fallback": {
+              "level": "L1",
+              "box": {
+                "min": [-3966464, -11769344, 0],
+                "max": [3966464, 1625600, 2340864]
+              }
+            },
+            "form": "fence",
+            "points": [[-3901440, 1560576], [-3901440, -11704320], [3901440, -11704320]],
+            "width": 130048,
+            "style": "privacy",
+            "material": "timber",
+            "postSpacing": 3121152,
+            "name": "Side fence",
+            "gates": [
+              {
+                "offset": 15605760,
+                "width": 1560576,
+                "swing": "left",
+                "selfClosing": true,
+                "name": "Side path"
+              }
+            ]
+          }
+        }
+      }
+    }
+  },
+  "optionSets": {
+    "OS1": {
+      "primary": "OP1",
+      "name": "Courtyard"
+    }
+  },
+  "options": {
+    "OP1": {
+      "set": "OS1",
+      "name": "Spa"
+    },
+    "OP2": {
+      "set": "OS1",
+      "name": "Fire table"
+    }
+  }
+}

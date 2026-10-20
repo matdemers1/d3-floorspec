@@ -1,0 +1,6 @@
+{
+  "description": "A gate is single or double.",
+  "covers": [
+    "FS-OUTD-1.3.1"
+  ]
+}

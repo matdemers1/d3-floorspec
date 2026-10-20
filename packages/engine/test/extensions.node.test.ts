@@ -113,8 +113,8 @@ describe('the official extensions', () => {
       .map((s) => JSON.parse(readFileSync(join(standard, 'registry', s.name, 'extension.json'), 'utf8')) as unknown);
     expect(OFFICIAL_EXTENSIONS).toEqual(vendored);
     for (const e of OFFICIAL_EXTENSIONS) {
-      // FS_structural, FS_landscape, FS_lighting, FS_views, FS_renovation, FS_annotation and FS_site 0.1.0 are Drafts; the others are Release Candidates.
-      expect(e.status).toBe(['FS_structural', 'FS_landscape', 'FS_lighting', 'FS_views', 'FS_renovation', 'FS_annotation', 'FS_site'].includes(e.name) ? 'draft' : 'releaseCandidate');
+      // FS_structural, FS_landscape, FS_lighting, FS_views, FS_renovation, FS_annotation, FS_site and FS_outdoor 0.1.0 are Drafts; the others are Release Candidates.
+      expect(e.status).toBe(['FS_structural', 'FS_landscape', 'FS_lighting', 'FS_views', 'FS_renovation', 'FS_annotation', 'FS_site', 'FS_outdoor'].includes(e.name) ? 'draft' : 'releaseCandidate');
       expect(EXTENSION_IMPLEMENTATIONS.get(e.name)?.version).toBe(e.version);
     }
   });

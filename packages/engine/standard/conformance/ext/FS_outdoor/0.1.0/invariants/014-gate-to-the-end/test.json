@@ -1,0 +1,7 @@
+{
+  "description": "The gate moved to 50': it ends exactly where the line does. Valid.",
+  "covers": [
+    "FS-OUTD-2.3.1",
+    "FS-OUTD-6.1.1"
+  ]
+}

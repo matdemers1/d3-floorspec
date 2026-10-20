@@ -1,0 +1,10 @@
+{
+  "valid": false,
+  "diagnostics": [
+    {
+      "code": "FS-OUTD-SCH-001",
+      "severity": "error",
+      "elements": []
+    }
+  ]
+}

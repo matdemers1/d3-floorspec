@@ -1,0 +1,6 @@
+{
+  "description": "The fence's line repeats its corner; its gate is not tested, since its line has no length (5.2).",
+  "covers": [
+    "FS-OUTD-3.4.1"
+  ]
+}

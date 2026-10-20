@@ -1,0 +1,10 @@
+{
+  "description": "The same terrace read with no known extensions: FS_outdoor is not evaluated, so nothing of it is derived (`derived.extensions` is empty) - only what Core derives from every element's fallback and host (Core 1.6.9): each one's box, and the placements of the hosted ones.",
+  "covers": [
+    "FS-OUTD-1.2.1",
+    "FS-OUTD-1.2.4",
+    "FS-CORE-1.6.9",
+    "FS-CORE-12.6.2",
+    "FS-CORE-13.4.1"
+  ]
+}

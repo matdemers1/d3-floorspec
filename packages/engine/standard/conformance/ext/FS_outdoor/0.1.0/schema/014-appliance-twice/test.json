@@ -1,0 +1,6 @@
+{
+  "description": "A kitchen lists each appliance once.",
+  "covers": [
+    "FS-OUTD-1.3.1"
+  ]
+}

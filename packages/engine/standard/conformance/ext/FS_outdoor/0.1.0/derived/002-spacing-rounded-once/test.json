@@ -1,0 +1,6 @@
+{
+  "description": "A shade sail X7 whose posts' centres span 1 m less a base unit along x and 3 m along y, at most 600,000 base units apart: three bays of 426,666.33..., rounded once to 426,666, and seven of 548,571.43..., rounded to 548,571.",
+  "covers": [
+    "FS-OUTD-6.1.1"
+  ]
+}

@@ -1,0 +1,9 @@
+{
+  "description": "The terrace declaring Core \"0.3\": FS_outdoor is evaluated, reports nothing, and derives exactly what it derives for the terrace declaring \"0.4\".",
+  "covers": [
+    "FS-OUTD-1.2.1",
+    "FS-OUTD-1.2.3",
+    "FS-OUTD-1.2.4",
+    "FS-OUTD-6.1.1"
+  ]
+}

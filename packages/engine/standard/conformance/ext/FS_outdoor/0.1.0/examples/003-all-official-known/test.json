@@ -1,0 +1,7 @@
+{
+  "description": "The terrace read with every official entry known, by an implementation of FS_outdoor alone: only FS_outdoor is evaluated and derived.",
+  "covers": [
+    "FS-OUTD-1.2.1",
+    "FS-OUTD-1.2.4"
+  ]
+}

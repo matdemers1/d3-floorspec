@@ -1,0 +1,46 @@
+{
+  "status": "committed",
+  "diagnostics": [],
+  "hash": "984e72f9b3589acc26e434962f87ba91cd049311b91a2267a38f9262e1b05a19",
+  "created": [],
+  "removed": [],
+  "resolved": [
+    {
+      "op": "setProperty",
+      "id": "X6",
+      "path": "/gates",
+      "value": [
+        {
+          "name": "Side path",
+          "offset": 15605760,
+          "selfClosing": true,
+          "swing": "left",
+          "width": 1560576
+        },
+        {
+          "leaves": 2,
+          "name": "Drive",
+          "offset": 3901440,
+          "swing": "right",
+          "width": 3901440
+        }
+      ]
+    }
+  ],
+  "inverse": [
+    {
+      "op": "setProperty",
+      "id": "X6",
+      "path": "/gates",
+      "value": [
+        {
+          "name": "Side path",
+          "offset": 15605760,
+          "selfClosing": true,
+          "swing": "left",
+          "width": 1560576
+        }
+      ]
+    }
+  ]
+}

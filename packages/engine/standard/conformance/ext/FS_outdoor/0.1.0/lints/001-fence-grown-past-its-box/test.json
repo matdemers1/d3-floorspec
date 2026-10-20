@@ -1,0 +1,7 @@
+{
+  "description": "The fence's box is its line grown by 1\", not by half its 4\" width.",
+  "covers": [
+    "FS-OUTD-1.2.3",
+    "FS-OUTD-3.3.2"
+  ]
+}

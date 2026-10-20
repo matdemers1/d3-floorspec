@@ -1,0 +1,10 @@
+{
+  "batch": [
+    {
+      "op": "setProperty",
+      "id": "X6",
+      "path": "/gates/0/offset",
+      "value": 20287488
+    }
+  ]
+}

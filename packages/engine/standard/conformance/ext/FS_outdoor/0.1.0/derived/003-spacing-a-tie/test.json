@@ -1,0 +1,6 @@
+{
+  "description": "A shade sail X7 whose posts' centres span 2,560,001 base units along x in two bays: 1,280,000.5, a tie, rounded to even, 1,280,000 (Core 2.2).",
+  "covers": [
+    "FS-OUTD-6.1.1"
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "description": "A fence's line has at least two points.",
+  "covers": [
+    "FS-OUTD-1.3.1"
+  ]
+}

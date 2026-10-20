@@ -1,0 +1,31 @@
+{
+  "batch": [
+    {
+      "op": "placeElement",
+      "extension": "FS_outdoor",
+      "collection": "pools",
+      "id": "X7",
+      "host": {
+        "mode": "free",
+        "level": "L1",
+        "at": ["7'", "-18'"]
+      },
+      "element": {
+        "form": "plunge",
+        "coping": 390144,
+        "waterLine": 195072,
+        "copingMaterial": "stone",
+        "interior": "plaster",
+        "heated": true,
+        "catalogue": "plunge-pool-8x14",
+        "name": "Plunge pool, 8′ × 14′",
+        "fallback": {
+          "box": {
+            "min": [-1560576, -2731008, -2145792],
+            "max": [1560576, 2731008, 0]
+          }
+        }
+      }
+    }
+  ]
+}

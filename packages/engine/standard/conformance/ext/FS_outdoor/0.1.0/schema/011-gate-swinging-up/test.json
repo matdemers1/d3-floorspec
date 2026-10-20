@@ -1,0 +1,6 @@
+{
+  "description": "A gate swings to the left or the right of its line, or slides.",
+  "covers": [
+    "FS-OUTD-1.3.1"
+  ]
+}

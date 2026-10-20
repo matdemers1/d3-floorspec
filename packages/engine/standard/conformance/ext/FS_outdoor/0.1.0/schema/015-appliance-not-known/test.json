@@ -1,0 +1,6 @@
+{
+  "description": "A kitchen with a \"dishwasher\", which no appliance of this version is.",
+  "covers": [
+    "FS-OUTD-1.3.1"
+  ]
+}

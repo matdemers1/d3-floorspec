@@ -1,0 +1,7 @@
+{
+  "description": "A second gate at 44', double, sliding: it meets the first at a point. Valid, and the gates are derived in order.",
+  "covers": [
+    "FS-OUTD-2.3.2",
+    "FS-OUTD-6.1.1"
+  ]
+}

@@ -1,0 +1,8 @@
+{
+  "description": "The fence placed with a free host at the level's origin: its line is in that frame, which is the level's own. Valid, and what it derives is unchanged.",
+  "covers": [
+    "FS-OUTD-3.2.1",
+    "FS-OUTD-3.2.2",
+    "FS-OUTD-6.1.1"
+  ]
+}

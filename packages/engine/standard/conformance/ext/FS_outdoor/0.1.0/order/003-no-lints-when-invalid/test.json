@@ -1,0 +1,7 @@
+{
+  "description": "An invariant breaks and a lint would apply too - the fire pit is moved into the Kitchen: the document is invalid, so no lint is reported, FS_outdoor's or Core's.",
+  "covers": [
+    "FS-OUTD-1.2.2",
+    "FS-OUTD-1.2.3"
+  ]
+}

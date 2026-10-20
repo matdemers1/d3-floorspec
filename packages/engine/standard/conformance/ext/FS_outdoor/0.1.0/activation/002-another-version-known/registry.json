@@ -1,0 +1,36 @@
+[
+  {
+    "name": "FS_outdoor",
+    "version": "0.2.0",
+    "status": "draft",
+    "schema": "https://d3cloud.io/floorspec/schema/ext/FS_outdoor/0.1.0/outdoor.schema.json",
+    "title": "Outdoor rooms: pools, fences and gates, shelters, outdoor kitchens and fire features",
+    "requires": {},
+    "kinds": {
+      "pools": {
+        "title": "Pool or spa"
+      },
+      "fences": {
+        "title": "Fence or garden wall"
+      },
+      "shelters": {
+        "title": "Pergola, porch or shade sail"
+      },
+      "kitchens": {
+        "title": "Outdoor kitchen"
+      },
+      "fires": {
+        "title": "Fire feature"
+      }
+    },
+    "terms": {
+      "roomFunctions": []
+    },
+    "implementations": [
+      {
+        "name": "D3 Floorspec (@floorspec/engine)",
+        "url": "https://github.com/matdemers1/d3-floorspec"
+      }
+    ]
+  }
+]

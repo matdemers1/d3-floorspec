@@ -1,0 +1,7 @@
+{
+  "description": "The kitchen's position on the Kitchen's south wall's location line: in no room, so no lint.",
+  "covers": [
+    "FS-OUTD-1.2.3",
+    "FS-OUTD-6.1.1"
+  ]
+}

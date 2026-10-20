@@ -1,0 +1,6 @@
+{
+  "description": "A post spacing is at least 1 mm.",
+  "covers": [
+    "FS-OUTD-1.3.1"
+  ]
+}

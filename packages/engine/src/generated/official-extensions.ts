@@ -228,6 +228,40 @@ export const OFFICIAL_ENTRIES = [
     ]
   },
   {
+    "name": "FS_outdoor",
+    "version": "0.1.0",
+    "status": "draft",
+    "schema": "https://d3cloud.io/floorspec/schema/ext/FS_outdoor/0.1.0/outdoor.schema.json",
+    "title": "Outdoor rooms: pools, fences and gates, shelters, outdoor kitchens and fire features",
+    "requires": {},
+    "kinds": {
+      "pools": {
+        "title": "Pool or spa"
+      },
+      "fences": {
+        "title": "Fence or garden wall"
+      },
+      "shelters": {
+        "title": "Pergola, porch or shade sail"
+      },
+      "kitchens": {
+        "title": "Outdoor kitchen"
+      },
+      "fires": {
+        "title": "Fire feature"
+      }
+    },
+    "terms": {
+      "roomFunctions": []
+    },
+    "implementations": [
+      {
+        "name": "D3 Floorspec (@floorspec/engine)",
+        "url": "https://github.com/matdemers1/d3-floorspec"
+      }
+    ]
+  },
+  {
     "name": "FS_plumbing",
     "version": "0.1.0",
     "status": "releaseCandidate",
@@ -2574,6 +2608,555 @@ export const OFFICIAL_SCHEMAS = {
           "extras": {
             "description": "As Core 1.7: data no specification defines.",
             "type": "object"
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "FS_outdoor": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://d3cloud.io/floorspec/schema/ext/FS_outdoor/0.1.0/outdoor.schema.json",
+    "$comment": "Normative (FLR-ADR-006, FLR-ADR-007): FS_outdoor 0.1.0, registry/FS_outdoor/spec.md. Applied to the extension's top-level data, extensions.FS_outdoor, by a validator that implements FS_outdoor and knows it (spec.md 1.2). The core members of an element (fallback, host, clearances, option, name, extras) are checked by Floorspec Core, so this schema only names them. Relations between members - a coping and its box, gates along a line, posts and a box - are checked by the invariants (spec.md chapter 5).",
+    "title": "FS_outdoor 0.1.0",
+    "description": "Outdoor rooms: pools and spas, fences and gates, pergolas, porches and shade sails, outdoor kitchens and fire features.",
+    "type": "object",
+    "properties": {
+      "collections": {
+        "description": "Core 12.5: the extension's elements, by kind.",
+        "type": "object",
+        "properties": {
+          "pools": {
+            "type": "object",
+            "propertyNames": {
+              "$ref": "#/$defs/id"
+            },
+            "additionalProperties": {
+              "$ref": "#/$defs/pool"
+            },
+            "description": "Pools: an ID → element map (Core 12.5)."
+          },
+          "fences": {
+            "type": "object",
+            "propertyNames": {
+              "$ref": "#/$defs/id"
+            },
+            "additionalProperties": {
+              "$ref": "#/$defs/fence"
+            },
+            "description": "Fences: an ID → element map (Core 12.5)."
+          },
+          "shelters": {
+            "type": "object",
+            "propertyNames": {
+              "$ref": "#/$defs/id"
+            },
+            "additionalProperties": {
+              "$ref": "#/$defs/shelter"
+            },
+            "description": "Shelters: an ID → element map (Core 12.5)."
+          },
+          "kitchens": {
+            "type": "object",
+            "propertyNames": {
+              "$ref": "#/$defs/id"
+            },
+            "additionalProperties": {
+              "$ref": "#/$defs/kitchen"
+            },
+            "description": "Kitchens: an ID → element map (Core 12.5)."
+          },
+          "fires": {
+            "type": "object",
+            "propertyNames": {
+              "$ref": "#/$defs/id"
+            },
+            "additionalProperties": {
+              "$ref": "#/$defs/fire"
+            },
+            "description": "Fires: an ID → element map (Core 12.5)."
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "additionalProperties": false,
+    "$defs": {
+      "id": {
+        "type": "string",
+        "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$",
+        "description": "Core 3.1.1: an ID."
+      },
+      "length": {
+        "type": "integer",
+        "minimum": -9007199254740991,
+        "maximum": 9007199254740991,
+        "description": "Core 2.1: a length, an integer of base units (1/1280 mm)."
+      },
+      "point": {
+        "description": "Core 2.6: a point, [x, y], in the element's frame (spec.md 3.1).",
+        "type": "array",
+        "items": {
+          "$ref": "#/$defs/length"
+        },
+        "minItems": 2,
+        "maxItems": 2
+      },
+      "pool": {
+        "title": "Pool",
+        "description": "2.2: a pool, a plunge pool or a spa: its box from the basin's floor to the coping's top, the coping's outer edge in plan.",
+        "type": "object",
+        "required": [
+          "form"
+        ],
+        "properties": {
+          "form": {
+            "description": "2.2: what it is.",
+            "type": "string",
+            "enum": [
+              "pool",
+              "plunge",
+              "spa"
+            ]
+          },
+          "coping": {
+            "description": "2.2: the coping's width on every side of the basin; twice it less than the box's X and Y (FS-OUTD-2.2.1, an invariant). Default 384000 (300 mm).",
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991,
+            "default": 384000
+          },
+          "waterLine": {
+            "description": "2.2: the water's surface below the top of the coping; less than the box's Z (FS-OUTD-2.2.2, an invariant). Default 192000 (150 mm).",
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991,
+            "default": 192000
+          },
+          "copingMaterial": {
+            "description": "2.2: what the coping is made of. Absent: not stated.",
+            "type": "string",
+            "enum": [
+              "stone",
+              "concrete",
+              "brick",
+              "tile",
+              "timber"
+            ]
+          },
+          "interior": {
+            "description": "2.2: the basin's finish. Absent: not stated.",
+            "type": "string",
+            "enum": [
+              "plaster",
+              "tile",
+              "pebble",
+              "vinyl",
+              "fibreglass"
+            ]
+          },
+          "heated": {
+            "description": "2.2: whether its water is heated. Absent: not stated.",
+            "type": "boolean"
+          },
+          "catalogue": {
+            "description": "2.1: where it came from - a starter item, a maker's model. A label only.",
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "fallback": {
+            "description": "Core 12.6: checked by Core, not here."
+          },
+          "host": {
+            "description": "Core 13.3: checked by Core, not here."
+          },
+          "clearances": {
+            "description": "Core 13.5: checked by Core, not here."
+          },
+          "option": {
+            "description": "Core 19.2 (Core 0.3): checked by Core, not here."
+          },
+          "name": {
+            "description": "Core 12.5: checked by Core, not here."
+          },
+          "extras": {
+            "description": "Core 1.7: checked by Core, not here."
+          }
+        },
+        "additionalProperties": false
+      },
+      "gate": {
+        "title": "Gate",
+        "description": "2.3: a gate, an opening along its fence's line, as an opening in a wall (Core 7.1).",
+        "type": "object",
+        "required": [
+          "offset",
+          "width"
+        ],
+        "properties": {
+          "offset": {
+            "description": "2.3: from the line's start along the line to the gate's near edge.",
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "width": {
+            "description": "2.3: its clear width along the line.",
+            "type": "integer",
+            "minimum": 1280,
+            "maximum": 9007199254740991
+          },
+          "leaves": {
+            "description": "2.3: a single gate or a double one. Default 1.",
+            "type": "integer",
+            "enum": [
+              1,
+              2
+            ],
+            "default": 1
+          },
+          "swing": {
+            "description": "2.3: the side of the line it opens to, walking from the line's start, or along it. Default left.",
+            "type": "string",
+            "enum": [
+              "left",
+              "right",
+              "slide"
+            ],
+            "default": "left"
+          },
+          "selfClosing": {
+            "description": "2.3: whether it closes itself. Absent: not stated.",
+            "type": "boolean"
+          },
+          "name": {
+            "description": "2.3: a label.",
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          }
+        },
+        "additionalProperties": false
+      },
+      "fence": {
+        "title": "Fence",
+        "description": "2.3: a fence or a garden wall: a line swept to its width, with gates.",
+        "type": "object",
+        "required": [
+          "form",
+          "points",
+          "width"
+        ],
+        "properties": {
+          "form": {
+            "description": "2.3: a fence or a garden wall.",
+            "type": "string",
+            "enum": [
+              "fence",
+              "wall"
+            ]
+          },
+          "points": {
+            "description": "2.3: its line, in its frame (3.4); no two consecutive points equal (FS-OUTD-3.4.1, an invariant).",
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/point"
+            },
+            "minItems": 2
+          },
+          "width": {
+            "description": "2.3: its thickness across the line.",
+            "type": "integer",
+            "minimum": 1280,
+            "maximum": 9007199254740991
+          },
+          "style": {
+            "description": "2.3: what fills it between posts. Absent: not stated.",
+            "type": "string",
+            "enum": [
+              "privacy",
+              "picket",
+              "rail",
+              "panel",
+              "mesh",
+              "solid"
+            ]
+          },
+          "material": {
+            "description": "2.3: what it is made of. Absent: not stated.",
+            "type": "string",
+            "enum": [
+              "timber",
+              "metal",
+              "vinyl",
+              "stone",
+              "brick",
+              "concrete",
+              "glass"
+            ]
+          },
+          "postSpacing": {
+            "description": "2.3: the greatest distance between two posts' centres along the line. Default 3072000 (2,400 mm).",
+            "type": "integer",
+            "minimum": 1280,
+            "maximum": 9007199254740991,
+            "default": 3072000
+          },
+          "onSlope": {
+            "description": "2.3: how it follows falling ground. Default racked.",
+            "type": "string",
+            "enum": [
+              "racked",
+              "stepped"
+            ],
+            "default": "racked"
+          },
+          "gates": {
+            "description": "2.3: its gates, within its line (FS-OUTD-2.3.1) and never overlapping (FS-OUTD-2.3.2), invariants. Default [].",
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/gate"
+            },
+            "default": []
+          },
+          "catalogue": {
+            "description": "2.1: where it came from - a starter item, a maker's model. A label only.",
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "fallback": {
+            "description": "Core 12.6: checked by Core, not here."
+          },
+          "host": {
+            "description": "Core 13.3: checked by Core, not here."
+          },
+          "clearances": {
+            "description": "Core 13.5: checked by Core, not here."
+          },
+          "option": {
+            "description": "Core 19.2 (Core 0.3): checked by Core, not here."
+          },
+          "name": {
+            "description": "Core 12.5: checked by Core, not here."
+          },
+          "extras": {
+            "description": "Core 1.7: checked by Core, not here."
+          }
+        },
+        "additionalProperties": false
+      },
+      "shelter": {
+        "title": "Shelter",
+        "description": "2.4: a pergola, a covered porch or a shade sail, on posts derived from its box (6.4).",
+        "type": "object",
+        "required": [],
+        "properties": {
+          "top": {
+            "description": "2.4: open slats, a solid roof or a sail. Default slats.",
+            "type": "string",
+            "enum": [
+              "slats",
+              "solid",
+              "sail"
+            ],
+            "default": "slats"
+          },
+          "material": {
+            "description": "2.4: what its frame is made of. Absent: not stated.",
+            "type": "string",
+            "enum": [
+              "timber",
+              "steel",
+              "aluminium",
+              "vinyl"
+            ]
+          },
+          "postSize": {
+            "description": "2.4: the width of a post, square; less than the box's X and Y (FS-OUTD-2.4.1, an invariant). Default 192000 (150 mm).",
+            "type": "integer",
+            "minimum": 1280,
+            "maximum": 9007199254740991,
+            "default": 192000
+          },
+          "postSpacing": {
+            "description": "2.4: the greatest distance between two posts' centres along a side; greater than postSize (FS-OUTD-2.4.2, an invariant). Default 3072000 (2,400 mm).",
+            "type": "integer",
+            "minimum": 1280,
+            "maximum": 9007199254740991,
+            "default": 3072000
+          },
+          "rafterSpacing": {
+            "description": "2.4: the distance between rafters' centres; informative. Default 768000 (600 mm).",
+            "type": "integer",
+            "minimum": 1280,
+            "maximum": 9007199254740991,
+            "default": 768000
+          },
+          "clearHeight": {
+            "description": "2.4: the underside of its beams above its box's bottom; less than the box's Z (FS-OUTD-2.4.3, an invariant).",
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "attached": {
+            "description": "2.4: whether its back, the side at min.x, is carried by a ledger on a wall, with no posts. Default false.",
+            "type": "boolean",
+            "default": false
+          },
+          "catalogue": {
+            "description": "2.1: where it came from - a starter item, a maker's model. A label only.",
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "fallback": {
+            "description": "Core 12.6: checked by Core, not here."
+          },
+          "host": {
+            "description": "Core 13.3: checked by Core, not here."
+          },
+          "clearances": {
+            "description": "Core 13.5: checked by Core, not here."
+          },
+          "option": {
+            "description": "Core 19.2 (Core 0.3): checked by Core, not here."
+          },
+          "name": {
+            "description": "Core 12.5: checked by Core, not here."
+          },
+          "extras": {
+            "description": "Core 1.7: checked by Core, not here."
+          }
+        },
+        "additionalProperties": false
+      },
+      "kitchen": {
+        "title": "Kitchen",
+        "description": "2.5: an outdoor kitchen: a counter run along y with its appliances.",
+        "type": "object",
+        "required": [],
+        "properties": {
+          "appliances": {
+            "description": "2.5: what is built in, in order along the run from min.y. Default [].",
+            "type": "array",
+            "uniqueItems": true,
+            "default": [],
+            "items": {
+              "type": "string",
+              "enum": [
+                "grill",
+                "sideBurner",
+                "sink",
+                "refrigerator",
+                "iceMaker",
+                "pizzaOven",
+                "smoker",
+                "warmingDrawer"
+              ]
+            }
+          },
+          "counter": {
+            "description": "2.5: its counter top. Absent: not stated.",
+            "type": "string",
+            "enum": [
+              "stone",
+              "concrete",
+              "tile",
+              "steel",
+              "timber"
+            ]
+          },
+          "fuel": {
+            "description": "2.5: what its grill burns. Absent: not stated.",
+            "type": "string",
+            "enum": [
+              "gas",
+              "propane",
+              "charcoal",
+              "wood",
+              "electric"
+            ]
+          },
+          "catalogue": {
+            "description": "2.1: where it came from - a starter item, a maker's model. A label only.",
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "fallback": {
+            "description": "Core 12.6: checked by Core, not here."
+          },
+          "host": {
+            "description": "Core 13.3: checked by Core, not here."
+          },
+          "clearances": {
+            "description": "Core 13.5: checked by Core, not here."
+          },
+          "option": {
+            "description": "Core 19.2 (Core 0.3): checked by Core, not here."
+          },
+          "name": {
+            "description": "Core 12.5: checked by Core, not here."
+          },
+          "extras": {
+            "description": "Core 1.7: checked by Core, not here."
+          }
+        },
+        "additionalProperties": false
+      },
+      "fire": {
+        "title": "Fire feature",
+        "description": "2.6: a fire pit, a fire bowl, a fire table or an outdoor fireplace.",
+        "type": "object",
+        "required": [
+          "form"
+        ],
+        "properties": {
+          "form": {
+            "description": "2.6: what it is.",
+            "type": "string",
+            "enum": [
+              "pit",
+              "bowl",
+              "table",
+              "fireplace"
+            ]
+          },
+          "fuel": {
+            "description": "2.6: what it burns. Absent: not stated.",
+            "type": "string",
+            "enum": [
+              "wood",
+              "gas",
+              "propane",
+              "ethanol"
+            ]
+          },
+          "catalogue": {
+            "description": "2.1: where it came from - a starter item, a maker's model. A label only.",
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "fallback": {
+            "description": "Core 12.6: checked by Core, not here."
+          },
+          "host": {
+            "description": "Core 13.3: checked by Core, not here."
+          },
+          "clearances": {
+            "description": "Core 13.5: checked by Core, not here."
+          },
+          "option": {
+            "description": "Core 19.2 (Core 0.3): checked by Core, not here."
+          },
+          "name": {
+            "description": "Core 12.5: checked by Core, not here."
+          },
+          "extras": {
+            "description": "Core 1.7: checked by Core, not here."
           }
         },
         "additionalProperties": false

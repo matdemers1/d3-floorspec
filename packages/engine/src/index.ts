@@ -106,6 +106,8 @@ export * as views from './extensions/fs/views.js';
 export * as renovation from './extensions/fs/renovation.js';
 export * as annotation from './extensions/fs/annotation.js';
 export * as site from './extensions/fs/site.js';
+export * as outdoor from './extensions/fs/outdoor.js';
+export { type DerivedOutdoor } from './extensions/fs/outdoor.js';
 export { type DerivedSite, type DerivedGrading } from './extensions/fs/site.js';
 export {
   siteDrawing,

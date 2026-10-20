@@ -1,0 +1,9 @@
+{
+  "description": "setProperty of X6 /gates adds a double gate where the drive crosses, 10' along the fence. It commits, and the fence derives both gates in order.",
+  "covers": [
+    "FS-OUTD-2.3.1",
+    "FS-OUTD-2.3.2",
+    "FS-OUTD-6.1.1",
+    "FS-OPS-2.3.1"
+  ]
+}
