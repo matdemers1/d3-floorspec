@@ -2,7 +2,8 @@ import { createHash } from 'node:crypto';
 import { evaluate, OFFICIAL_READER } from '@floorspec/engine';
 import { LAYER_STATES, MODE_IDS, PLAN_LAYERS, PLAN_STYLES, RENOVATION_FILTERS } from '@floorspec/render2d';
 import { MAX_SHOTS, QUALITIES, SHOT_SIZES, shotWithinBudget, SIZES, SKIES, withinBudget, type Quality, type ShotSize, type Size } from '@d3-floorspec/worker/stills';
-import { filmDuration, filmFrameCount, filmNamed, filmProblem, filmShots, filmsOf, readView, savedViewNamed, savedViewsOf } from '@floorspec/mesh';
+import { DEFAULT_EYE_HEIGHT, filmDuration, filmFrameCount, filmNamed, filmProblem, filmShots, filmsOf, MAX_EYE_HEIGHT, MAX_TOUR_ROOMS, MIN_EYE_HEIGHT, readView, savedViewNamed, savedViewsOf, TOUR_QUALITIES, TOUR_SIZES, tourAt, tourRoomsByDefault, tourWithinBudget, type TourQuality, type TourSize } from '@floorspec/mesh';
+import { storeZip } from '@d3-floorspec/worker/zip';
 import { midsummer, timelapseAround, timelapseProblem } from '@floorspec/mesh/sky';
 import { FILM_FORMATS, FILM_LIGHTS, FILM_QUALITIES, FILM_RATES, FILM_SIZES, filmChoiceProblem, finalSamples, type FilmSize } from '@d3-floorspec/worker/films';
 import type { Request, Response } from 'express';
@@ -52,11 +53,18 @@ import { MAX_PENDING_RENDERS } from './checks.js';
  * editor's camera as it is) into a ZIP of the two pictures and their swipe and side-by-side
  * composites. The job reads A's version; B's version and design travel in its parameters. It takes
  * a render place as a shot list does: one still, shot list, film or pair renders at a time.
+ *
+ * A virtual tour (FLR-T-14.2, FLR-ADR-055) is `kind: "tour"`: the rooms in its order (the first opens
+ * it; default every room but garages, closets and the outdoors), each seen from its centre or a saved
+ * view's eye, at an eye height, a panorama size and a quality — each panorama within a still's work
+ * budget. It takes a render place as a film does. Its file is the tour's manifest, and its panoramas
+ * and plans are kept beside it as the job's assets; the download is a ZIP of them all. A share link
+ * shows it (share/routes.ts), and keeps its files for as long as the link lives.
  */
 
-const KINDS = ['pdf', 'dxf', 'ifc', 'gltf', 'usdz', 'still', 'shots', 'film', 'pair'] as const;
+const KINDS = ['pdf', 'dxf', 'ifc', 'gltf', 'usdz', 'still', 'shots', 'film', 'pair', 'tour'] as const;
 /** The kinds that render on the worker for a while: one at a time per project. */
-const RENDERING = ['export.still', 'export.shots', 'export.film', 'export.pair'];
+const RENDERING = ['export.still', 'export.shots', 'export.film', 'export.pair', 'export.tour'];
 const VIEWS = ['sw', 'se', 'ne', 'nw', 'top'] as const;
 const ID = /^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$/;
 
@@ -128,6 +136,17 @@ const PairBody = z.strictObject({
   size: z.enum(Object.keys(SHOT_SIZES) as [ShotSize, ...ShotSize[]]).default('small'),
   quality: z.enum(Object.keys(QUALITIES) as [Quality, ...Quality[]]).default('draft'),
 });
+/**
+ * A virtual tour (FLR-T-14.2): the rooms, in order — each by its ID or name, seen from its centre or
+ * a saved view's eye (by ID or name) — default every room but garages, closets and the outdoors; the
+ * eye's height above each floor in base units; the panoramas' width and quality.
+ */
+const TourBody = z.strictObject({
+  rooms: z.array(z.strictObject({ room: z.string().trim().min(1).max(200), view: z.string().trim().min(1).max(200).optional() })).min(1).max(MAX_TOUR_ROOMS).optional(),
+  eyeHeight: z.int().min(MIN_EYE_HEIGHT).max(MAX_EYE_HEIGHT).default(DEFAULT_EYE_HEIGHT),
+  size: z.enum(Object.keys(TOUR_SIZES) as [TourSize, ...TourSize[]]).default('large'),
+  quality: z.enum(Object.keys(TOUR_QUALITIES) as [TourQuality, ...TourQuality[]]).default('standard'),
+});
 export const PAGE_NAMES = ['tabloid', 'arch-c', 'arch-d', 'letter', 'a4', 'a3'] as const;
 
 const ExportBody = z.strictObject({
@@ -155,6 +174,8 @@ const ExportBody = z.strictObject({
   film: FilmBody.optional(),
   /** A matched pair: its two sides, its camera, how big and how clean (FLR-T-14.4). */
   pair: z.unknown().optional(),
+  /** A virtual tour: its rooms, the eye height, how big and how clean (FLR-T-14.2). */
+  tour: TourBody.optional(),
   /** glTF and USDZ: the doors closed (default) or open (FLR-T-13.8) — the editor's GPU still asks for either (FLR-T-13.13). */
   doors: z.enum(['open', 'closed']).optional(),
   /**
@@ -217,6 +238,10 @@ type Params = {
   readonly aLabel?: string;
   readonly pair?: { hash: string; seq: number | null; label: string; design?: Record<string, string> };
   readonly shot?: Prisma.InputJsonObject;
+  /** A virtual tour (FLR-T-14.2): the rooms in order (IDs), each with the saved view it is seen from; the eye height; the light. */
+  readonly rooms?: { room: string; name: string; view?: string }[];
+  readonly eyeHeight?: number;
+  readonly at?: string;
 };
 
 /** The largest still the editor may save: a 4K PNG with room to spare. */
@@ -287,6 +312,10 @@ export function exportView(projectId: string, job: Job) {
             size: p.size ?? 'small',
             quality: p.quality ?? 'draft',
           }
+        : null,
+    tour:
+      job.kind === 'export.tour'
+        ? { rooms: (p.rooms ?? []).map((r) => ({ id: r.room, name: r.name, view: r.view ?? null })), panos: p.rooms?.length ?? 0, size: p.size ?? 'large', quality: p.quality ?? 'standard', eyeHeight: p.eyeHeight ?? DEFAULT_EYE_HEIGHT, at: p.at ?? null }
         : null,
     film:
       job.kind === 'export.film'
@@ -466,6 +495,7 @@ export function exportRoutes(db: Db): Routes {
       if (body.still !== undefined && body.kind !== 'still') throw new HttpError(400, 'only a still takes still options');
       if (body.shots !== undefined && body.kind !== 'shots') throw new HttpError(400, 'only a shot list takes shots options');
       if (body.film !== undefined && body.kind !== 'film') throw new HttpError(400, 'only a film takes film options');
+      if (body.tour !== undefined && body.kind !== 'tour') throw new HttpError(400, 'only a tour takes tour options');
       if (body.doors !== undefined && body.kind !== 'gltf' && body.kind !== 'usdz') throw new HttpError(400, 'only a glTF or USDZ model takes doors');
       if (body.lighting !== undefined && body.kind !== 'gltf' && body.kind !== 'usdz') throw new HttpError(400, 'only a glTF or USDZ model takes a lighting');
       if ((body.mode !== undefined || body.layers !== undefined) && body.kind !== 'pdf' && body.kind !== 'dxf') throw new HttpError(400, 'a mode is a view of the plan: only a PDF or DXF drawing takes one');
@@ -538,6 +568,37 @@ export function exportRoutes(db: Db): Routes {
         const rendering = await tx.job.count({ where: { projectId: project.id, kind: { in: RENDERING }, status: { in: ['queued', 'running'] } } });
         if (rendering > 0) throw new HttpError(429, 'a film, a still, a shot list or a pair is already rendering for this project; wait for it to finish, or cancel it');
       }
+      const tourBody = body.kind === 'tour' ? TourBody.parse(body.tour ?? {}) : undefined;
+      let tour: { rooms: { room: string; name: string; view?: string }[]; at: string } | undefined;
+      if (tourBody !== undefined) {
+        if (body.levels !== undefined || body.page !== undefined) throw new HttpError(400, 'a tour is its rooms’ panoramas: it takes no levels or page');
+        if (!tourWithinBudget(tourBody.size, tourBody.quality)) throw new HttpError(400, `a ${tourBody.size} panorama at ${tourBody.quality} quality is more work than a still may take: choose a smaller size or a lower quality`);
+        const view = ev.view ?? ev.document;
+        const all = Object.entries(view.rooms ?? {}).flatMap(([id, r]) => (r === undefined ? [] : [{ id, name: r.name ?? id }]));
+        const find = (key: string) => all.find((r) => r.id === key) ?? all.find((r) => r.name.toLowerCase() === key.toLowerCase());
+        const asked: { room: string; view?: string | undefined }[] = tourBody.rooms ?? tourRoomsByDefault(view).map((room) => ({ room }));
+        if (asked.length === 0) throw new ProblemError({ status: 422, type: 'no-rooms', title: 'this model has no rooms to tour', detail: 'A tour is a panorama of each room: draw rooms first, or name the ones to visit.' });
+        const rooms: { room: string; name: string; view?: string }[] = [];
+        for (const stop of asked) {
+          const room = find(stop.room);
+          if (room === undefined) throw new HttpError(400, `the model has no room ${stop.room}`);
+          if (rooms.some((r) => r.room === room.id)) throw new HttpError(400, `${room.name} is in the tour twice`);
+          let seen: string | undefined;
+          if (stop.view !== undefined) {
+            const saved = savedViewNamed(ev.document, stop.view);
+            if (saved === undefined) {
+              const views = savedViewsOf(ev.document).map((v) => `"${v.name}"`);
+              throw new HttpError(400, `the model has no saved view "${stop.view}"; ${views.length === 0 ? 'it has none (FS_views)' : `its views are ${views.join(', ')}`}`);
+            }
+            seen = saved.id;
+          }
+          rooms.push({ room: room.id, name: room.name, ...(seen === undefined ? {} : { view: seen }) });
+        }
+        tour = { rooms, at: tourAt(new Date().getUTCFullYear()) };
+        // One tour, film, still or shot list renders at a time per project.
+        const rendering = await tx.job.count({ where: { projectId: project.id, kind: { in: RENDERING }, status: { in: ['queued', 'running'] } } });
+        if (rendering > 0) throw new HttpError(429, 'a tour, a film, a still, a shot list or a pair is already rendering for this project; wait for it to finish, or cancel it');
+      }
       const missing = (body.levels ?? []).filter((l) => !levels.includes(l));
       if (missing.length > 0) throw new HttpError(400, `the model has no level ${missing.join(', ')}`);
       const pending = await tx.job.count({ where: { projectId: project.id, kind: { startsWith: 'export.' }, status: { in: ['queued', 'running'] } } });
@@ -553,6 +614,7 @@ export function exportRoutes(db: Db): Routes {
         ...(body.doors === undefined ? {} : { doors: body.doors }),
         ...(body.lighting === undefined ? {} : { lighting: { on: Object.fromEntries(Object.entries(body.lighting.on).map(([id, s]) => [id, { ...(s.output === undefined ? {} : { output: s.output }), ...(s.cct === undefined ? {} : { cct: s.cct }) }])) } }),
         ...(shots === undefined ? {} : { ...(shots.views === undefined ? {} : { views: [...new Set(shots.views)] }), size: shots.size, quality: shots.quality }),
+        ...(tourBody === undefined || tour === undefined ? {} : { rooms: tour.rooms, size: tourBody.size, quality: tourBody.quality, eyeHeight: tourBody.eyeHeight, at: tour.at }),
         ...(filmBody === undefined || film === undefined
           ? {}
           : { film: film.id, filmName: film.name, quality: filmBody.quality, format: filmBody.format, size: filmBody.size, fps: filmBody.fps, frames: film.frames, light: filmBody.light, ...(film.samples === undefined ? {} : { samples: film.samples }), ...(film.timelapse === undefined ? {} : { timelapse: film.timelapse }) }),
@@ -582,7 +644,7 @@ export function exportRoutes(db: Db): Routes {
       });
       return {
         reply: (res) => res.status(202).location(`/api/projects/${project.id}/exports/${job.id}`).json({ export: exportView(project.id, job) }),
-        audit: { action: 'export.request', targetType: 'job', targetId: job.id, detail: { projectId: project.id, kind: body.kind, version: version.hash, levels: params.levels ?? null, page: params.page ?? null, ...(params.design === undefined ? {} : { design: params.design }), ...(params.mode === undefined ? {} : { mode: params.mode }), ...(params.style === undefined ? {} : { style: params.style }), ...(params.renovation === undefined ? {} : { renovation: params.renovation }), ...(params.doors === undefined ? {} : { doors: params.doors }), ...(still === undefined ? {} : { still: { camera: params.camera ?? null, room: params.room ?? null, level: params.level ?? null, size: params.size, quality: params.quality } }), ...(shots === undefined ? {} : { shots: { views: params.views ?? null, size: params.size, quality: params.quality } }), ...(film === undefined ? {} : { film: { id: film.id, quality: params.quality, format: params.format, size: params.size, fps: params.fps, frames: film.frames, light: params.light } }) } },
+        audit: { action: 'export.request', targetType: 'job', targetId: job.id, detail: { projectId: project.id, kind: body.kind, version: version.hash, levels: params.levels ?? null, page: params.page ?? null, ...(params.design === undefined ? {} : { design: params.design }), ...(params.mode === undefined ? {} : { mode: params.mode }), ...(params.style === undefined ? {} : { style: params.style }), ...(params.renovation === undefined ? {} : { renovation: params.renovation }), ...(params.doors === undefined ? {} : { doors: params.doors }), ...(still === undefined ? {} : { still: { camera: params.camera ?? null, room: params.room ?? null, level: params.level ?? null, size: params.size, quality: params.quality } }), ...(shots === undefined ? {} : { shots: { views: params.views ?? null, size: params.size, quality: params.quality } }), ...(film === undefined ? {} : { film: { id: film.id, quality: params.quality, format: params.format, size: params.size, fps: params.fps, frames: film.frames, light: params.light } }), ...(tour === undefined ? {} : { tour: { rooms: tour.rooms.map((r) => r.room), size: params.size, quality: params.quality, eyeHeight: params.eyeHeight } }) } },
       };
     },
     { token: 'read' },
@@ -737,6 +799,17 @@ export function exportRoutes(db: Db): Routes {
       if (job.status !== 'done') throw new HttpError(409, 'this export is not finished yet');
       const output = await db.jobOutput.findUnique({ where: { jobId: job.id } });
       if (output === null) throw new HttpError(410, 'this export’s file has expired; export again');
+      // A tour (FLR-T-14.2): its manifest, panoramas and plans, in one ZIP made as it is asked for.
+      if (job.kind === 'export.tour') {
+        const assets = await db.jobAsset.findMany({ where: { jobId: job.id }, orderBy: { path: 'asc' } });
+        const zip = storeZip([{ name: 'tour.json', bytes: new Uint8Array(output.bytes) }, ...assets.map((a) => ({ name: a.path, bytes: new Uint8Array(a.bytes) }))]);
+        res.setHeader('Content-Type', 'application/zip');
+        res.setHeader('Content-Disposition', `attachment; filename="${output.name.replace(/\.json$/, '.zip').replace(/[^\w.-]/g, '_')}"`);
+        res.setHeader('ETag', `"${output.sha256}"`);
+        res.setHeader('Cache-Control', 'private, max-age=3600');
+        res.send(Buffer.from(zip.buffer, zip.byteOffset, zip.byteLength));
+        return;
+      }
       res.setHeader('Content-Type', output.contentType);
       res.setHeader('Content-Disposition', `attachment; filename="${output.name.replace(/[^\w.-]/g, '_')}"`);
       res.setHeader('ETag', `"${output.sha256}"`);

@@ -6,7 +6,8 @@
  * Woken by NOTIFY on `floorspec_jobs` (a trigger announces every queued insert) and by a slow poll,
  * which also picks up a job whose worker died: a running job whose lock is older than
  * `STALE_AFTER` is taken again, up to `MAX_ATTEMPTS`, then failed with a reason a person can read.
- * Files are kept for `KEEP_DAYS` days; the job row stays as history.
+ * Files are kept for `KEEP_DAYS` days — a tour's for as long as a live share link shows it
+ * (FLR-T-14.2) — and the job row stays as history.
  */
 import { createHash } from 'node:crypto';
 import { hostname } from 'node:os';
@@ -140,6 +141,14 @@ export function createDrain(options: DrainOptions): Drain {
            on conflict (job_id) do update set name = excluded.name, content_type = excluded.content_type, bytes = excluded.bytes, sha256 = excluded.sha256, created_at = now()`,
           [job.id, file.name, file.contentType, Buffer.from(file.bytes), sha256],
         );
+        // A job's other files (FLR-T-14.2: a tour's panoramas and plans), kept with its file.
+        await client.query('delete from job_assets where job_id = $1', [job.id]);
+        for (const asset of file.assets ?? []) {
+          await client.query(
+            'insert into job_assets (job_id, path, content_type, bytes, sha256) values ($1, $2, $3, $4, $5)',
+            [job.id, asset.path, asset.contentType, Buffer.from(asset.bytes), createHash('sha256').update(asset.bytes).digest('hex')],
+          );
+        }
         const result = { name: file.name, contentType: file.contentType, size: file.bytes.byteLength, sha256, ...file.summary };
         const done = await client.query(`update jobs set status = 'done', result = $2, finished_at = now(), locked_by = null where id = $1 and locked_by = $3`, [job.id, JSON.stringify(result), workerId]);
         // Cancelled while its file was being stored: keep nothing.
@@ -173,7 +182,10 @@ export function createDrain(options: DrainOptions): Drain {
       await runJob(job);
       n++;
     }
-    await pool.query(`delete from job_outputs where created_at < now() - interval '${String(KEEP_DAYS)} days'`);
+    // A file a live share link shows (FLR-T-14.2: a tour) is kept while the link lives.
+    const live = `not exists (select 1 from share_links s where s.tour_job_id = %s and s.revoked_at is null and s.expires_at > now())`;
+    await pool.query(`delete from job_outputs o where o.created_at < now() - interval '${String(KEEP_DAYS)} days' and ${live.replace('%s', 'o.job_id')}`);
+    await pool.query(`delete from job_assets a where a.created_at < now() - interval '${String(KEEP_DAYS)} days' and ${live.replace('%s', 'a.job_id')}`);
     return n;
   }
 
