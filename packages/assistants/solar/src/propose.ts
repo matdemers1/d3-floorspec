@@ -78,6 +78,11 @@ export interface SolarOptions {
   readonly inverter?: boolean;
   /** IDs a changeset retired, never to be minted again. */
   readonly retired?: readonly string[];
+  /**
+   * Only these faces, by key (`RF1:0`, or a flat roof's `RF3`): a person placing an array on one face. With
+   * faces, the cutoff defaults to 0 and the target to filling them.
+   */
+  readonly faces?: readonly string[];
 }
 
 /** One face, as the assistant ranked it. */
@@ -428,7 +433,7 @@ export function proposeSolar(document: string | Uint8Array | FloorspecDocument |
   const mod = options.module ?? DEFAULT_MODULE;
   const gap = IN;
   const rack = options.rack ?? DEFAULT_RACK;
-  const cutoff = options.cutoff ?? DEFAULT_CUTOFF;
+  const cutoff = options.cutoff ?? (options.faces === undefined ? DEFAULT_CUTOFF : 0);
   const site = solarSite(doc);
   const sky: MonthSky[] = yearSky(site);
   const drawing = solarDrawing(doc);
@@ -465,6 +470,7 @@ export function proposeSolar(document: string | Uint8Array | FloorspecDocument |
   }
   const candidates: Candidate[] = [];
   for (const face of faces) {
+    if (options.faces !== undefined && !options.faces.includes(face.key)) continue;
     if (occupied.has(face.key)) {
       candidates.push({ face, array: null, fit: null, perKw: 0, shade: 0, est: null, reason: 'already has an array' });
       continue;
@@ -504,7 +510,7 @@ export function proposeSolar(document: string | Uint8Array | FloorspecDocument |
   const houseUse = houseUseOf(doc);
   let target: { kwh: number; source: string } | null = null;
   if (options.target?.kind === 'kwh') target = { kwh: options.target.kwh, source: `${String(round0(options.target.kwh))} kWh a year, as asked` };
-  else if (options.target === undefined || options.target.kind === 'share') {
+  else if ((options.target === undefined && options.faces === undefined) || options.target?.kind === 'share') {
     const percent = options.target?.kind === 'share' ? options.target.percent : 100;
     if (houseUse === null) notes.push('No energy estimate could be made for this plan, so the share of its use was not a target: every face worth it is filled.');
     else target = { kwh: (houseUse * percent) / 100, source: `${String(percent)}% of the house’s ≈ ${grouped(Math.round(houseUse / 100) * 100)} kWh a year` };
@@ -595,6 +601,7 @@ export function proposeSolar(document: string | Uint8Array | FloorspecDocument |
   let inverter: SolarProposal['inverter'] = null;
   let shutdown: string | null = null;
   let circuit: string | null = null;
+  let explanation0: string | null = null;
   const existingInverters = energyCollection<{ arrays?: string[] }>(doc, 'inverters');
   if (arrays.length > 0 && options.inverter !== false) {
     const dcWatts = arrays.reduce((s, a) => s + a.kw * 1000, 0);
@@ -602,6 +609,13 @@ export function proposeSolar(document: string | Uint8Array | FloorspecDocument |
       const [iid, inv] = existingInverters[0]!;
       ops.push({ op: 'setProperty', id: iid, path: '/arrays', value: [...(inv.arrays ?? []), ...arrays.map((a) => a.id)] } as unknown as Operation);
       notes.push(`The new arrays join ${iid}, the plan's inverter.`);
+      const rs = energyCollection<{ arrays?: string[] }>(doc, 'shutdowns')[0];
+      if (rs !== undefined) {
+        ops.push({ op: 'setProperty', id: rs[0], path: '/arrays', value: [...(rs[1].arrays ?? []), ...arrays.map((a) => a.id)] } as unknown as Operation);
+        shutdown = rs[0];
+      }
+      inverter = { id: iid, watts: (existingInverters[0]![1] as { watts?: number }).watts ?? 0, kind: 'hybrid', on: '' };
+      explanation0 = `${arrays.map((a) => a.id).join(' and ')} join${arrays.length === 1 ? 's' : ''} ${iid}${rs === undefined ? '' : ` and ${rs[0]}`}, the plan's inverter and rapid-shutdown initiator.`;
     } else {
       const spot = panelSpot(doc);
       if (spot === null) notes.push('The plan has no panel on a wall to put the inverter beside: add one, or place the inverter by hand.');
@@ -646,10 +660,13 @@ export function proposeSolar(document: string | Uint8Array | FloorspecDocument |
 
   const total = { modules: arrays.reduce((s, a) => s + a.modules, 0), kw: arrays.reduce((s, a) => s + a.kw, 0), annual: made, ...pvRange(made) };
   const explanation: string[] = [];
-  explanation.push(`Ranked ${String(faces.length)} roof face${faces.length === 1 ? '' : 's'} by a kW’s typical year after shade, kept each face’s eave, ridge and rake setbacks, and used the faces making at least ${String(Math.round(cutoff * 100))}% of the best.`);
+  if (options.faces === undefined)
+    explanation.push(`Ranked ${String(faces.length)} roof face${faces.length === 1 ? '' : 's'} by a kW’s typical year after shade, kept each face’s eave, ridge and rake setbacks, and used the faces making at least ${String(Math.round(cutoff * 100))}% of the best.`);
+  else explanation.push('Laid the largest grid of modules that keeps each face’s eave, ridge and rake setbacks.');
   for (const a of arrays) explanation.push(`${a.id}: ${String(a.modules)} modules on ${a.name} (${a.facing}), ${a.kw.toFixed(1)} kW, ${String(a.low)}–${String(a.high)} kWh a year.`);
   for (const p of plans) if (p.status === 'skipped' && p.reason !== undefined) explanation.push(`${p.roofName ?? p.roof} (${p.facing}) left bare: ${p.reason}.`);
-  if (inverter !== null) explanation.push(`${inverter.id}: a ${(inverter.watts / 1000).toFixed(1)} kW hybrid inverter beside the panel, battery-ready; ${shutdown ?? ''} rapid shutdown at each module, its initiator beside it; both on ${circuit ?? ''}.`);
+  if (explanation0 !== null) explanation.push(explanation0);
+  else if (inverter !== null) explanation.push(`${inverter.id}: a ${(inverter.watts / 1000).toFixed(1)} kW hybrid inverter beside the panel, battery-ready; ${shutdown ?? ''} rapid shutdown at each module, its initiator beside it; both on ${circuit ?? ''}.`);
   if (target !== null) explanation.push(`Sized to ${target.source}.`);
   explanation.push(PV_ADVISORY);
   return {

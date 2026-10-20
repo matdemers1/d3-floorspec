@@ -27,6 +27,7 @@
     "@d3cloudio/auth-client": "0.1.1",
     "@floorspec/engine": "workspace:*",
     "@floorspec/assistant-electrical": "workspace:*",
+    "@floorspec/assistant-solar": "workspace:*",
     "@floorspec/assistant-staging": "workspace:*",
     "@floorspec/layout-solver": "workspace:*",
     "@floorspec/mcp": "workspace:*",

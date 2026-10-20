@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { parseLength } from '@floorspec/ops';
 import { PlanError, proposeElectrical, proposeExterior, type ElectricalProposal, type ExteriorReading } from '@floorspec/assistant-electrical';
 import { proposeStaging, type StagingProposal } from '@floorspec/assistant-staging';
+import { proposeSolar, SolarError, type SolarProposal, type SolarTarget } from '@floorspec/assistant-solar';
 import { libraryFileBytes } from '@floorspec/mcp';
 import type { AssetStore } from '../assets/store.js';
 import { prepareUpload } from '../assets/upload.js';
@@ -56,6 +57,39 @@ export const StagingBody = z.strictObject({
   /** A pending changeset, by ID or name, whose plan to read instead of main's (as the electrical assistant's). */
   changeset: z.string().trim().min(1).max(120).optional(),
 });
+
+export const SolarBody = z.strictObject({
+  /** Size the arrays to make this many kWh a year. Not with `share` or `fill`. */
+  kwh: z.number().min(1).max(10_000_000).optional(),
+  /** Size them to this share of the house's use (the energy estimate), percent; the default is 100. */
+  share: z.number().min(1).max(1000).optional(),
+  /** Fill every face worth it, whatever the house uses. */
+  fill: z.boolean().optional(),
+  /** Use a face when a kW on it makes at least this share of what it makes on the best face (0–1). */
+  cutoff: z.number().min(0).max(1).optional(),
+  /** A pending changeset, by ID or name, whose plan to read instead of main's (as the electrical assistant's). */
+  changeset: z.string().trim().min(1).max(120).optional(),
+});
+
+/** What the answer says of a solar proposal besides its changeset. */
+export function solarView(p: SolarProposal) {
+  return {
+    name: p.name,
+    explanation: p.explanation,
+    faces: p.faces,
+    arrays: p.arrays,
+    inverter: p.inverter,
+    shutdown: p.shutdown,
+    circuit: p.circuit,
+    total: p.total,
+    target: p.target,
+    houseUse: p.houseUse,
+    notes: p.notes,
+    advisory: p.advisory,
+    method: p.method,
+    ops: p.batch.length,
+  };
+}
 
 /** What the answer says of a staging proposal besides its changeset. */
 export function stagingView(p: StagingProposal) {
@@ -201,6 +235,80 @@ export function assistantRoutes(db: Db, applier: Applier, store: AssetStore | nu
           targetType: 'project',
           targetId: project.id,
           detail: { project: project.id, main: main.hash, changeset: changeset.id, ops: proposal.batch.length, items: proposal.added.length, files: stored },
+        },
+      };
+    },
+    { token: 'propose' },
+  );
+
+  /**
+   * FLR-T-16.1: run the solar assistant on main — or on a pending changeset's plan — and open what it
+   * proposes as one pending changeset: arrays on the most productive roof faces within their setbacks,
+   * sized to a target, and an inverter and a rapid-shutdown initiator beside the panel on a circuit.
+   * Nothing is written to main; a person accepts it (FLR-ADR-016). An estimate, never a guarantee.
+   */
+  routes.mutate(
+    'POST',
+    '/:projectId/assistants/solar',
+    async (req, tx): Promise<MutationResult> => {
+      const project = req.project;
+      if (project === undefined) throw new HttpError(404, 'project not found');
+      const body = parse(SolarBody, req.body ?? {});
+      if ([body.kwh !== undefined, body.share !== undefined, body.fill === true].filter(Boolean).length > 1) {
+        throw new HttpError(400, 'the request body is not valid', { fields: [{ path: 'kwh', message: 'size to kWh, to a share of the house\'s use, or fill: one of them' }] });
+      }
+      const target: SolarTarget | undefined =
+        body.kwh !== undefined ? { kind: 'kwh', kwh: body.kwh } : body.share !== undefined ? { kind: 'share', percent: body.share } : body.fill === true ? { kind: 'fill' } : undefined;
+      const author = authorOf(req);
+      await lockProject(tx, project.id);
+      const main = await readHead(tx, project.id, MAIN);
+      const source = body.changeset === undefined ? null : await readSource(tx, project.id, body.changeset, main.hash, 'a plan');
+      const plan = source === null ? main : source.head;
+      let proposal: SolarProposal;
+      try {
+        proposal = proposeSolar(plan.document as object, {
+          retired: await retiredFor(tx, project.id),
+          ...(target === undefined ? {} : { target }),
+          ...(body.cutoff === undefined ? {} : { cutoff: body.cutoff }),
+        });
+      } catch (error) {
+        if (!(error instanceof SolarError)) throw error;
+        throw new ProblemError({ status: 422, type: 'solar-unproposable', title: 'no solar layout could be proposed', detail: `${error.message.charAt(0).toUpperCase()}${error.message.slice(1)}.`, head: MAIN });
+      }
+      const view = solarView(proposal);
+      if (proposal.batch.length === 0) {
+        return {
+          reply: (res) => res.status(200).json({ main: main.hash, changeset: null, proposal: view }),
+          audit: { action: 'assistants.solar.propose', targetType: 'project', targetId: project.id, detail: { project: project.id, main: main.hash, changeset: null, ops: 0 } },
+        };
+      }
+      const pending = await tx.changeset.findMany({ where: { projectId: project.id, status: 'pending' }, select: { name: true } });
+      const name = freeName(proposal.name, new Set(pending.map((c) => c.name)));
+      const { changeset } = await openChangeset(tx, project.id, name, author);
+      const head = changesetHead(changeset.id);
+      if (source !== null) {
+        const refused = await carry(tx, applier, { projectId: project.id, head, changesetId: changeset.id, source, author });
+        if (refused !== null) throw rejection(refused.result, head);
+      }
+      const outcome = await applyToHead(tx, applier, { projectId: project.id, head, batch: proposal.batch as unknown as Batch, author, kind: 'apply', changesetId: changeset.id });
+      // The assistant reads the plan with the same engine the applier validates with: a refusal here
+      // is a fault in the assistant, and nothing of this request is kept.
+      if (outcome.status === 'rejected') throw rejection(outcome.result, head);
+      const committed = committedView(outcome);
+      return {
+        reply: (res) =>
+          res.status(201).json({
+            main: main.hash,
+            changeset: changesetView(changeset, { head: committed.hash, ops: (source?.ops.length ?? 0) + 1 }),
+            proposal: view,
+            ...(source === null ? {} : { carries: { changeset: source.changeset.id, name: source.changeset.name, ops: source.ops.length } }),
+          }),
+        events: [changesetEvent(changeset, 'opened', { hash: committed.hash, ops: await countChangesetOps(tx, changeset) })],
+        audit: {
+          action: 'assistants.solar.propose',
+          targetType: 'project',
+          targetId: project.id,
+          detail: { project: project.id, main: main.hash, changeset: changeset.id, ops: proposal.batch.length, arrays: proposal.arrays.map((a) => a.id), kw: proposal.total.kw },
         },
       };
     },

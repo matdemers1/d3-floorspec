@@ -204,6 +204,30 @@ export interface StagingProposal {
   };
 }
 
+export interface SolarInput {
+  readonly changeset?: string;
+  /** Size to this many kWh a year; else to the house's use. */
+  readonly kwh?: number;
+}
+
+/** The solar assistant's answer (FLR-T-16.1): its proposal, and the changeset it became — none when there was nothing to lay out. */
+export interface SolarProposalView {
+  readonly main: string;
+  readonly changeset: ChangesetView | null;
+  readonly carries?: { readonly changeset: string; readonly name: string; readonly ops: number };
+  readonly proposal: {
+    readonly name: string;
+    readonly explanation: readonly string[];
+    readonly arrays: readonly { readonly id: string; readonly name: string; readonly modules: number; readonly kw: number; readonly low: number; readonly high: number }[];
+    readonly total: { readonly modules: number; readonly kw: number; readonly low: number; readonly high: number };
+    readonly inverter: { readonly id: string } | null;
+    readonly shutdown: string | null;
+    readonly notes: readonly string[];
+    readonly advisory: string;
+    readonly ops: number;
+  };
+}
+
 export interface FloorspecClient {
   listProjects(): Promise<readonly ProjectSummary[]>;
   /** A new, empty project owned by the caller's account. */
@@ -217,6 +241,7 @@ export interface FloorspecClient {
   proposeLayouts(projectId: string, input: LayoutsInput): Promise<Layouts>;
   proposeElectrical(projectId: string, input: ElectricalInput): Promise<ElectricalProposal>;
   proposeStaging(projectId: string, input: ElectricalInput): Promise<StagingProposal>;
+  proposeSolar(projectId: string, input: SolarInput): Promise<SolarProposalView>;
   validate(projectId: string, changeset?: string): Promise<Validation>;
   findings(projectId: string, changeset?: string): Promise<Findings>;
   render(projectId: string, options: RenderOptions): Promise<Uint8Array>;
@@ -444,6 +469,10 @@ export class HttpFloorspecClient implements FloorspecClient {
 
   proposeStaging(projectId: string, input: ElectricalInput): Promise<StagingProposal> {
     return this.json<StagingProposal>('POST', this.project(projectId, '/assistants/staging'), input);
+  }
+
+  proposeSolar(projectId: string, input: SolarInput): Promise<SolarProposalView> {
+    return this.json<SolarProposalView>('POST', this.project(projectId, '/assistants/solar'), input);
   }
 
   validate(projectId: string, changeset?: string): Promise<Validation> {

@@ -194,6 +194,12 @@ const EXERCISES: Record<string, Exercise> = {
     // A plan with no rooms: nothing to propose, and the request is still audited.
     return { reply: await operator.post(`/api/projects/${id}/assistants/electrical`, {}), action: 'assistants.electrical.propose' };
   },
+  'POST /api/projects/:projectId/assistants/solar': async ({ running }) => {
+    const operator = await setupOperator(running);
+    const { id } = await createProjectAs(operator);
+    // A plan with no roofs: nothing to lay out, and the request is still audited.
+    return { reply: await operator.post(`/api/projects/${id}/assistants/solar`, {}), action: 'assistants.solar.propose' };
+  },
   'POST /api/projects/:projectId/assistants/staging': async ({ running }) => {
     const operator = await setupOperator(running);
     const { id } = await createProjectAs(operator);

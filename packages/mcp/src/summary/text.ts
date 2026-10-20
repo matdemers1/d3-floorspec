@@ -268,6 +268,15 @@ export function summaryText(s: DocumentSummary): string {
     for (const n of c.neighbours) out.push(`- neighbour ${n.id}${q(n.name)}: ${n.roof} roof, ${String(n.storeys)} storey${n.storeys === 1 ? '' : 's'}, ${n.footprint.toLocaleString('en-US')} sq ft footprint, eaves ${n.eaves}, ridge ${n.ridge} above the floor${n.generated ? ' (generated)' : ''}`);
     if (c.trees.ids.length > 0) out.push(`- trees beyond the lot: ${String(c.trees.deciduous)} deciduous, ${String(c.trees.evergreen)} evergreen`);
   }
+  if (s.solar) {
+    const p = s.solar;
+    out.push('', `## Solar (FS_energy) — ${String(p.total.modules)} modules, ${p.total.kw.toFixed(1)} kW, ${p.total.kwhPerYear} a year (estimate ±20%)`);
+    for (const a of p.arrays)
+      out.push(`- array ${a.id}${q(a.name)} on ${a.roof}${a.face === undefined ? '' : ` face ${String(a.face)}`}: ${a.mount}, ${a.facing === 'flat' ? 'flat' : `faces ${a.facing}`} at ${String(a.tilt)}°, ${String(a.modules)} modules, ${a.kw.toFixed(2)} kW, ${a.kwhPerYear} a year, shade ${a.shade}${a.clear === false ? ', a corner inside its setbacks' : ''}${a.inverter === null ? ', no inverter' : `, on ${a.inverter}`}`);
+    for (const i of p.inverters) out.push(`- inverter ${i.id}: ${i.kw.toFixed(1)} kW of modules offered by ${i.arrays.join(', ') || 'no array'}`);
+    for (const r of p.shutdowns) out.push(`- rapid-shutdown initiator ${r.id}: ${r.arrays.join(', ') || 'no array'}`);
+    out.push(`- ${p.method}`);
+  }
   if (s.circulation) {
     const c = s.circulation;
     out.push('', '## Circulation');

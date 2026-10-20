@@ -72,6 +72,9 @@ export interface Palette {
   readonly contextFill: string;
   readonly contextPave: string;
   readonly contextInk: string;
+  /** FS_energy (FLR-T-16.1): a solar module's cell and the lines between modules. */
+  readonly pv: string;
+  readonly pvEdge: string;
 }
 
 /** The Floorspec accent, the same in both themes. */
@@ -121,6 +124,8 @@ export const PALETTES: Readonly<Record<ThemeName, Palette>> = {
     contextFill: '#dfe1e7',
     contextPave: '#e6e8ee',
     contextInk: '#515563',
+    pv: '#2a78d6',
+    pvEdge: '#b9d6f5',
   },
   dark: {
     paper: '#101117',
@@ -165,5 +170,7 @@ export const PALETTES: Readonly<Record<ThemeName, Palette>> = {
     contextFill: '#2a2d36',
     contextPave: '#1b1d24',
     contextInk: '#b9bdcb',
+    pv: '#2a7fd9',
+    pvEdge: '#123a66',
   },
 };

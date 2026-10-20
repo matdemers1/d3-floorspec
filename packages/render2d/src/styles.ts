@@ -266,6 +266,9 @@ function lineTheme(style: 'technical' | 'blueprint', theme: ThemeName): PlanThem
     contextFill: paper,
     contextPave: paper,
     contextInk: muted,
+    // Solar (FLR-T-16.1) in the drawing's inks: modules paper, their lines in ink.
+    pv: paper,
+    pvEdge: ink,
     wallExterior: paper,
     wallInterior: ink,
     wallEdge: ink,
