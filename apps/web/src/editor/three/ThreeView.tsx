@@ -877,13 +877,13 @@ export default function ThreeView({ store, compact = false }: { store: EditorSto
         <SceneBridge />
         <group ref={houseGroup}>
           <group ref={mainGroup}>
-            <Parts visible={partsShown} rig={sectionRig} motion={motion} reno={renoStyles} danger={tokens.danger} selection={walking ? null : comparing && compare.focus !== null ? compare.focus : selection} accent={tokens.accent} textures={textures} lit={lightsOn} glows={glows} quality={comparing ? 'draft' : quality} onClick={onClick} onDoubleClick={onDoubleClick} onHover={onHover} onLeave={() => { if (tip !== null) setTip(null); }} outlined={comparing && compare.b?.kind === 'main' ? changed : undefined} />
+            <Parts visible={partsShown} rig={sectionRig} motion={motion} reno={renoStyles} danger={tokens.danger} selection={walking ? null : comparing && compare.focus !== null ? compare.focus : selection} accent={tokens.accent} textures={textures} lit={lightsOn} glows={glows} quality={comparing ? 'draft' : quality} onClick={onClick} onDoubleClick={onDoubleClick} onHover={onHover} onLeave={() => { if (tip !== null) setTip(null); }} outlined={comparing && compare.b.kind === 'main' ? changed : undefined} />
             {ready !== null ? <FurnitureScene furniture={furniture} mesh={ready.mesh} visibleIds={extensionIds} selection={walking ? null : selection} accent={tokens.accent} clearances={clearancesShown && !walking} onClick={onClick} register={(id, g) => registerItem(sectionRig, ready.mesh, id, g)} move={(id, g) => motion.register(id, g)} /> : null}
           </group>
           {comparing && compare.a.kind !== 'main' && aModel !== null ? (
             <CompareModel key={`a:${sourceKey(compare.a)}`} side="a" model={aModel} originRef={originRef} setGroup={setCompareGroup} levels={levels} roof={roof} level={levelId} accent={tokens.accent} danger={tokens.danger} textures={textures} lit={lightsOn} glows={glows} outlined={undefined} focus={compare.focus} projectId={store.projectId} onState={onCompareState} />
           ) : null}
-          {comparing && compare.b !== null && compare.b.kind !== 'main' && bModel !== null ? (
+          {comparing && compare.b.kind !== 'main' && bModel !== null ? (
             <CompareModel key={`b:${sourceKey(compare.b)}`} side="b" model={bModel} originRef={originRef} setGroup={setCompareGroup} levels={levels} roof={roof} level={levelId} accent={tokens.accent} danger={tokens.danger} textures={textures} lit={lightsOn} glows={glows} outlined={changed} focus={compare.focus} projectId={store.projectId} onState={onCompareState} />
           ) : null}
         </group>

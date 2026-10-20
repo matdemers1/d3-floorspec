@@ -51,10 +51,11 @@
   position: absolute;
   top: 0;
   bottom: 0;
-  left: 6px;
-  width: 2px;
+  left: 5px;
+  width: 4px;
+  border-right: 1px solid var(--color-surface);
+  border-left: 1px solid var(--color-surface);
   background: var(--color-fg);
-  box-shadow: 0 0 0 1px var(--color-surface);
 }
 .fs-compare__line--fixed {
   cursor: default;
