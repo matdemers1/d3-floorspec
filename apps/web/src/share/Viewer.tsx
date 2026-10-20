@@ -84,6 +84,11 @@ export default function ShareViewer({ token }: { token: string }) {
         return;
       }
       const { meta } = answer;
+      // A tour's link (FLR-T-14.2) shows the tour alone, at its own page.
+      if (meta.shows.tour === true) {
+        navigate(`/s/${token}/tour`, { replace: true });
+        return;
+      }
       // Before any surface asks: the findings come from the link's route, or not at all.
       sharedFindingsSource(key, meta.shows.findings ? `/api/share/${encodeURIComponent(token)}/findings` : null);
       comments.readsThreads = meta.comments.allowed;

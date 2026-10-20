@@ -28,12 +28,14 @@ import { FindingsReportScreen } from './findings/Report';
 import { Coverage } from './findings/Coverage';
 import { Setup } from './screens/Setup';
 import { SignIn } from './screens/SignIn';
-import { SHARE_PATH, takeReturn } from './share/returnTo';
+import { SHARE_PATH, takeReturn, TOUR_PATH } from './share/returnTo';
 
 const Editor = lazy(() => import('./editor/Editor'));
 const Program = lazy(() => import('./program/Program'));
 // The shared viewer (FLR-T-9.6): a chunk of its own, opened by people with no account at all.
 const ShareViewer = lazy(() => import('./share/Viewer'));
+// A virtual tour (FLR-T-14.2): a chunk of its own too, opened on phones with no account.
+const TourViewer = lazy(() => import('./share/tour/TourViewer'));
 // The profile builder carries the rules engine's checker: a chunk of its own (FLR-T-6.8).
 const Jurisdictions = lazy(() => import('./profiles/Jurisdictions').then((m) => ({ default: m.Jurisdictions })));
 
@@ -82,6 +84,14 @@ function Root() {
 
   // A share link is for anybody, signed in or not: what it shows does not depend on who asks, only
   // whether they may comment does — and the viewer asks the server that itself.
+  const toured = TOUR_PATH.exec(path)?.[1];
+  if (toured !== undefined) {
+    return (
+      <Suspense fallback={<Spinner label="Opening the tour" />}>
+        <TourViewer key={toured} token={toured} />
+      </Suspense>
+    );
+  }
   const shared = SHARE_PATH.exec(path)?.[1];
   if (shared !== undefined) {
     return (

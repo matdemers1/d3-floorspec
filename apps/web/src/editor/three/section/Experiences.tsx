@@ -8,6 +8,8 @@ import { threeOf, useThreeState } from '../mode';
 import { planeFrom, sizeOf, SPREAD_MAX, SPREAD_MIN, type Box, type Face, type SectionMode } from './section';
 import { download, stillName, stillPng, stillSvg, styleOf, type StillFormat } from './still';
 import type { SectionRig } from './rig';
+import { DaylightButton } from '../../daylight/Daylight';
+import { daylightOf } from '../../daylight/state';
 import type { Drawing } from './SectionOverlay';
 import { toggleCompare, useCompareChoices } from '../compare/CompareOverlay';
 import { XrayButton } from '../xray/XrayPanel';
@@ -57,7 +59,7 @@ interface Experience {
 const EXPERIENCES: readonly Experience[] = [
   { id: 'section', Button: SectionButton },
   { id: 'xray', Button: XrayButton },
-  // FLR-T-14.7 Daylight comes here.
+  { id: 'daylight', Button: DaylightToolButton },
   { id: 'compare', Button: CompareButton },
   { id: 'edit', Button: EditButton },
   { id: 'tape', Button: TapeButton },
@@ -76,6 +78,7 @@ export function ExperiencesToolbar({ ctx }: { ctx: ExperienceContext }) {
 /** Close what shares the panels' place over the view: the sun, the lighting, the camera. */
 function closeOthers(store: EditorStore): void {
   sunOf(store).set({ open: false, playing: false, lapse: false });
+  daylightOf(store).set({ open: false });
   threeOf(store).set({ lightingOpen: false, cameraOpen: false });
 }
 
@@ -116,6 +119,12 @@ function SectionButton({ ctx }: { ctx: ExperienceContext }) {
       <IconButton label="Section box" icon={<Crop />} size="sm" pressed={open || on} onClick={() => { toggleSection(ctx); }} />
     </Tooltip>
   );
+}
+
+/** FLR-T-14.7: Daylight (⌥D) — illuminance on the floors, sun-hours and glare at desks and beds. */
+function DaylightToolButton({ ctx }: { ctx: ExperienceContext }) {
+  const exploded = useThreeState(ctx.store, (s) => s.explode.open);
+  return <DaylightButton store={ctx.store} disabled={exploded} />;
 }
 
 /** FLR-T-14.4: Compare (⌥C) — A and B from one camera, with a swipe divider or side by side. */

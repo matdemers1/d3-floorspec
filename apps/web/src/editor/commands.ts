@@ -20,6 +20,8 @@ import { PLACING_COMMANDS } from '../placing/commands';
 import { PHRASE_COMMANDS } from '../phrases/commands';
 import { openElementList } from './ElementList';
 import { openShortcuts } from './ShortcutSheet';
+import { daylightOf } from './daylight/state';
+import { toggleDaylightPanel } from './daylight/Daylight';
 
 /**
  * The command registry: every editor action with a name, a group and its keys, in one list. The
@@ -461,6 +463,20 @@ export const COMMANDS: readonly Command[] = [
     hint: '?',
     run: (store) => {
       openShortcuts(store);
+    },
+  },
+  {
+    // FLR-T-14.7: daylight — in 3D its panel and the overlay, on the plan the overlay.
+    id: 'view.daylight',
+    label: 'Show daylight: light on the floors, sun-hours and glare',
+    group: 'View',
+    keywords: 'daylight sun light illuminance lux heatmap glare desk bed sun-hours window',
+    codes: ['Alt+KeyD'],
+    hint: '⌥D',
+    enabled: (store) => store.get().model !== null,
+    run: (store) => {
+      if (threeOf(store).get().mode === 'plan') daylightOf(store).toggle();
+      else toggleDaylightPanel(store);
     },
   },
   {

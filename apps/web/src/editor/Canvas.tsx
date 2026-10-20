@@ -40,6 +40,7 @@ import { AnnotationLayer } from './annotate/Layer';
 import { AnnotationDraftLayer, AnnotationHtml } from './annotate/Overlay';
 import { ReferenceLayer, UnderlayCapture, UnderlayHtml, UnderlayImage } from './underlay/Layer';
 import { HaloHtml, HaloLayer, useHalos } from './halos/HaloLayer';
+import { DaylightLayer, PlanDaylight } from './daylight/Daylight';
 import { HistoryScrubber } from './HistoryScrubber';
 
 /**
@@ -220,6 +221,8 @@ export function PlanCanvas({ store, tools }: { store: EditorStore; tools: ToolCo
               {/* FLR-T-18.12: the level's underlay, over the floors and under the walls. */}
               <Plan view={view} level={level} document={model.document} layers={layers} units={units} labels={false} paint={paint} reno={renoStyles} underlay={<UnderlayImage store={store} view={view} level={level.id} />} />
               <FurnitureLayer view={view} level={level} model={model} layers={layers} projectId={store.projectId} look={look} />
+              {/* FLR-T-14.7: the daylight study on the floors, under the systems, labels and handles. */}
+              {comparing ? null : <DaylightLayer store={store} view={view} level={level} />}
               <SystemsLayer view={view} level={level} document={model.document} derived={model.derived} layers={layers} selection={selection} look={look} />
               {/* FLR-T-18.12: the level below or above, in the reference colour: snapped to, never picked. */}
               <ReferenceLayer store={store} view={view} level={level.id} layers={layers} />
@@ -262,6 +265,7 @@ export function PlanCanvas({ store, tools }: { store: EditorStore; tools: ToolCo
       {view !== null && model !== null && level !== undefined && !comparing ? <ArrangeHtml store={store} view={view} level={level} model={fullModel ?? model} units={units} picking={tools.pickLevel} /> : null}
       {view !== null && level !== undefined && !comparing ? <UnderlayHtml store={store} view={view} level={level} units={units} /> : null}
       {view !== null && model !== null ? <HaloHtml view={view} halos={halos} model={model} units={units} /> : null}
+      {view !== null && level !== undefined && !comparing ? <PlanDaylight store={store} view={view} level={level} /> : null}
       {view !== null && level !== undefined ? <RuleFindingLabels store={store} view={view} level={level} /> : null}
       {paint !== null && layers.walls ? <WallTypeLegend paint={paint} /> : null}
       <DiffLegend store={store} />

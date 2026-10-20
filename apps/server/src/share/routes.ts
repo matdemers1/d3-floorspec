@@ -44,6 +44,12 @@ import { digestsNamed, reachableFiles, sendAssetBytes } from '../assets/access.j
  *
  * **`/api/projects/:projectId/shares` and `/comments`** — the owner's side: make, list and revoke
  * links, and read, answer, resolve and moderate every comment, guarded like every project route.
+ *
+ * A virtual tour (FLR-T-14.2, FLR-ADR-057) is shared through a link of its own: one that names the
+ * tour's export job and shows that tour and nothing else — no model, plan, findings or comments to
+ * reach — view only and revocable like any link. `/api/share/:token/tour` answers the tour's state
+ * (rendering, with its progress, until its panoramas are made) and then its manifest, and
+ * `/api/share/:token/tour/:file` each panorama and plan the manifest names.
  */
 
 export interface ShareDeps {
@@ -71,16 +77,24 @@ const RootBody = z.strictObject({
 });
 const TextBody = z.strictObject({ body: Body });
 
+const NOTHING = { plan: false, threeD: false, findings: false };
 const CreateShare = z
   .strictObject({
     label: z.string().trim().min(1, 'a label cannot be blank').max(80).optional(),
     expiresInDays: z.number().int().min(1).max(MAX_DAYS, `a link lasts at most ${String(MAX_DAYS)} days`).default(DEFAULT_DAYS),
     version: z.enum(['latest', 'current']).default('latest'),
-    shows: z.strictObject({ plan: z.boolean(), threeD: z.boolean(), findings: z.boolean() }).default({ plan: true, threeD: true, findings: true }),
-    comments: z.boolean().default(true),
+    shows: z.strictObject({ plan: z.boolean(), threeD: z.boolean(), findings: z.boolean() }).optional(),
+    comments: z.boolean().optional(),
+    /** A virtual tour (FLR-T-14.2): its export job's ID. The link then shows that tour alone. */
+    tour: z.string().regex(UUID, 'a tour is its export’s ID').optional(),
   })
-  .refine((b) => b.shows.plan || b.shows.threeD || b.shows.findings, { path: ['shows'], message: 'a link has to show something' })
+  .transform((b) => ({ ...b, shows: b.shows ?? (b.tour === undefined ? { plan: true, threeD: true, findings: true } : NOTHING), comments: b.comments ?? b.tour === undefined }))
+  .refine((b) => b.tour === undefined || (!b.shows.plan && !b.shows.threeD && !b.shows.findings && !b.comments), { path: ['tour'], message: 'a tour’s link shows the tour alone: no plan, 3D view, findings or comments' })
+  .refine((b) => b.tour !== undefined || b.shows.plan || b.shows.threeD || b.shows.findings, { path: ['shows'], message: 'a link has to show something' })
   .refine((b) => !b.comments || b.shows.plan || b.shows.threeD, { path: ['comments'], message: 'comments are pinned to the plan or the 3D view: show one of them' });
+
+/** A tour's file names, as the worker writes them (apps/worker tour/index.ts). */
+const TOUR_FILE = /^[a-z0-9][a-z0-9._-]{0,127}$/;
 
 /** A comment's text, cleaned, or a 400 that says why. */
 function textOf(raw: string): string {
@@ -134,7 +148,7 @@ export function shareRoutes(db: Db, deps: ShareDeps): Routes {
       project: { name: project.name },
       sharedBy: ownerName,
       version: version === null ? null : { hash: version.hash, seq: version.seq, pinned: version.pinned },
-      shows: showsOf(link),
+      shows: { ...showsOf(link), tour: link.tourJobId !== null },
       comments: {
         allowed: link.allowComments,
         // Only a person in a session comments: a bearer token is never a commenter.
@@ -175,6 +189,57 @@ export function shareRoutes(db: Db, deps: ShareDeps): Routes {
     const bytes = file === undefined || deps.assets === undefined || deps.assets === null ? null : await deps.assets.get(sha256);
     if (file === undefined || bytes === null) throw new HttpError(404, 'asset not found');
     sendAssetBytes(req, res, file, bytes, 'private, no-cache');
+  }, pub);
+
+  /**
+   * The tour a link shows (FLR-T-14.2): while its panoramas are made, how far it has got; once they
+   * are, its manifest. Revalidated every time, like the model, so a revoked link stops at once.
+   */
+  routes.read('/:token/tour', async (req, res) => {
+    const { link } = shareOf(req);
+    if (link.tourJobId === null) throw new HttpError(404, 'this link does not share a tour');
+    const job = await db.job.findUnique({ where: { id: link.tourJobId } });
+    if (job === null) throw new HttpError(404, 'this link does not share a tour');
+    const rooms = ((job.params as { rooms?: unknown } | null)?.rooms as unknown[] | undefined)?.length ?? 0;
+    res.setHeader('Cache-Control', 'private, no-cache');
+    if (job.status === 'failed') {
+      res.status(200).json({ status: 'failed', panos: rooms, cancelled: (job.result as { cancelled?: unknown } | null)?.cancelled === true });
+      return;
+    }
+    if (job.status !== 'done') {
+      const p = (job.progress ?? {}) as { pano?: unknown; panos?: unknown };
+      res.json({ status: job.status === 'running' ? 'rendering' : 'queued', panos: rooms, done: job.status === 'running' && typeof p.pano === 'number' ? Math.max(0, p.pano - 1) : 0 });
+      return;
+    }
+    const output = await db.jobOutput.findUnique({ where: { jobId: job.id } });
+    if (output === null) throw new HttpError(410, 'this tour’s panoramas are no longer kept');
+    res.setHeader('ETag', `"${output.sha256}"`);
+    if (req.get('if-none-match') === `"${output.sha256}"`) {
+      res.status(304).end();
+      return;
+    }
+    res.json({ status: 'done', panos: rooms, done: rooms, manifest: JSON.parse(Buffer.from(output.bytes).toString('utf8')) as unknown });
+  }, pub);
+
+  /** A panorama or a plan of the tour a link shows, by the name its manifest gives it. */
+  routes.read('/:token/tour/:file', async (req, res) => {
+    const { link } = shareOf(req);
+    if (link.tourJobId === null) throw new HttpError(404, 'this link does not share a tour');
+    const path = String(req.params['file'] ?? '');
+    if (!TOUR_FILE.test(path)) throw new HttpError(404, 'no such file in this tour');
+    const asset = await db.jobAsset.findUnique({ where: { jobId_path: { jobId: link.tourJobId, path } } });
+    if (asset === null) throw new HttpError(404, 'no such file in this tour');
+    res.setHeader('Content-Type', asset.contentType);
+    res.setHeader('ETag', `"${asset.sha256}"`);
+    // Asked again every time, so a revoked link stops at once; a 304 when it is unchanged.
+    res.setHeader('Cache-Control', 'private, no-cache');
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('Content-Security-Policy', "default-src 'none'; style-src 'unsafe-inline'; sandbox");
+    if (req.get('if-none-match') === `"${asset.sha256}"`) {
+      res.status(304).end();
+      return;
+    }
+    res.send(Buffer.from(asset.bytes));
   }, pub);
 
   routes.read('/:token/findings', async (req, res) => {
@@ -341,6 +406,7 @@ function linkView(link: ShareLink & { _count?: { comments: number } }) {
     prefix: link.prefix,
     shows: showsOf(link),
     comments: link.allowComments,
+    tour: link.tourJobId,
     version: link.versionHash === null ? { pinned: false, hash: null, seq: null } : { pinned: true, hash: link.versionHash, seq: link.versionSeq },
     createdAt: link.createdAt,
     expiresAt: link.expiresAt,
@@ -382,7 +448,12 @@ export function projectShareRoutes(db: Db, deps: ShareDeps): Routes {
     const active = await tx.shareLink.count({ where: { projectId: project.id, revokedAt: null, expiresAt: { gt: new Date() } } });
     if (active >= MAX_ACTIVE_LINKS) throw new HttpError(409, `a project has at most ${String(MAX_ACTIVE_LINKS)} live links; revoke one first`);
     let pin: { hash: string; seq: number } | null = null;
-    if (body.version === 'current') {
+    // A tour's link (FLR-T-14.2): of a tour of this project's that is made or being made.
+    if (body.tour !== undefined) {
+      const job = await tx.job.findFirst({ where: { id: body.tour, projectId: project.id, kind: 'export.tour' } });
+      if (job === null) throw new HttpError(404, 'tour not found');
+      if (job.status === 'failed') throw new HttpError(409, 'this tour was not made: render it again, then share it');
+    } else if (body.version === 'current') {
       const now = await sharedVersion(tx, { projectId: project.id, versionHash: null, versionSeq: null });
       if (now === null) throw new HttpError(409, 'this project has no model to pin yet');
       pin = { hash: now.hash, seq: now.seq ?? 0 };
@@ -402,18 +473,19 @@ export function projectShareRoutes(db: Db, deps: ShareDeps): Routes {
         show3d: body.shows.threeD,
         showFindings: body.shows.findings,
         allowComments: body.comments,
+        tourJobId: body.tour ?? null,
         createdAt,
         expiresAt: new Date(createdAt.getTime() + body.expiresInDays * 86_400_000),
       },
     });
     const events: ProjectEvent[] = [{ projectId: project.id, type: 'share', data: { id: link.id, change: 'created' } }];
     return {
-      reply: (res) => res.status(201).json({ link: linkView(link), url: `${base}/s/${token}`, token }),
+      reply: (res) => res.status(201).json({ link: linkView(link), url: body.tour === undefined ? `${base}/s/${token}` : `${base}/s/${token}/tour`, token }),
       audit: {
         action: 'share.create',
         targetType: 'share_link',
         targetId: link.id,
-        detail: { project: project.id, label: link.label, prefix: link.prefix, expiresAt: link.expiresAt, shows: showsOf(link), comments: link.allowComments, version: pin },
+        detail: { project: project.id, label: link.label, prefix: link.prefix, expiresAt: link.expiresAt, shows: showsOf(link), comments: link.allowComments, version: pin, ...(body.tour === undefined ? {} : { tour: body.tour }) },
       },
       events,
     };

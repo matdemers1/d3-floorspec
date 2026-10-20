@@ -161,6 +161,24 @@ export interface SceneDoor {
 }
 
 /**
+ * A way through from one room to the next (FLR-T-14.2): a door, an empty opening or a separator (open
+ * plan) — what a virtual tour's hotspots are placed at. Plan in metres, z-up.
+ */
+export interface ScenePassage {
+  readonly id: string;
+  readonly kind: 'door' | 'opening' | 'separator';
+  readonly level: string;
+  /** The middle of the way through, on the wall's (or the separator's) centre line. */
+  readonly mid: [number, number];
+  /** Across it, unit: the host wall's left normal, or the separator's. */
+  readonly normal: [number, number];
+  /** Half the host wall's thickness; zero for a separator. */
+  readonly halfThickness: number;
+  /** How wide it is, metres. */
+  readonly width: number;
+}
+
+/**
  * An extension element's fallback box (Core 12.6) — a piece of furniture, a fixture, an appliance —
  * for a camera that keeps out of it (FLR-T-12.29). Plan in metres, z-up.
  */
@@ -191,6 +209,8 @@ export interface Scene {
   readonly bounds: { min: Vec3; max: Vec3 } | null;
   readonly rooms: SceneRoom[];
   readonly doors: SceneDoor[];
+  /** Doors, empty openings and separators: where one room opens into the next (FLR-T-14.2). */
+  readonly passages: ScenePassage[];
   /** Every extension element's fallback box, by ID: what a camera standing in a room keeps out of. */
   readonly obstacles: SceneObstacle[];
   /** What FS_electrical's luminaires shine (FLR-T-12.22), for a view that turns them on. */
@@ -820,6 +840,7 @@ export function sceneOf(doc: FloorspecDocument, derived: Derived, parts: readonl
     bounds: builders.size === 0 ? null : { min, max },
     rooms: roomsOf(doc, derived),
     doors: doorsOf(derived, parts, frameOf),
+    passages: passagesOf(doc, derived, parts, frameOf),
     obstacles: obstaclesOf(doc, derived),
     lights: lit.map((l) => ({
       id: l.id,
@@ -904,6 +925,47 @@ function obstaclesOf(doc: FloorspecDocument, derived: Derived): SceneObstacle[] 
         ...(decor ? { decor: true as const } : {}),
       };
     });
+}
+
+/** Every door, empty opening and separator, by ID (FLR-T-14.2): where a tour walks from room to room. */
+function passagesOf(doc: FloorspecDocument, derived: Derived, parts: readonly MeshPart[], frameOf: (id: string) => WallFrame | undefined): ScenePassage[] {
+  const out: ScenePassage[] = [];
+  for (const part of parts) {
+    const category = part.opening?.category;
+    if (part.kind !== 'opening' || part.opening === undefined || (category !== 'door' && category !== 'empty')) continue;
+    const o = derived.openings[part.id];
+    const f = frameOf(part.opening.wall);
+    if (o === undefined || f === undefined) continue;
+    const half = Math.abs((f.leftAt[0] - f.rightAt[0]) * f.L[0] + (f.leftAt[1] - f.rightAt[1]) * f.L[1]) / 2;
+    out.push({
+      id: part.id,
+      kind: category === 'door' ? 'door' : 'opening',
+      level: part.level,
+      mid: [(o.start[0] + o.end[0]) / 2 / M, (o.start[1] + o.end[1]) / 2 / M],
+      normal: f.L,
+      halfThickness: half,
+      width: Math.hypot(o.end[0] - o.start[0], o.end[1] - o.start[1]) / M,
+    });
+  }
+  for (const [id, sep] of Object.entries(doc.separators ?? {})) {
+    if (sep === undefined) continue;
+    const a = doc.junctions?.[sep.start]?.position;
+    const b = doc.junctions?.[sep.end]?.position;
+    const level = doc.junctions?.[sep.start]?.level;
+    if (a === undefined || b === undefined || level === undefined) continue;
+    const length = Math.hypot(b[0] - a[0], b[1] - a[1]);
+    if (length === 0) continue;
+    out.push({
+      id,
+      kind: 'separator',
+      level,
+      mid: [(a[0] + b[0]) / 2 / M, (a[1] + b[1]) / 2 / M],
+      normal: [-(b[1] - a[1]) / length, (b[0] - a[0]) / length],
+      halfThickness: 0,
+      width: length / M,
+    });
+  }
+  return out.sort((p, q) => (p.id < q.id ? -1 : p.id > q.id ? 1 : 0));
 }
 
 function doorsOf(derived: Derived, parts: readonly MeshPart[], frameOf: (id: string) => WallFrame | undefined): SceneDoor[] {
