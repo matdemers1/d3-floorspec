@@ -1,0 +1,7 @@
+{
+  "description": "IW1's cavity has no material: its resistance, and its clear path's, are not known; the framed path, through the studs, is.",
+  "covers": [
+    "FS-THRM-1.2.3",
+    "FS-THRM-5.1.1"
+  ]
+}

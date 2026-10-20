@@ -1,0 +1,8 @@
+{
+  "description": "A house as no energy code would have it - no insulation in its walls, single glazing, an uninsulated slab edge. FS_thermal compares nothing with a code, a climate or a load: the document is valid, reports nothing, and derives only the values of chapter 5 - EW1's clear path now its layers with the empty cavity's 160 - and nothing that says whether the envelope is good enough.",
+  "covers": [
+    "FS-THRM-1.4.1",
+    "FS-THRM-1.4.2",
+    "FS-THRM-5.1.1"
+  ]
+}

@@ -1,0 +1,25 @@
+{
+  "valid": false,
+  "diagnostics": [
+    {
+      "code": "FS-THRM-INV-001",
+      "severity": "error",
+      "elements": ["M-CAV"]
+    },
+    {
+      "code": "FS-THRM-INV-001",
+      "severity": "error",
+      "elements": ["M-GAP"]
+    },
+    {
+      "code": "FS-THRM-INV-002",
+      "severity": "error",
+      "elements": ["IW1"]
+    },
+    {
+      "code": "FS-THRM-INV-002",
+      "severity": "error",
+      "elements": ["R2"]
+    }
+  ]
+}

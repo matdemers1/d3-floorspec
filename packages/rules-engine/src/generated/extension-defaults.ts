@@ -96,6 +96,7 @@ export const ELEMENT_DEFAULTS: Readonly<Record<string, Readonly<Record<string, R
   "FS_renovation": {},
   "FS_site": {},
   "FS_structural": {},
+  "FS_thermal": {},
   "FS_views": {}
 };
 
@@ -160,6 +161,7 @@ export const RECORD_DEFAULTS: Readonly<Record<string, Readonly<Record<string, Re
     "spots": {}
   },
   "FS_structural": {},
+  "FS_thermal": {},
   "FS_views": {
     "views": {
       "aspect": "3:2",

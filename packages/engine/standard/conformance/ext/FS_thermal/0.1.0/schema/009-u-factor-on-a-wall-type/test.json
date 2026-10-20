@@ -1,0 +1,6 @@
+{
+  "description": "EW1 states a U-factor: a wall type's U-factor is derived from its layers by a method (3.3), never stated.",
+  "covers": [
+    "FS-THRM-1.3.2"
+  ]
+}

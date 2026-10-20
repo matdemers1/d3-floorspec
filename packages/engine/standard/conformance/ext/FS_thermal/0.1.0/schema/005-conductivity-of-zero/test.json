@@ -1,0 +1,6 @@
+{
+  "description": "A conductivity of 0 conducts nothing, and is out of range: a material that stops heat whole states a resistance.",
+  "covers": [
+    "FS-THRM-1.3.2"
+  ]
+}

@@ -1,0 +1,9 @@
+{
+  "description": "The house as a Core 0.3 document with a hip roof whose FS_thermal data is its assembly from the shingles down to the gypsum ceiling - a vented attic stating its resistance, 6 1/2\" of cellulose over the ceiling joists and 5 1/2\" between them - framed 7%: the joists replace the core layer, the cellulose between them, and nothing else. Valid; the roof's derived values are beside the wall types' and floors', which are the 0.2 house's.",
+  "covers": [
+    "FS-THRM-1.2.1",
+    "FS-THRM-1.3.2",
+    "FS-THRM-3.1.1",
+    "FS-THRM-5.1.1"
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "description": "IW1 without its framing: no member `framed`; and a framing of 1000, all framing, on EW1, whose framed path is its studs.",
+  "covers": [
+    "FS-THRM-5.1.1"
+  ]
+}

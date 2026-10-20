@@ -1,0 +1,31 @@
+{
+  "status": "committed",
+  "diagnostics": [],
+  "hash": "792589dc5d43dcf5f2818eb4bc08cd3f93a57e1ec6a967f01cfacbcd8ef7a126",
+  "created": [],
+  "removed": [],
+  "resolved": [
+    {
+      "op": "setProperty",
+      "id": "WT1",
+      "path": "/extensions/FS_thermal",
+      "value": {
+        "shgc": 400,
+        "uFactor": 800
+      }
+    }
+  ],
+  "inverse": [
+    {
+      "op": "setProperty",
+      "id": "WT1",
+      "path": "/extensions",
+      "value": {
+        "FS_thermal": {
+          "shgc": 250,
+          "uFactor": 1700
+        }
+      }
+    }
+  ]
+}

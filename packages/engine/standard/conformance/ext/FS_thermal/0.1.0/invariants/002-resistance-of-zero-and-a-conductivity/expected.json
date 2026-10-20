@@ -1,0 +1,10 @@
+{
+  "valid": false,
+  "diagnostics": [
+    {
+      "code": "FS-THRM-INV-001",
+      "severity": "error",
+      "elements": ["M-WRAP"]
+    }
+  ]
+}

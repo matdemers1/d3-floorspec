@@ -1,0 +1,8 @@
+{
+  "description": "Setting a U-factor on the wall W1: the result breaks 1.3.3, and the batch is rejected with FS-THRM-SCH-001.",
+  "covers": [
+    "FS-THRM-1.3.3",
+    "FS-THRM-1.2.1",
+    "FS-OPS-1.2.3"
+  ]
+}

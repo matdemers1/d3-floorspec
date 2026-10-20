@@ -108,6 +108,24 @@ export * as annotation from './extensions/fs/annotation.js';
 export * as site from './extensions/fs/site.js';
 export * as outdoor from './extensions/fs/outdoor.js';
 export * as context from './extensions/fs/context.js';
+export * as thermal from './extensions/fs/thermal.js';
+export {
+  FS_THERMAL_NAME,
+  thermalOf,
+  materialThermal,
+  layerValues,
+  deriveAssembly,
+  thermalAssemblies,
+  type DerivedThermal,
+  type DerivedAssembly,
+  type DerivedLayer,
+  type ThermalAssembly,
+  type ThermalLayer,
+  type ThermalFraming,
+  type MaterialThermal,
+  type UnitThermal,
+  type FloorThermal,
+} from './extensions/fs/thermal.js';
 export { type DerivedContext, contextData, contextRecords, usesContext, streetMeasures, neighbourHeights } from './extensions/fs/context.js';
 export {
   contextDrawing,

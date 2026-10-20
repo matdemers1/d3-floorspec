@@ -1,0 +1,14 @@
+{
+  "extensions": {
+    "FS_thermal": {
+      "colour": "red"
+    }
+  },
+  "extensionsUsed": {
+    "FS_thermal": "0.1.0"
+  },
+  "floorspec": "0.1",
+  "project": {
+    "name": "Old"
+  }
+}

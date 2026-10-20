@@ -1,0 +1,6 @@
+{
+  "description": "The wrap states a resistance of 0 and a conductivity: a resistance of 0 is still a resistance.",
+  "covers": [
+    "FS-THRM-2.1.1"
+  ]
+}

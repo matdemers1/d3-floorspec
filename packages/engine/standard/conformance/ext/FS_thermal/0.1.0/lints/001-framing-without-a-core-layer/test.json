@@ -1,0 +1,6 @@
+{
+  "description": "EW1's batts are called insulation, not core: its framing interrupts nothing, and its framed path is its clear path.",
+  "covers": [
+    "FS-THRM-1.2.3"
+  ]
+}
