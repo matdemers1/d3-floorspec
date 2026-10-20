@@ -50,6 +50,11 @@ import { digestsNamed, reachableFiles, sendAssetBytes } from '../assets/access.j
  * reach — view only and revocable like any link. `/api/share/:token/tour` answers the tour's state
  * (rendering, with its progress, until its panoramas are made) and then its manifest, and
  * `/api/share/:token/tour/:file` each panorama and plan the manifest names.
+ *
+ * An AR model (FLR-T-14.3) is shared the same way: a link naming a USDZ export, showing that model
+ * and nothing else. `/api/share/:token/ar` answers its state (being made, made — at which scale —
+ * or not made), and `/api/share/:token/ar.usdz` the file, as `model/vnd.usdz+zip` and inline, so
+ * a phone's `<a rel="ar">` opens it in AR Quick Look.
  */
 
 export interface ShareDeps {
@@ -87,10 +92,17 @@ const CreateShare = z
     comments: z.boolean().optional(),
     /** A virtual tour (FLR-T-14.2): its export job's ID. The link then shows that tour alone. */
     tour: z.string().regex(UUID, 'a tour is its export’s ID').optional(),
+    /** An AR model (FLR-T-14.3): its USDZ export's ID. The link then shows that model alone. */
+    ar: z.string().regex(UUID, 'an AR model is its export’s ID').optional(),
   })
-  .transform((b) => ({ ...b, shows: b.shows ?? (b.tour === undefined ? { plan: true, threeD: true, findings: true } : NOTHING), comments: b.comments ?? b.tour === undefined }))
+  .transform((b) => {
+    const alone = b.tour !== undefined || b.ar !== undefined;
+    return { ...b, shows: b.shows ?? (alone ? NOTHING : { plan: true, threeD: true, findings: true }), comments: b.comments ?? !alone };
+  })
+  .refine((b) => b.tour === undefined || b.ar === undefined, { path: ['ar'], message: 'a link shares a tour or an AR model, not both' })
   .refine((b) => b.tour === undefined || (!b.shows.plan && !b.shows.threeD && !b.shows.findings && !b.comments), { path: ['tour'], message: 'a tour’s link shows the tour alone: no plan, 3D view, findings or comments' })
-  .refine((b) => b.tour !== undefined || b.shows.plan || b.shows.threeD || b.shows.findings, { path: ['shows'], message: 'a link has to show something' })
+  .refine((b) => b.ar === undefined || (!b.shows.plan && !b.shows.threeD && !b.shows.findings && !b.comments), { path: ['ar'], message: 'an AR model’s link shows the model alone: no plan, 3D view, findings or comments' })
+  .refine((b) => b.tour !== undefined || b.ar !== undefined || b.shows.plan || b.shows.threeD || b.shows.findings, { path: ['shows'], message: 'a link has to show something' })
   .refine((b) => !b.comments || b.shows.plan || b.shows.threeD, { path: ['comments'], message: 'comments are pinned to the plan or the 3D view: show one of them' });
 
 /** A tour's file names, as the worker writes them (apps/worker tour/index.ts). */
@@ -148,7 +160,7 @@ export function shareRoutes(db: Db, deps: ShareDeps): Routes {
       project: { name: project.name },
       sharedBy: ownerName,
       version: version === null ? null : { hash: version.hash, seq: version.seq, pinned: version.pinned },
-      shows: { ...showsOf(link), tour: link.tourJobId !== null },
+      shows: { ...showsOf(link), tour: link.tourJobId !== null, ar: link.arJobId !== null },
       comments: {
         allowed: link.allowComments,
         // Only a person in a session comments: a bearer token is never a commenter.
@@ -219,6 +231,54 @@ export function shareRoutes(db: Db, deps: ShareDeps): Routes {
       return;
     }
     res.json({ status: 'done', panos: rooms, done: rooms, manifest: JSON.parse(Buffer.from(output.bytes).toString('utf8')) as unknown });
+  }, pub);
+
+  /** The AR model a link shows (FLR-T-14.3): its job, and once made, its scale and size. */
+  async function arJobOf(link: ShareLink) {
+    if (link.arJobId === null) throw new HttpError(404, 'this link does not share an AR model');
+    const job = await db.job.findUnique({ where: { id: link.arJobId } });
+    if (job === null) throw new HttpError(404, 'this link does not share an AR model');
+    return job;
+  }
+
+  /**
+   * The AR model a link shows (FLR-T-14.3): while it is made, that it is; once it is, its scale, its
+   * file's name and size, and where to get it. Revalidated every time, so a revoked link stops at once.
+   */
+  routes.read('/:token/ar', async (req, res) => {
+    const { link, project } = shareOf(req);
+    const job = await arJobOf(link);
+    const ar = ((job.params ?? {}) as { ar?: { scale?: unknown } }).ar;
+    const scale = ar?.scale === 'table' ? 'table' : 'true';
+    res.setHeader('Cache-Control', 'private, no-cache');
+    if (job.status !== 'done') {
+      res.json({ status: job.status === 'failed' ? 'failed' : job.status === 'running' ? 'making' : 'queued', scale, project: project.name });
+      return;
+    }
+    const output = await db.jobOutput.findUnique({ where: { jobId: job.id }, select: { name: true } });
+    if (output === null) throw new HttpError(410, 'this AR model is no longer kept');
+    const size = (job.result as { size?: unknown } | null)?.size;
+    res.json({ status: 'done', scale, project: project.name, name: output.name, bytes: typeof size === 'number' ? size : null, file: `/api/share/${String(req.params['token'])}/ar.usdz` });
+  }, pub);
+
+  /** The AR model's USDZ, inline: AR Quick Look opens it from a phone's `<a rel="ar">`. */
+  routes.read('/:token/ar.usdz', async (req, res) => {
+    const { link } = shareOf(req);
+    const job = await arJobOf(link);
+    if (job.status !== 'done') throw new HttpError(409, 'this AR model is not made yet');
+    const output = await db.jobOutput.findUnique({ where: { jobId: job.id } });
+    if (output === null) throw new HttpError(410, 'this AR model is no longer kept');
+    res.setHeader('Content-Type', 'model/vnd.usdz+zip');
+    res.setHeader('Content-Disposition', `inline; filename="${output.name.replace(/[^\w.-]/g, '_')}"`);
+    res.setHeader('ETag', `"${output.sha256}"`);
+    // Asked again every time, so a revoked link stops at once; a 304 when it is unchanged.
+    res.setHeader('Cache-Control', 'private, no-cache');
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    if (req.get('if-none-match') === `"${output.sha256}"`) {
+      res.status(304).end();
+      return;
+    }
+    res.send(Buffer.from(output.bytes));
   }, pub);
 
   /** A panorama or a plan of the tour a link shows, by the name its manifest gives it. */
@@ -407,6 +467,7 @@ function linkView(link: ShareLink & { _count?: { comments: number } }) {
     shows: showsOf(link),
     comments: link.allowComments,
     tour: link.tourJobId,
+    ar: link.arJobId,
     version: link.versionHash === null ? { pinned: false, hash: null, seq: null } : { pinned: true, hash: link.versionHash, seq: link.versionSeq },
     createdAt: link.createdAt,
     expiresAt: link.expiresAt,
@@ -453,6 +514,11 @@ export function projectShareRoutes(db: Db, deps: ShareDeps): Routes {
       const job = await tx.job.findFirst({ where: { id: body.tour, projectId: project.id, kind: 'export.tour' } });
       if (job === null) throw new HttpError(404, 'tour not found');
       if (job.status === 'failed') throw new HttpError(409, 'this tour was not made: render it again, then share it');
+    } else if (body.ar !== undefined) {
+      // An AR model's link (FLR-T-14.3): of a USDZ export of this project's that is made or being made.
+      const job = await tx.job.findFirst({ where: { id: body.ar, projectId: project.id, kind: 'export.usdz' } });
+      if (job === null) throw new HttpError(404, 'AR model not found');
+      if (job.status === 'failed') throw new HttpError(409, 'this AR model was not made: make it again, then share it');
     } else if (body.version === 'current') {
       const now = await sharedVersion(tx, { projectId: project.id, versionHash: null, versionSeq: null });
       if (now === null) throw new HttpError(409, 'this project has no model to pin yet');
@@ -474,18 +540,19 @@ export function projectShareRoutes(db: Db, deps: ShareDeps): Routes {
         showFindings: body.shows.findings,
         allowComments: body.comments,
         tourJobId: body.tour ?? null,
+        arJobId: body.ar ?? null,
         createdAt,
         expiresAt: new Date(createdAt.getTime() + body.expiresInDays * 86_400_000),
       },
     });
     const events: ProjectEvent[] = [{ projectId: project.id, type: 'share', data: { id: link.id, change: 'created' } }];
     return {
-      reply: (res) => res.status(201).json({ link: linkView(link), url: body.tour === undefined ? `${base}/s/${token}` : `${base}/s/${token}/tour`, token }),
+      reply: (res) => res.status(201).json({ link: linkView(link), url: body.tour !== undefined ? `${base}/s/${token}/tour` : body.ar !== undefined ? `${base}/s/${token}/ar` : `${base}/s/${token}`, token }),
       audit: {
         action: 'share.create',
         targetType: 'share_link',
         targetId: link.id,
-        detail: { project: project.id, label: link.label, prefix: link.prefix, expiresAt: link.expiresAt, shows: showsOf(link), comments: link.allowComments, version: pin, ...(body.tour === undefined ? {} : { tour: body.tour }) },
+        detail: { project: project.id, label: link.label, prefix: link.prefix, expiresAt: link.expiresAt, shows: showsOf(link), comments: link.allowComments, version: pin, ...(body.tour === undefined ? {} : { tour: body.tour }), ...(body.ar === undefined ? {} : { ar: body.ar }) },
       },
       events,
     };

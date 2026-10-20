@@ -26,6 +26,9 @@ const CALLS: Record<string, { body?: unknown; anonymous: number; stream?: true }
   // A tour's (FLR-T-14.2): an ordinary link shows none (tours.test.ts walks one).
   'GET /api/share/:token/tour': { anonymous: 404 },
   'GET /api/share/:token/tour/:file': { anonymous: 404 },
+  // An AR model's (FLR-T-14.3): an ordinary link shows none (ar.test.ts makes one).
+  'GET /api/share/:token/ar': { anonymous: 404 },
+  'GET /api/share/:token/ar.usdz': { anonymous: 404 },
   'GET /api/share/:token/coverage': { anonymous: 200 },
   'GET /api/share/:token/comments': { anonymous: 200 },
   'GET /api/share/:token/events': { anonymous: 200, stream: true },
@@ -183,7 +186,7 @@ describe('share links', () => {
         project: { name: 'Two-storey ranch' },
         sharedBy: OPERATOR.displayName,
         version: { hash: head, seq: 1, pinned: false },
-        shows: { plan: true, threeD: true, findings: true, tour: false },
+        shows: { plan: true, threeD: true, findings: true, tour: false, ar: false },
         comments: { allowed: true, signedIn: false, you: null, owner: false },
         expiresAt: expect.any(String) as unknown,
       });

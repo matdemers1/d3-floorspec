@@ -505,7 +505,9 @@ model Job {
   output      JobOutput?
   assets      JobAsset[]
   /// Share links that show this job's virtual tour (FLR-T-14.2).
-  tourLinks   ShareLink[]
+  tourLinks   ShareLink[] @relation("TourLinks")
+  /// Share links that show this job's AR model (FLR-T-14.3).
+  arLinks     ShareLink[] @relation("ArLinks")
 
   @@index([status, createdAt])
   @@index([projectId, createdAt])
@@ -617,6 +619,8 @@ model ShareLink {
   allowComments Boolean @map("allow_comments")
   /// A virtual tour (FLR-T-14.2): the export job whose panoramas the link shows — and nothing else.
   tourJobId     String? @map("tour_job_id") @db.Uuid
+  /// An AR model (FLR-T-14.3): the USDZ export a phone opens in AR Quick Look — and nothing else.
+  arJobId       String? @map("ar_job_id") @db.Uuid
 
   createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
   expiresAt  DateTime  @map("expires_at") @db.Timestamptz(6)
@@ -628,11 +632,13 @@ model ShareLink {
   project   Project   @relation(fields: [projectId], references: [id], onDelete: Restrict)
   createdBy Account   @relation(fields: [createdByAccountId], references: [id], onDelete: Restrict)
   version   Version?  @relation(fields: [versionHash], references: [hash], onDelete: Restrict, onUpdate: Restrict)
-  tourJob   Job?      @relation(fields: [tourJobId], references: [id], onDelete: Restrict)
+  tourJob   Job?      @relation("TourLinks", fields: [tourJobId], references: [id], onDelete: Restrict)
+  arJob     Job?      @relation("ArLinks", fields: [arJobId], references: [id], onDelete: Restrict)
   comments  Comment[]
 
   @@index([projectId, createdAt])
   @@index([tourJobId])
+  @@index([arJobId])
   @@map("share_links")
 }
 
