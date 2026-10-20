@@ -90,7 +90,7 @@ export function planElements({ model, level, layers, ghost, units, annotations }
   for (const d of level.devices) {
     const layer = layerOfElement(d.extension, d.collection);
     if (layer !== null && !drawn(layers, layer)) continue;
-    const box = d.extension === 'FS_furniture' || d.extension === 'FS_landscape' ? boxOf(d.element) : null;
+    const box = d.extension === 'FS_furniture' || d.extension === 'FS_landscape' || (d.extension === 'FS_outdoor' && d.collection !== 'fences') ? boxOf(d.element) : null;
     const size = box === null ? null : sizeOf(box);
     const what = d.kindLabel.toLowerCase();
     const label = labelOf(model, d.id);
@@ -100,7 +100,7 @@ export function planElements({ model, level, layers, ghost, units, annotations }
     list.push({ id: d.id, label, meta: meta === '' ? (layer === null ? d.extension : LAYER_LABELS[layer].toLowerCase()) : meta, ghost: layer !== null && ghosted.has(layer) });
     byLayer.set(key, list);
   }
-  for (const layer of ['furniture', 'casework', 'electrical', 'plumbing', 'mechanical', 'lowvoltage', 'landscape', 'other'] as const) {
+  for (const layer of ['furniture', 'casework', 'electrical', 'plumbing', 'mechanical', 'lowvoltage', 'landscape', 'outdoor', 'other'] as const) {
     const items = byLayer.get(layer);
     if (items !== undefined) add(layer, layer === 'other' ? 'Other elements' : LAYER_LABELS[layer], items);
   }

@@ -2,7 +2,7 @@ import './editor.css';
 import { RenovationMenu, useRenovationFilter } from './renovation';
 import { useEffect, useMemo, type ReactNode } from 'react';
 import { Avatar, Button, EmptyState, IconButton, Modal, Select, Skeleton, Spinner, StatusDot, Tooltip, TooltipProvider, useToast } from '@d3cloud/ui';
-import { ArrowLeft, CircleCheck, Command as CommandIcon, Hand, History as HistoryIcon, Palette as PaletteIcon, PanelLeft, Redo2, RulerDimensionLine, Sparkles, SquareSlash, StickyNote, Table as TableIcon, TriangleAlert, Undo2, WandSparkles, Waypoints, LandPlot, SquareDashed, LocateFixed, Spline, Shovel } from 'lucide-react';
+import { ArrowLeft, CircleCheck, Command as CommandIcon, Hand, History as HistoryIcon, Palette as PaletteIcon, PanelLeft, Redo2, RulerDimensionLine, Sparkles, SquareSlash, StickyNote, Table as TableIcon, TriangleAlert, Undo2, WandSparkles, Waypoints, LandPlot, SquareDashed, LocateFixed, Spline, Shovel, Fence } from 'lucide-react';
 import { OptionCompareCanvas, OptionComparePanel, OptionsChip, OptionsPanel } from './Options';
 import { MaterialsModal } from './Materials';
 import { FurnitureLibrary } from '../furniture/Browser';
@@ -486,6 +486,8 @@ const RAIL: { tool?: ToolId; label: string; icon: ReactNode; later?: string }[] 
   { tool: 'spot', label: 'Add a spot elevation', icon: <LocateFixed /> },
   { tool: 'contour', label: 'Draw a contour line', icon: <Spline /> },
   { tool: 'pad', label: 'Draw a grade pad', icon: <Shovel /> },
+  // FLR-T-15.2: a fence or a garden wall, drawn as a wall is, with gates as openings.
+  { tool: 'fence', label: 'Draw a fence', icon: <Fence /> },
 ];
 /** The building systems below the rule (FLR-T-5.7): each starts the device tool with that system's first kind. */
 const RAIL_SYSTEMS: { system: SystemId; label: string; icon: ReactNode; first: string }[] = [

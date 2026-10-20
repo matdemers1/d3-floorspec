@@ -29,6 +29,12 @@ const UNITS: Record<string, string> = {
   volts: 'V', amps: 'A', rating: 'A', breaker: 'A', mainBreaker: 'A', watts: 'W', input: 'W', heating: 'W', cooling: 'W', capacity: 'mL', airflow: 'mL/s',
 };
 
+/**
+ * Members an extension's schema types as a bare integer that are lengths (each spec's 1.4): FS_outdoor's
+ * (FLR-T-15.2) — a coping's width, a water line, a post's size and spacing — shown as lengths.
+ */
+const LENGTHS = new Set(['FS_outdoor/coping', 'FS_outdoor/waterLine', 'FS_outdoor/postSize', 'FS_outdoor/postSpacing', 'FS_outdoor/rafterSpacing', 'FS_outdoor/clearHeight', 'FS_outdoor/width']);
+
 function definition(schema: Json, ref: unknown): Json | undefined {
   if (typeof ref !== 'string' || !ref.startsWith('#/$defs/')) return undefined;
   const defs = schema['$defs'];
@@ -65,7 +71,7 @@ export function memberSpecs(extension: string, collection: string, record = fals
     else if (raw['type'] === 'array' && items?.['type'] === 'integer') out.push({ ...base, type: 'intList' });
     else if (Array.isArray(raw['enum']) && raw['enum'].every((v) => typeof v === 'string')) out.push({ ...base, type: 'enum', options: raw['enum'], ...(typeof raw['default'] === 'string' ? { default: raw['default'] } : {}) });
     else if (Array.isArray(raw['enum']) && raw['enum'].every((v) => typeof v === 'number')) out.push({ ...base, type: 'int', ...(typeof raw['default'] === 'number' ? { default: raw['default'] } : {}), min: Math.min(...(raw['enum'])), max: Math.max(...(raw['enum'])) });
-    else if (raw['type'] === 'integer' && /length in base units/i.test(base.description)) out.push({ ...base, type: 'length' });
+    else if (raw['type'] === 'integer' && (/length in base units/i.test(base.description) || LENGTHS.has(`${extension}/${name}`))) out.push({ ...base, type: 'length' });
     else if (raw['type'] === 'integer')
       out.push({
         ...base,

@@ -1,5 +1,6 @@
 import type { FloorspecDocument } from '@floorspec/engine';
 import landscapeLibrary from '../../../../packages/engine/standard/registry/FS_landscape/library.json';
+import outdoorLibrary from '../../../../packages/engine/standard/registry/FS_outdoor/library.json';
 import { LIBRARY, categoryLabel, mountHeight, type LibraryItem } from '../furniture/library';
 import { DEVICE_KINDS, type DeviceKind } from '../editor/systems/catalog';
 import { typeChoices, type TypeChoice } from '../editor/ops';
@@ -62,7 +63,11 @@ export type EntrySource =
   | { kind: 'furniture'; item: LibraryItem }
   | { kind: 'device'; device: DeviceKind }
   | { kind: 'opening'; type: TypeChoice }
-  | { kind: 'landscape'; collection: 'plants' | 'beds'; element: Record<string, unknown> };
+  | { kind: 'landscape'; collection: 'plants' | 'beds'; element: Record<string, unknown> }
+  | { kind: 'outdoor'; collection: OutdoorPlaced; element: Record<string, unknown> };
+
+/** FS_outdoor's kinds placed like furniture (FLR-T-15.2); a fence is drawn instead (editor/outdoor). */
+export type OutdoorPlaced = 'pools' | 'shelters' | 'kitchens' | 'fires';
 
 export interface Entry {
   /** Unique across the library: `furniture:sofa-2100`, `device:toilet`, `door:D1`, `landscape:tree-small`. */
@@ -229,8 +234,45 @@ function landscapeEntries(): Entry[] {
   return [...plants, ...beds];
 }
 
-/** The parts of the library that do not depend on the document. */
-const FIXED: readonly Entry[] = [...LIBRARY.map(furnitureEntry), ...DEVICE_KINDS.map(deviceEntry), ...landscapeEntries()];
+interface RawOutdoor {
+  kind: string;
+  element: Record<string, unknown> & { name: string; fallback: { box: { min: number[]; max: number[] } } };
+}
+
+const OUTDOOR_WORDS: Readonly<Record<OutdoorPlaced, string>> = {
+  pools: 'pool spa plunge swim water coping',
+  shelters: 'pergola porch shade sail shelter roof posts',
+  kitchens: 'outdoor kitchen grill bbq barbecue counter',
+  fires: 'fire pit bowl table fireplace',
+};
+
+/**
+ * FS_outdoor's starter library (FLR-T-15.2, the board's "Outdoor" shelf): pools, shelters, kitchens
+ * and fires placed like furniture, free on the level, centred on their frame (FS_outdoor 3.3). The
+ * fence and wall styles are drawn with the fence tool, not placed.
+ */
+export function outdoorEntries(): Entry[] {
+  return Object.entries((outdoorLibrary as unknown as { items: Record<string, RawOutdoor> }).items)
+    .filter(([, raw]) => raw.kind !== 'fences')
+    .map(([id, raw]): Entry => {
+      const collection = raw.kind as OutdoorPlaced;
+      return {
+        key: `outdoor:${id}`,
+        name: raw.element.name,
+        groups: ['outdoor'],
+        placement: 'level',
+        box: box3(raw.element.fallback.box),
+        clearances: [],
+        height: 0,
+        symbol: null,
+        hay: `${raw.element.name} ${OUTDOOR_WORDS[collection]} ${typeof raw.element['form'] === 'string' ? raw.element['form'] : typeof raw.element['top'] === 'string' ? raw.element['top'] : ''} outdoor room garden landscape`,
+        source: { kind: 'outdoor', collection, element: raw.element },
+      };
+    });
+}
+
+/** The parts of the library that do not depend on the document: the outdoor rooms first on the Outdoor shelf. */
+const FIXED: readonly Entry[] = [...LIBRARY.map(furnitureEntry), ...DEVICE_KINDS.map(deviceEntry), ...outdoorEntries(), ...landscapeEntries()];
 
 const cache = new WeakMap<FloorspecDocument, readonly Entry[]>();
 

@@ -31,4 +31,6 @@ export const SITE_COMMANDS: readonly Command[] = [
   siteTool('spot', 'Spot elevation — a height of the ground', 'E', 'spot elevation level height grade survey topography'),
   siteTool('contour', 'Contour line — a line of the ground at one height', 'C', 'contour topography terrain survey'),
   siteTool('pad', 'Grade pad — ground set to one height, cut and filled', 'G', 'pad grade grading cut fill earthwork'),
+  // FLR-T-15.2: a fence or a garden wall (FS_outdoor), drawn as a wall is, its gates openings along it.
+  siteTool('fence', 'Fence — a fence or a garden wall, drawn point to point', 'F', 'fence wall gate garden yard outdoor'),
 ];

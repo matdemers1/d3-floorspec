@@ -52,6 +52,7 @@ import type { WandDraft } from './store';
 import { anchorAt, dimensionBack, dimensionDown, dimensionEnter, dimensionMove, noteDown, noteMove, noteUp } from './annotate/tools';
 import { annotateOf, EMPTY_DIMENSION } from './annotate/state';
 import { finishSiteChain, setbackDown, spotDown } from './site/tools';
+import { finishFence } from './outdoor/tools';
 
 /**
  * Pointer and keyboard input on the plan (FLR-T-3.3). Pointer events throughout, so a mouse, a
@@ -399,6 +400,7 @@ export class ToolController {
       case 'lot':
       case 'pad':
       case 'contour':
+      case 'fence':
         this.chainDown(p, s.tool);
         return;
       case 'spot':
@@ -495,7 +497,8 @@ export class ToolController {
       case 'roof':
       case 'lot':
       case 'pad':
-      case 'contour': {
+      case 'contour':
+      case 'fence': {
         const draft = isChainDraft(s.draft) && s.draft.tool === s.tool ? s.draft : { tool: s.tool, chain: [], cursor: null, typed: '' };
         const last = draft.chain[draft.chain.length - 1];
         const cursor = this.snapFor(p, last?.point, draft.chain.map((v) => v.point));
@@ -887,6 +890,11 @@ export class ToolController {
     const draft = s.draft;
     if (!isChainDraft(draft) || s.model === null || s.level === null) return;
     this.store.set({ draft: { ...draft, chain: [], typed: '' } });
+    if (draft.tool === 'fence') {
+      // FLR-T-15.2: a fence or a garden wall (FS_outdoor), drawn as a wall is.
+      finishFence(this.store, draft.chain.map((v) => v.point), s.level);
+      return;
+    }
     if (draft.tool === 'lot' || draft.tool === 'pad' || draft.tool === 'contour') {
       // FLR-T-15.1: the lot (Core's site boundary), a grading pad, a contour line (FS_site).
       const points = isClosed(draft.chain) && draft.tool !== 'contour' ? draft.chain.slice(0, -1) : draft.chain;

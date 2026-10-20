@@ -91,7 +91,7 @@ export const RAILS: Readonly<Record<ModeId, readonly RailItem[]>> = {
   mechanical: [SELECT, HAND, { device: 'furnace' }, { device: 'airHandler' }, { device: 'supply' }, { device: 'return' }, { device: 'exhaustFan' }, { device: 'gasRange' }],
   lowvoltage: [SELECT, HAND, { device: 'dataOutlet' }, { device: 'coaxOutlet' }, { device: 'headEnd' }],
   // FLR-T-15.1: the site — the lot, its setbacks, spots, contours and grade pads — then paving and planting.
-  landscape: [SELECT, HAND, { tool: 'lot' }, { tool: 'setback' }, { tool: 'spot' }, { tool: 'contour' }, { tool: 'pad' }, { tool: 'slab' }, { library: true }],
+  landscape: [SELECT, HAND, { tool: 'lot' }, { tool: 'setback' }, { tool: 'spot' }, { tool: 'contour' }, { tool: 'pad' }, { tool: 'slab' }, { tool: 'fence' }, { library: true }],
 };
 
 export class ModesStore {

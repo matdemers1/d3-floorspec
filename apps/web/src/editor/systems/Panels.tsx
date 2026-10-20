@@ -20,6 +20,7 @@ import { ExteriorSection } from './ExteriorPanel';
 import { circuitsOf, compareIds, elementsOfExtension, recordsOf, switchesOf, type DeviceView } from './view';
 import { isResizable, normalRotation, turnBatch } from '../../furniture/resize';
 import { SizeSection } from '../../furniture/SizeSection';
+import { OutdoorSection } from '../outdoor/Panel';
 
 /**
  * The inspector for the building systems (FLR-T-5.7, the board's "23 · Building systems"): the
@@ -427,6 +428,7 @@ export function DeviceBody({ ctx, device }: { ctx: SystemsCtx; device: DeviceVie
     <>
       <ExteriorSection ctx={ctx} />
       <SizeSection key={id} ctx={ctx} device={device} />
+      <OutdoorSection ctx={ctx} />
       <PlacementSection ctx={ctx} device={device} />
       {asLoad && elementsOfExtension(model.document, 'FS_electrical', 'panels').length > 0 ? <CircuitSection ctx={ctx} /> : null}
       {at.extension === 'FS_electrical' && at.collection === 'switches' ? <ControlsSection ctx={ctx} /> : null}

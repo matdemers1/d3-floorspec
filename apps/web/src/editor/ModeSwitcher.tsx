@@ -547,7 +547,7 @@ const SYSTEM_EXT: Partial<Record<ModeId, readonly string[]>> = {
   plumbing: ['FS_plumbing'],
   mechanical: ['FS_mechanical'],
   lowvoltage: ['FS_lowvoltage'],
-  landscape: ['FS_landscape'],
+  landscape: ['FS_landscape', 'FS_outdoor'],
 };
 
 function summaryRows(trade: ModeId, model: EditorModel, level: LevelView, units: UnitSystem): SummaryGroup[] {

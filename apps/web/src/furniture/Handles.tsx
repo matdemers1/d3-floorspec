@@ -5,7 +5,7 @@ import type { Viewport } from '../editor/store';
 import { toScreen } from '../editor/viewport';
 import { prettyLen, type UnitSystem } from '../editor/units';
 import type { DeviceView } from '../editor/systems/view';
-import { boxOf, frameVectors, handlesOf, isResizable, rotateHandleOf, sizeOf, toPlan, type HandleSide } from './resize';
+import { boxOf, frameVectors, handlesOf, isResizable, rotateHandleOf, shelterPostsAt, sizeOf, toPlan, type HandleSide } from './resize';
 
 /**
  * The handles of a selected item on the plan (FLR-T-18.4, the board's frame 18.4): a square on each
@@ -82,6 +82,8 @@ export function ResizeGhost({ view, device, units, label }: { view: Viewport; de
   };
   tag('w', r0, r3, outward(r0, r3), prettyLen(size.width, units));
   tag('d', r2, r3, outward(r2, r3), prettyLen(size.depth, units));
+  // FLR-T-15.2: a shelter's posts re-space as it is stretched — the count and spacing, live, by its front.
+  const posts = device.extension === 'FS_outdoor' && device.collection === 'shelters' ? shelterPostsAt(device.element, size) : null;
   return (
     <g className="fs-resize fs-resize--ghost" aria-hidden="true" data-testid="resize-ghost">
       <polygon className="fs-resize__ghost" points={ring.map((p) => `${f1(p[0])},${f1(p[1])}`).join(' ')} />
@@ -89,6 +91,12 @@ export function ResizeGhost({ view, device, units, label }: { view: Viewport; de
         <polygon key={c.name} className="fs-resize__clearance" points={c.ring.map((p) => toScreen(view, p)).map((p) => `${f1(p[0])},${f1(p[1])}`).join(' ')} />
       ))}
       {tags}
+      {posts === null ? null : (
+        <g className="fs-resize__tag fs-resize__tag--posts" data-testid="resize-posts" data-posts={posts.posts} transform={`translate(${f1(centre[0])} ${f1(Math.min(...ring.map((p) => p[1])) - 22)})`}>
+          <rect x={-80} y={-10} width={160} height={20} rx={4} />
+          <text x={0} y={4} textAnchor="middle">{`${String(posts.posts)} posts · ${prettyLen(posts.spacing[0], units)} o.c.`}</text>
+        </g>
+      )}
       {label === undefined ? null : (
         <g className="fs-resize__tag fs-resize__tag--hint" transform={`translate(${f1(centre[0])} ${f1(Math.max(...ring.map((p) => p[1])) + 44)})`}>
           <rect x={-90} y={-11} width={180} height={22} rx={6} />

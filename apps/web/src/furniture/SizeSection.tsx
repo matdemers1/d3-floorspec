@@ -7,7 +7,7 @@ import { LengthField, Row, Section } from '../editor/fields';
 import { prettyLen } from '../editor/units';
 import type { SystemsCtx } from '../editor/systems/Panels';
 import type { DeviceView } from '../editor/systems/view';
-import { baysAt, boxOf, isResizable, modelKind, resizeBatch, ruleFor, sizeOf, type Axis, type CommonSize, type Size } from './resize';
+import { baysAt, boxOf, isResizable, modelKind, resizeBatch, ruleFor, shelterPostsAt, sizeOf, type Axis, type CommonSize, type Size } from './resize';
 
 /**
  * The Size section of an item's inspector (FLR-T-18.4, the board's frame "inspector W × D × H"): its
@@ -56,6 +56,7 @@ export function SizeSection({ ctx, device }: { ctx: SystemsCtx; device: DeviceVi
   );
   const kind = modelKind(model.document, d);
   const bays = baysAt(category, size);
+  const shelter = d.extension === 'FS_outdoor' && d.collection === 'shelters' ? shelterPostsAt(element, size) : null;
   return (
     <Section title="Size">
       {field('width', 'Width')}
@@ -89,7 +90,7 @@ export function SizeSection({ ctx, device }: { ctx: SystemsCtx; device: DeviceVi
           ) : (
             <>
               <strong>Procedural — regenerates at any size</strong>
-              <span className="fs-note">{bays === null ? 'Drawn again from its box at the new size.' : `${String(bays)} ${bays === 1 ? 'bay' : 'bays'} at ${prettyLen(size.width, units)}: a longer island gets more bays, not stretched ones.`}</span>
+              <span className="fs-note">{shelter !== null ? `${String(shelter.posts)} posts, ${prettyLen(shelter.spacing[0], units)} × ${prettyLen(shelter.spacing[1], units)} o.c.: stretched, it gets more posts, re-spaced — never wider ones.` : bays === null ? 'Drawn again from its box at the new size.' : `${String(bays)} ${bays === 1 ? 'bay' : 'bays'} at ${prettyLen(size.width, units)}: a longer island gets more bays, not stretched ones.`}</span>
             </>
           )}
         </div>
