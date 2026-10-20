@@ -64,6 +64,8 @@ import { viewFromState } from './shot/views';
 import { sunOf } from './sun/study';
 import { XrayScene, type XrayColours } from './xray/XrayScene';
 import { XrayPanel } from './xray/XrayPanel';
+import { HeatLossScene } from '../envelope/HeatLossScene';
+import { HeatLossPanel } from '../envelope/Envelope';
 import { XrayLabels } from './xray/XrayLabels';
 import { wallLabels } from './xray/labels';
 import { colourVar, planOf, XRAY_SYSTEMS } from './xray/xray';
@@ -998,6 +1000,8 @@ export default function ThreeView({ store, compact = false }: { store: EditorSto
             <Parts visible={partsShown} rig={sectionRig} motion={motion} reno={renoStyles} contextGhost={contextShown === 'ghost'} danger={tokens.danger} selection={walking ? null : comparing && compare.focus !== null ? compare.focus : selection} accent={tokens.accent} textures={textures} lit={lightsOn} glows={glows} quality={comparing || inXr ? 'draft' : quality} onClick={onClick} onDoubleClick={onDoubleClick} onHover={onHover} onLeave={() => { if (tip !== null) setTip(null); }} outlined={comparing && compare.b.kind === 'main' ? changed : undefined} />
             {ready !== null ? <FurnitureScene furniture={furniture} mesh={ready.mesh} visibleIds={extensionIds} selection={walking ? null : selection} accent={tokens.accent} clearances={clearancesShown && !walking} onClick={onClick} register={(id, g) => registerItem(sectionRig, ready.mesh, id, g)} move={(id, g) => motion.register(id, g)} /> : null}
           </group>
+          {/* FLR-T-16.4: the heat-loss map, inside the house's group so the section box cuts it too. */}
+          {ready !== null && !walking && !exploding && !comparing ? <HeatLossScene store={store} origin={ready.mesh.origin} levels={shownLevels} /> : null}
           {/* FLR-T-14.5: inside the house's group, so the section box cuts it as it cuts the house. */}
           {ready !== null && xrayShown ? <XrayScene plan={xrayed} origin={ready.mesh.origin} state={xray} levels={shownLevels} fade={mainGroup} colours={tokens.xray} /> : null}
           {comparing && compare.a.kind !== 'main' && aModel !== null ? (
@@ -1104,6 +1108,7 @@ export default function ThreeView({ store, compact = false }: { store: EditorSto
           {ctx !== null ? <ExplodedPanel ctx={ctx} /> : null}
           {ctx !== null ? <XrayPanel ctx={ctx} plan={xrayed} /> : null}
           <DaylightPanel store={store} />
+          <HeatLossPanel store={store} />
           <VrPanel store={store} model={ready.model} world={ready.world} mesh={ready.mesh} />
           {daylightOn && !daylightOpen && !exploding ? (
             <div className="fs-daylight__plan-legend">

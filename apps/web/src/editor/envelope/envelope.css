@@ -1,0 +1,252 @@
+/*
+ * The thermal envelope (FLR-T-16.4): the board's frames "16.4 · Wall type — layer by layer", "16.4 · Heat
+ * loss room by room" and "16.4 · Heat-loss map in 3D", and the P16/Assembly layer component.
+ *
+ * The four bands are semantic tokens, highest loss the most urgent: high danger, raised warning,
+ * typical info, low success. (The board's amber and brown pair became danger and warning so every
+ * band is a token of @d3cloud/ui.) Colour is never the only cue: the high band's swatch is hatched,
+ * and every band has its name and range beside it.
+ */
+:root {
+  --fs-heatloss-high: var(--color-danger);
+  --fs-heatloss-raised: var(--color-warning);
+  --fs-heatloss-typical: var(--color-info);
+  --fs-heatloss-low: var(--color-success);
+}
+
+.fs-envelope {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+}
+.fs-envelope__sub {
+  margin: 0;
+  color: var(--color-fg-muted);
+  font-size: var(--text-12);
+  line-height: var(--leading-12);
+}
+.fs-envelope__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-6);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.fs-envelope__chip {
+  padding: var(--space-2) var(--space-8);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
+  background: var(--color-fill-quiet);
+  color: var(--color-fg);
+  font-size: var(--text-11);
+  line-height: var(--leading-12);
+  white-space: nowrap;
+}
+.fs-envelope__line {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-8);
+  font-size: var(--text-12);
+  line-height: var(--leading-12);
+  color: var(--color-fg-muted);
+}
+.fs-envelope__line-value {
+  color: var(--color-fg);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.fs-envelope__line--strong .fs-envelope__line-label,
+.fs-envelope__line--strong .fs-envelope__line-value {
+  color: var(--color-fg);
+  font-weight: var(--weight-semibold);
+}
+
+/* ─── Layers: the P16/Assembly layer component ─────────────────────────────────────────────── */
+.fs-envelope__layers {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.fs-envelope__layer {
+  display: grid;
+  grid-template-columns: 14px minmax(0, 1fr) auto 52px;
+  align-items: center;
+  gap: var(--space-8);
+  padding: var(--space-6) 0;
+  border-bottom: 1px solid var(--color-border);
+  font-size: var(--text-12);
+  line-height: var(--leading-12);
+}
+.fs-envelope__layer-swatch {
+  width: 14px;
+  height: 14px;
+  border: 1px solid var(--color-border);
+  border-radius: 3px;
+}
+.fs-envelope__layer-name {
+  color: var(--color-fg);
+}
+.fs-envelope__tag {
+  color: var(--color-fg-faint);
+}
+.fs-envelope__layer-t,
+.fs-envelope__layer-r {
+  color: var(--color-fg-muted);
+  font-family: var(--font-mono);
+  font-size: var(--text-11);
+  text-align: right;
+  white-space: nowrap;
+}
+
+/* ─── The section drawing ──────────────────────────────────────────────────────────────────── */
+.fs-envelope__section {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+.fs-envelope__section svg {
+  width: 100%;
+  height: auto;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg-sunken);
+}
+.fs-envelope__caption {
+  display: flex;
+  justify-content: space-between;
+  color: var(--color-fg-muted);
+  font-family: var(--font-mono);
+  font-size: var(--text-11);
+}
+
+/* ─── The stacked bar of a room's loads ────────────────────────────────────────────────────── */
+.fs-envelope__bar {
+  display: flex;
+  height: 10px;
+  overflow: hidden;
+  border-radius: var(--radius-sm);
+  background: var(--color-fill-quiet);
+}
+.fs-envelope__bar-part {
+  flex-basis: 0;
+  min-width: 2px;
+  border-right: 1px solid var(--color-surface-raised);
+}
+.fs-envelope__bar-part--windows,
+.fs-envelope__bar-part--sun {
+  background: var(--fs-heatloss-high);
+}
+.fs-envelope__bar-part--doors,
+.fs-envelope__bar-part--slab {
+  background: var(--fs-heatloss-raised);
+}
+.fs-envelope__bar-part--walls,
+.fs-envelope__bar-part--air {
+  background: var(--fs-heatloss-typical);
+}
+.fs-envelope__bar-part--ceiling,
+.fs-envelope__bar-part--floor {
+  background: var(--fs-heatloss-low);
+}
+.fs-envelope__bar-part--people,
+.fs-envelope__bar-part--appliances {
+  background: var(--color-fg-faint);
+}
+
+.fs-envelope__try,
+.fs-envelope__compare,
+.fs-envelope__offer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+.fs-envelope__compare {
+  padding: var(--space-8);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-fill-quiet);
+}
+
+/* ─── The legend ───────────────────────────────────────────────────────────────────────────── */
+.fs-envelope__legend {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+}
+.fs-envelope__bands {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.fs-envelope__band {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+}
+.fs-envelope__swatch {
+  flex: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+}
+.fs-envelope__swatch--high {
+  background:
+    repeating-linear-gradient(135deg, transparent 0 3px, var(--color-surface-raised) 3px 4px),
+    var(--fs-heatloss-high);
+}
+.fs-envelope__swatch--raised {
+  background: var(--fs-heatloss-raised);
+}
+.fs-envelope__swatch--typical {
+  background: var(--fs-heatloss-typical);
+}
+.fs-envelope__swatch--low {
+  background: var(--fs-heatloss-low);
+}
+.fs-envelope__band-label {
+  color: var(--color-fg);
+  font-size: var(--text-12);
+  line-height: var(--leading-12);
+}
+.fs-envelope__band-range {
+  color: var(--color-fg-muted);
+  font-family: var(--font-mono);
+  font-size: var(--text-11);
+  white-space: nowrap;
+}
+
+/* ─── Over the 3D view ─────────────────────────────────────────────────────────────────────── */
+.fs-sun.fs-envelope__panel {
+  left: var(--space-16);
+  right: auto;
+  top: 64px;
+  width: 300px;
+  max-height: calc(100% - 64px - 60px);
+}
+.fs-envelope__float-legend {
+  position: absolute;
+  left: var(--space-16);
+  bottom: 64px;
+  z-index: 3;
+  padding: var(--space-12) var(--space-16);
+  border: 1px solid var(--color-border-float);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-raised);
+  box-shadow: var(--shadow-float);
+}
+
+/* ─── On the energy screen ─────────────────────────────────────────────────────────────────── */
+.fs-envelope__band-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-6);
+  white-space: nowrap;
+}
