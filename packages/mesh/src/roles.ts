@@ -7,11 +7,35 @@
  * not the standard's, and a document's own materials are not involved.
  */
 
+import { LAWN_TINT, SNOW_ALBEDO } from './sky/weather.js';
+
+/** `#rrggbb` (sRGB) times a linear multiplier per channel, back to `#rrggbb`. */
+function tinted(hex: string, k: readonly [number, number, number]): string {
+  const n = parseInt(hex.slice(1), 16);
+  return (
+    '#' +
+    [(n >> 16) & 255, (n >> 8) & 255, n & 255]
+      .map((v, i) => {
+        const c = v / 255;
+        const lin = (c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4) * k[i]!;
+        const t = Math.min(1, Math.max(0, lin));
+        return Math.round(255 * (t <= 0.0031308 ? 12.92 * t : 1.055 * t ** (1 / 2.4) - 0.055))
+          .toString(16)
+          .padStart(2, '0');
+      })
+      .join('')
+  );
+}
+
 export const MODEL_ROLES = [
   'porcelain', 'stainless', 'darkMetal', 'wood', 'fabric', 'cushion', 'linen', 'stone', 'lens', 'trim', 'plate', 'glass', 'millwork', 'frame', 'door',
   'foliage', 'foliageLight', 'foliageDark', 'trunk', 'grass', 'plume', 'lawn', 'meadow', 'mulch', 'barkMulch', 'soil', 'gravel', 'paver', 'concrete', 'corten', 'brick',
   // Decor (FLR-T-13.11): a rug's wool, glazes and planters, a picture's canvas and its muted accents, a lamp's shade, brass, a screen, a mirror — leaves are the landscape's foliage.
   'rug', 'rugBorder', 'ceramic', 'terracotta', 'canvas', 'clay', 'ochre', 'sage', 'slate', 'shade', 'brass', 'screen', 'mirror',
+  // Seasons and weather (FLR-T-15.4, looks.ts): a deciduous plant's spring leaves and blossom, its autumn
+  // colours and the leaves it drops, a lawn and a meadow through the year, and a light snow.
+  'leafSpring', 'leafSpringLight', 'blossom', 'autumnGold', 'autumnOrange', 'autumnRed', 'autumnBrown',
+  'lawnSpring', 'lawnAutumn', 'lawnWinter', 'meadowSpring', 'meadowAutumn', 'meadowWinter', 'snow',
 ] as const;
 
 /**
@@ -24,6 +48,15 @@ export const LANDSCAPE_ROLES: readonly ModelRole[] = ['foliage', 'foliageLight',
 /** The roles only decor is made of (FLR-T-13.11), and the foliage its plants share with the landscape: a house without the starter library's decor has none of them. */
 export const DECOR_ROLES: readonly ModelRole[] = ['rug', 'rugBorder', 'foliage', 'ceramic', 'terracotta', 'canvas', 'clay', 'ochre', 'sage', 'slate', 'shade', 'brass', 'screen', 'mirror'];
 export type ModelRole = (typeof MODEL_ROLES)[number];
+
+/**
+ * The roles only a season or a weather draws (FLR-T-15.4, looks.ts): no model is made of them — a look
+ * swaps a plant's or a lawn's role for one of these, and lays snow in `snow`.
+ */
+export const LOOK_ROLES: readonly ModelRole[] = [
+  'leafSpring', 'leafSpringLight', 'blossom', 'autumnGold', 'autumnOrange', 'autumnRed', 'autumnBrown',
+  'lawnSpring', 'lawnAutumn', 'lawnWinter', 'meadowSpring', 'meadowAutumn', 'meadowWinter', 'snow',
+];
 
 export interface RoleLook {
   /** `#rrggbb`, sRGB. */
@@ -130,4 +163,24 @@ export const ROLE_LOOKS: Readonly<Record<ModelRole, RoleLook>> = {
   screen: { color: '#0e0f11', metallic: 0.3, roughness: 0.08 },
   /** A mirror's glass. */
   mirror: { color: '#d3d9dc', metallic: 1, roughness: 0.04 },
+  // ─── Seasons and weather (FLR-T-15.4) ───
+  /** A deciduous canopy's fresh spring leaves, and their sunlit lobes. */
+  leafSpring: { color: '#77a046', metallic: 0, roughness: 0.9 },
+  leafSpringLight: { color: '#a3c46a', metallic: 0, roughness: 0.9 },
+  /** A flowering tree's blossom. */
+  blossom: { color: '#efd3db', metallic: 0, roughness: 0.9 },
+  /** Autumn colour: gold, orange, red, and the browning lobes. */
+  autumnGold: { color: '#d39a2b', metallic: 0, roughness: 0.9 },
+  autumnOrange: { color: '#c5642a', metallic: 0, roughness: 0.9 },
+  autumnRed: { color: '#a5342a', metallic: 0, roughness: 0.9 },
+  autumnBrown: { color: '#7c4d2b', metallic: 0, roughness: 0.92 },
+  /** A lawn and a meadow through the year: summer's colour times the season's (sky/weather.ts LAWN_TINT). */
+  lawnSpring: { color: tinted('#6b8d43', LAWN_TINT.spring), metallic: 0, roughness: 0.95 },
+  lawnAutumn: { color: tinted('#6b8d43', LAWN_TINT.autumn), metallic: 0, roughness: 0.95 },
+  lawnWinter: { color: tinted('#6b8d43', LAWN_TINT.winter), metallic: 0, roughness: 0.95 },
+  meadowSpring: { color: tinted('#98a35b', LAWN_TINT.spring), metallic: 0, roughness: 0.95 },
+  meadowAutumn: { color: tinted('#98a35b', LAWN_TINT.autumn), metallic: 0, roughness: 0.95 },
+  meadowWinter: { color: tinted('#98a35b', LAWN_TINT.winter), metallic: 0, roughness: 0.95 },
+  /** A light snow on what faces up outside (SNOW_ALBEDO, in sRGB). */
+  snow: { color: tinted('#ffffff', SNOW_ALBEDO), metallic: 0, roughness: 0.85 },
 };
