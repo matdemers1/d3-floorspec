@@ -122,7 +122,14 @@ export function createDrain(options: DrainOptions): Drain {
         const wrote = await pool.query(`update jobs set progress = $2, locked_at = now() where id = $1 and locked_by = $3 and status = 'running'`, [job.id, JSON.stringify(p), workerId]).catch(() => null);
         if (wrote !== null && wrote.rowCount === 0) throw new JobGone(job.id);
       };
-      const file = await handler(version.document as object, { ...job, claimed: new Set(claims.rows.map((r) => r.sha256)), progress, signal: gone.signal });
+      // Another version a job compares with (FLR-T-14.4): read from the store by its hash.
+      const load = async (hash: string): Promise<object> => {
+        const other = await pool.query<{ document: unknown }>('select document from versions where hash = $1', [hash]);
+        const row = other.rows[0];
+        if (row === undefined) throw new Error(`version ${hash.slice(0, 12)} is not in the store`);
+        return row.document as object;
+      };
+      const file = await handler(version.document as object, { ...job, claimed: new Set(claims.rows.map((r) => r.sha256)), progress, signal: gone.signal, load });
       if (gone.signal.aborted) throw new JobGone(job.id);
       const sha256 = createHash('sha256').update(file.bytes).digest('hex');
       const client = await pool.connect();

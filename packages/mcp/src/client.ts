@@ -275,6 +275,8 @@ export interface RenderOptions {
   readonly style?: 'colour' | 'presentation' | 'technical' | 'blueprint';
   /** Plan (FLR-T-18.13): a remodel's renovation plan — the house as it stands, its demolition, as proposed, or all at once. */
   readonly renovation?: 'existing' | 'demolition' | 'proposed' | 'combined';
+  /** 3D with a changeset (FLR-T-14.4): main and the changeset side by side, from one camera, its changes lit. */
+  readonly compare?: 'main';
 }
 
 /** A film asked for over MCP (FLR-T-14.1): its name or ID, draft or final, and day to night. */
@@ -448,6 +450,7 @@ export class HttpFloorspecClient implements FloorspecClient {
     if (options.style !== undefined) params.set('style', options.style);
     if (options.renovation !== undefined) params.set('renovation', options.renovation);
     if (options.savedView !== undefined) params.set('savedView', options.savedView);
+    if (options.compare !== undefined) params.set('compare', options.compare);
     const res = await this.send('GET', this.project(projectId, `/render?${params.toString()}`), undefined, { accept: 'image/png' });
     return new Uint8Array(await res.arrayBuffer());
   }
