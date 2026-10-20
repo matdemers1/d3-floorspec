@@ -206,6 +206,10 @@
 }
 
 /* FLR-T-15.4: the season's "Follow the date", and where the season and the weather go besides the view. */
+/* The panel scrolls rather than squeezing what is in it (the season's segmented control would collapse). */
+.fs-sun > * {
+  flex-shrink: 0;
+}
 .fs-sun__follow {
   font-size: var(--text-12);
 }
@@ -261,4 +265,25 @@
 }
 .fs-seasons > .fs-note {
   padding: 0 var(--space-16);
+}
+.fs-seasons__list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  margin: 0;
+}
+.fs-seasons__item {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-12);
+  font-size: var(--text-13);
+}
+.fs-seasons__item dt {
+  color: var(--color-fg-muted);
+}
+.fs-seasons__item dd {
+  margin: 0;
+  color: var(--color-fg);
+  text-align: right;
 }

@@ -122,10 +122,10 @@ export function lookSkyTint(look: Look): Vec3 {
  * spring, yellowing in autumn, a dormant straw-green in winter.
  */
 export const LAWN_TINT: Readonly<Record<LookSeason, Vec3>> = {
-  spring: [0.96, 1.14, 0.84],
+  spring: [0.95, 1.12, 0.9],
   summer: ONE,
-  autumn: [1.25, 1.03, 0.68],
-  winter: [1.5, 1.02, 0.75],
+  autumn: [1.18, 1.0, 0.82],
+  winter: [1.2, 0.86, 1.05],
 };
 
 /**

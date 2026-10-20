@@ -3,7 +3,7 @@ import { foliageOf, landscapeCollection } from '@floorspec/mesh';
 import { SEASON_LABELS, type Look, type LookSeason } from '@floorspec/mesh/sky';
 import type { EditorStore } from '../../store';
 import type { EditorModel } from '../../model';
-import { Row, Section } from '../../fields';
+import { Section } from '../../fields';
 import { useLook, useSunState } from './study';
 
 /**
@@ -39,6 +39,20 @@ function lookRows(look: Look, studio: boolean): [string, string][] {
   ];
 }
 
+/** Terms and what the look makes of them, one to a line. */
+function List({ rows }: { rows: readonly (readonly [string, string])[] }) {
+  return (
+    <dl className="fs-seasons__list">
+      {rows.map(([term, value]) => (
+        <div key={term} className="fs-seasons__item">
+          <dt>{term}</dt>
+          <dd>{value}</dd>
+        </div>
+      ))}
+    </dl>
+  );
+}
+
 export function SeasonsPanel({ store, model }: { store: EditorStore; model: EditorModel }) {
   const look = useLook(store, model);
   const followDate = useSunState(store, (s) => s.followDate);
@@ -59,23 +73,15 @@ export function SeasonsPanel({ store, model }: { store: EditorStore; model: Edit
       </header>
       <Section title="Foliage (FS_landscape)">
         {plants.length === 0 ? <p className="fs-note">No FS_landscape plants: the lawn and the sky follow the season.</p> : null}
-        {groups.map((g) =>
-          g.forms.length === 0 ? null : (
-            <Row key={g.foliage} label={`${g.foliage === 'unstated' ? 'Not stated' : g.foliage === 'deciduous' ? 'Deciduous' : 'Evergreen'} · ${counted(g.forms)}`}>
-              <span className="fs-three-section__value">{g.foliage === 'deciduous' ? DECIDUOUS[season] : g.foliage === 'evergreen' ? 'unchanged' : 'stay green'}</span>
-            </Row>
-          ),
-        )}
-        <Row label={lawns === 0 ? 'The ground' : `Lawn${lawns === 1 ? '' : 's'}`}>
-          <span className="fs-three-section__value">{look.weather === 'snow' ? 'under snow' : LAWN[season]}</span>
-        </Row>
+        <List
+          rows={[
+            ...groups.filter((g) => g.forms.length > 0).map((g): [string, string] => [`${g.foliage === 'unstated' ? 'Not stated' : g.foliage === 'deciduous' ? 'Deciduous' : 'Evergreen'} · ${counted(g.forms)}`, g.foliage === 'deciduous' ? DECIDUOUS[season] : g.foliage === 'evergreen' ? 'unchanged' : 'stay green']),
+            [lawns === 0 ? 'The ground' : `Lawn${lawns === 1 ? '' : 's'}`, look.weather === 'snow' ? 'under snow' : LAWN[season]],
+          ]}
+        />
       </Section>
       <Section title="This look">
-        {lookRows(look, studio).map(([label, value]) => (
-          <Row key={label} label={label}>
-            <span className="fs-three-section__value">{value}</span>
-          </Row>
-        ))}
+        <List rows={lookRows(look, studio)} />
       </Section>
       <Section title="Over MCP">
         <pre className="fs-seasons__mcp">{mcp}</pre>

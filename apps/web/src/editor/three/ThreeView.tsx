@@ -2004,6 +2004,12 @@ interface Hook {
   kinds: Record<string, number>;
   /** The parts showing now (FLR-T-13.2), counted by "level:kind": what the levels control leaves in. */
   shown: Record<string, number>;
+  /**
+   * FLR-T-15.4: the drawn parts' roles by element — what a season and a weather made of them (a bare
+   * crown, autumn colour, snow) — and how many are wet in the rain.
+   */
+  roles: Record<string, string[]>;
+  wet: number;
   walking: boolean;
   /** The walker, in metres in the document's frame; null when not walking. */
   walker: { x: number; y: number; feet: number; eye: number; ground: number; yaw: number; room: string | null; blocked: string | null } | null;
@@ -2084,6 +2090,14 @@ function useTestHook(store: EditorStore, three: ThreeStore, ctl: ThreeController
         const k: Record<string, number> = {};
         for (const { part } of visible) k[`${part.level}:${part.kind}`] = (k[`${part.level}:${part.kind}`] ?? 0) + 1;
         return k;
+      },
+      get roles() {
+        const r: Record<string, Set<string>> = {};
+        for (const { part } of built) if (part.model !== undefined) (r[part.id] ??= new Set()).add(part.model.role);
+        return Object.fromEntries(Object.entries(r).map(([id, set]) => [id, [...set].sort()]));
+      },
+      get wet() {
+        return built.filter((b) => b.wet === true).length;
       },
       get walking() {
         return three.get().walking && ctl.walker !== null;
