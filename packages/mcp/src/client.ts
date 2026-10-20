@@ -167,6 +167,8 @@ export interface Layouts {
 export interface ElectricalInput {
   /** A pending changeset's ID whose plan to read instead of main's. */
   readonly changeset?: string;
+  /** FLR-T-15.5: the grounds' lighting instead of the rooms' layout. */
+  readonly exterior?: boolean;
   readonly rooms?: readonly string[];
   readonly level?: string;
 }

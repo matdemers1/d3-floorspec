@@ -62,6 +62,12 @@
   font-size: var(--text-12);
   line-height: var(--leading-12);
 }
+.fs-lighting__night {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-6);
+}
 .fs-lighting__save {
   display: flex;
   flex-wrap: wrap;

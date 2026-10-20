@@ -159,7 +159,7 @@ class MemoryClient implements FloorspecClient {
       },
     });
   }
-  proposeElectrical(projectId: string, input: { rooms?: readonly string[] }) {
+  proposeElectrical(projectId: string, input: { rooms?: readonly string[]; exterior?: boolean }) {
     this.record('proposeElectrical', projectId, input);
     return Promise.resolve({
       main: PROJECT.head,
@@ -319,6 +319,18 @@ describe('the MCP server', () => {
     expect(both.isError).toBe(true);
     const unnamed = await mcp.callTool({ name: 'floorspec_propose', arguments: {} });
     expect(texts(unnamed)).toContain('Name the changeset');
+  });
+
+  it('asks the electrical assistant for the grounds’ lighting with exterior, and keeps exterior to that assistant (FLR-T-15.5)', async () => {
+    const client = new MemoryClient();
+    const mcp = await connect(client);
+    const result = await mcp.callTool({ name: 'floorspec_propose', arguments: { assistant: 'electrical', exterior: true } });
+    expect(result.isError, texts(result)).toBeFalsy();
+    expect(client.calls.at(-1)).toEqual({ method: 'proposeElectrical', args: [PROJECT.id, { exterior: true }] });
+    const withRooms = await mcp.callTool({ name: 'floorspec_propose', arguments: { assistant: 'electrical', exterior: true, rooms: ['Kitchen'] } });
+    expect(texts(withRooms)).toContain('without rooms');
+    const staging = await mcp.callTool({ name: 'floorspec_propose', arguments: { assistant: 'staging', exterior: true } });
+    expect(texts(staging)).toContain('exterior goes with assistant "electrical"');
   });
 
   it('lets the staging assistant dress a room as a changeset', async () => {
@@ -782,7 +794,7 @@ describe('the MCP server', () => {
     expect(params('floorspec_render')['sky']).toMatchObject({ enum: ['clear', 'overcast', 'dusk', 'night', 'studio'] });
     expect(params('floorspec_render')['doors']).toMatchObject({ enum: ['closed', 'open'] });
     expect(params('floorspec_propose')['assistant']).toMatchObject({ enum: ['electrical', 'staging'] });
-    expect(Object.keys(params('floorspec_propose')).sort()).toEqual(['assistant', 'batch', 'changeset', 'locks', 'name', 'project', 'render', 'rooms']);
+    expect(Object.keys(params('floorspec_propose')).sort()).toEqual(['assistant', 'batch', 'changeset', 'exterior', 'locks', 'name', 'project', 'render', 'rooms']);
     expect(Object.keys(params('floorspec_apply')).sort()).toEqual(['batch', 'changeset', 'ifMatch', 'locks', 'option', 'project', 'render']);
   });
 

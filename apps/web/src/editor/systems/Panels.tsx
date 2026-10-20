@@ -15,7 +15,8 @@ import { DataIcon, DropIcon, AirIcon, PlugIcon } from '../icons';
 import { defaultHeight, RECEPTACLE, extensionOfSystem, extensionVersion, kindById, kindsOf, SYSTEMS, words, type DeviceKind, type SystemId } from './catalog';
 import { addCircuit, addGasSource, addStack, assignCircuit, moveDevice, nextRecordId, rotateDevice, setMember, setRecordMember, type HostRef } from './ops';
 import { memberSpecs, type MemberSpec } from './schema';
-import { AssistantCard } from './Assistant';
+import { AssistantCard, ExteriorAssistantCard } from './Assistant';
+import { ExteriorSection } from './ExteriorPanel';
 import { circuitsOf, compareIds, elementsOfExtension, recordsOf, switchesOf, type DeviceView } from './view';
 import { isResizable, normalRotation, turnBatch } from '../../furniture/resize';
 import { SizeSection } from '../../furniture/SizeSection';
@@ -57,6 +58,9 @@ const MOUNT_NOTE: Record<DeviceKind['mount'], string> = {
   floorWall: 'Stands on the room’s floor, backed onto the nearest wall face when put near one.',
   floor: 'Stands on the room’s floor where it is put; outside a room it stands free on the level.',
   ceiling: 'On the room’s ceiling where it is put.',
+  ground: 'Stands free on the ground: near a walk it snaps to the walk’s edge at the spacing from the one before it, near a tree into its canopy, near a wall up its face.',
+  step: 'Set in the riser of a stair it is pointed at, lighting the tread below it; elsewhere it stands on the ground.',
+  string: 'Strung between two points, 8′ up with a foot of sag: click where the run starts, then where it ends.',
 };
 
 export function DevicePanel({ store, tools, model }: { store: EditorStore; tools: ToolController; model: EditorModel }) {
@@ -185,12 +189,15 @@ export function circuitBadges(model: EditorModel, circuit: Json): string[] {
 }
 
 export function ElectricalOverview({ store, model, units }: { store: EditorStore; model: EditorModel; units: UnitSystem }) {
+  const exterior = useEditor(store, (s) => s.tool === 'device' && kindById(s.draw.device)?.exterior !== undefined);
   const derived = model.derived?.extensions?.FS_electrical;
   const panels = elementsOfExtension(model.document, 'FS_electrical', 'panels');
   const circuits = recordsOf(model.document, 'FS_electrical', 'circuits');
   const roomOf = (id: string) => Object.entries(derived?.rooms ?? {}).find(([, ids]) => ids.includes(id))?.[0];
   return (
     <>
+      {/* FLR-T-15.5: with an exterior light's tool in hand, the assistant for the grounds comes first. */}
+      {exterior ? <ExteriorAssistantCard store={store} model={model} units={units} /> : null}
       {panels.length === 0 ? (
         <p className="fs-note">No panel yet. Circuits start at a panel: place one, then add circuits to it from its inspector.</p>
       ) : (
@@ -231,7 +238,7 @@ export function ElectricalOverview({ store, model, units }: { store: EditorStore
           </ul>
         </Section>
       ) : null}
-      <AssistantCard store={store} model={model} units={units} />
+      {exterior ? null : <AssistantCard store={store} model={model} units={units} />}
       <Legend units={units} />
     </>
   );
@@ -418,6 +425,7 @@ export function DeviceBody({ ctx, device }: { ctx: SystemsCtx; device: DeviceVie
   const asLoad = device === undefined ? canBeLoadAt(at) : canBeLoad(device);
   return (
     <>
+      <ExteriorSection ctx={ctx} />
       <SizeSection key={id} ctx={ctx} device={device} />
       <PlacementSection ctx={ctx} device={device} />
       {asLoad && elementsOfExtension(model.document, 'FS_electrical', 'panels').length > 0 ? <CircuitSection ctx={ctx} /> : null}

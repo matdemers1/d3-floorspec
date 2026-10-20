@@ -3,6 +3,8 @@
  * of the plan's layers is On (drawn as usual), Ghost (drawn in grey at reduced contrast, as
  * context, and not selectable in the editor) or Off. Construction, Decorator, Electrical, Plumbing,
  * Mechanical, Low-voltage and Landscape, after Revit's disciplines and Chief Architect's layer sets.
+ * `beams` (FLR-T-15.5) is where exterior lights' light lands — a picture, not a calculation — on in
+ * the Electrical and Landscape modes.
  *
  * One table for every place a plan is drawn, so a mode means the same thing everywhere: the editor's
  * canvas and its switcher, `renderPlan` (floorspec_render's `mode`), and the PDF and DXF drawings
@@ -13,7 +15,7 @@ export const MODE_IDS = ['construction', 'decorator', 'electrical', 'plumbing', 
 export type ModeId = (typeof MODE_IDS)[number];
 
 /** The plan's layers a mode sets, in the order the Layers drawer lists them. */
-export const PLAN_LAYERS = ['walls', 'openings', 'rooms', 'furniture', 'casework', 'dimensions', 'roof', 'electrical', 'plumbing', 'mechanical', 'lowvoltage', 'landscape', 'findings'] as const;
+export const PLAN_LAYERS = ['walls', 'openings', 'rooms', 'furniture', 'casework', 'dimensions', 'roof', 'electrical', 'beams', 'plumbing', 'mechanical', 'lowvoltage', 'landscape', 'findings'] as const;
 export type PlanLayer = (typeof PLAN_LAYERS)[number];
 
 export const LAYER_STATES = ['on', 'ghost', 'off'] as const;
@@ -29,6 +31,7 @@ export const LAYER_LABELS: Readonly<Record<PlanLayer, string>> = {
   dimensions: 'Dimensions',
   roof: 'Stairs & roofs',
   electrical: 'Electrical',
+  beams: 'Beams',
   plumbing: 'Plumbing',
   mechanical: 'Mechanical',
   lowvoltage: 'Low-voltage',
@@ -67,9 +70,9 @@ export const MODES: Readonly<Record<ModeId, ModeDef>> = {
   electrical: {
     id: 'electrical',
     label: 'Electrical',
-    summary: 'Devices, circuits by colour, switch legs',
+    summary: 'Devices, circuits by colour, switch legs, beams',
     plan: 'Electrical plan',
-    layers: states(['electrical', 'findings'], ['walls', 'openings', 'rooms', 'furniture', 'casework']),
+    layers: states(['electrical', 'beams', 'findings'], ['walls', 'openings', 'rooms', 'furniture', 'casework', 'landscape']),
   },
   plumbing: {
     id: 'plumbing',
@@ -97,7 +100,7 @@ export const MODES: Readonly<Record<ModeId, ModeDef>> = {
     label: 'Landscape',
     summary: 'Site, paving, lawn, planting, exterior lights',
     plan: 'Landscape plan',
-    layers: states(['landscape', 'findings'], ['walls', 'openings', 'rooms', 'roof']),
+    layers: states(['landscape', 'beams', 'findings'], ['walls', 'openings', 'rooms', 'roof']),
   },
 };
 

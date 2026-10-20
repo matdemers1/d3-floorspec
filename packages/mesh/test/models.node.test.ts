@@ -37,6 +37,16 @@ const KINDS: [string, string, Json, number[]][] = [
   ['FS_electrical', 'alarms', { detects: ['smoke'] }, [-75, -75, -50, 75, 75, 0]],
   ...['ceiling', 'recessed', 'pendant', 'wall', 'track', 'underCabinet', 'fan', 'exterior'].map((fixture): [string, string, Json, number[]] => ['FS_electrical', 'lights', { fixture }, [-200, -200, -300, 200, 200, 0]]),
   ['FS_electrical', 'lights', {}, [-100, -100, -150, 100, 100, 0]],
+  // FLR-T-15.5: the exterior kinds, by the application's record on an exterior light.
+  ...(
+    [
+      ['path', [-90, -90, -40, 90, 90, 560]],
+      ['uplight', [-50, -50, -40, 50, 50, 150]],
+      ['wallWash', [0, -60, -60, 75, 60, 60]],
+      ['step', [0, -70, 100, 20, 70, 180]],
+      ['string', [0, -25, 2130, 3600, 25, 2440]],
+    ] as const
+  ).map(([kind, box]): [string, string, Json, number[]] => ['FS_electrical', 'lights', { fixture: 'exterior', extras: { d3floorspec: { exterior: { kind } } } }, [...box]]),
   ['FS_plumbing', 'fixtures', { fixture: 'waterCloset' }, [0, -190, 0, 700, 190, 800]],
   ['FS_plumbing', 'fixtures', { fixture: 'bidet' }, [0, -190, 0, 600, 190, 400]],
   ['FS_plumbing', 'fixtures', { fixture: 'lavatory' }, [0, -250, -200, 500, 250, 150]],

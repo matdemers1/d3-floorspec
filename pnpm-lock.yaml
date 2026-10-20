@@ -311,6 +311,9 @@ importers:
       '@floorspec/ops':
         specifier: workspace:*
         version: link:../../ops
+      '@floorspec/render2d':
+        specifier: workspace:*
+        version: link:../../render2d
 
   packages/assistants/staging:
     dependencies:
@@ -424,6 +427,9 @@ importers:
       '@floorspec/engine':
         specifier: workspace:*
         version: link:../engine
+      '@floorspec/render2d':
+        specifier: workspace:*
+        version: link:../render2d
       manifold-3d:
         specifier: 3.2.1
         version: 3.2.1

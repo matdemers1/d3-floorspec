@@ -10,6 +10,10 @@
     ".": {
       "types": "./src/index.ts",
       "default": "./dist/index.js"
+    },
+    "./exterior": {
+      "types": "./src/exterior.ts",
+      "default": "./dist/exterior.js"
     }
   },
   "files": [

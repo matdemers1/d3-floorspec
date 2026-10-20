@@ -16,6 +16,7 @@ import { roofSymbol, stairSymbol, upPlacement } from './symbols.js';
 import { doorSymbol, fixtureSymbol, standsInRoom, symbolCorners, type SymbolPart, type SymbolStroke } from './plansymbols.js';
 import { PALETTES, type Palette, type ThemeName } from './theme.js';
 import { landscapeLayers, type SceneLandscape } from './landscape.js';
+import type { Beam } from './exterior.js';
 import { annoSourceOf, approxMeasure, customString, exteriorStrings, layoutAnnotations, openingMarks, roomStrings, scaleBarOf, SCREEN_METRICS, tagsOf, type AnnoPrim, type CustomDimension, type DimString, type Note, type SideDepths } from './annotate.js';
 import { ALL_ON, layerOfElement, layerStates, type LayerState, type ModeId, type PlanLayer } from './modes.js';
 import {
@@ -880,6 +881,11 @@ export function renderEvaluation(given: Evaluation, options: EvaluationRenderOpt
   }
   put('openings', el('g', { id: 'openings' }, ops));
 
+  // ── FLR-T-15.5: exterior lights' beams — where the light lands, in one warm tint with a dashed edge —
+  // under the devices; a picture of each fixture, not a lighting calculation ──
+  const beamSvg = beamsSvg([...scene.fallbacks.values()].flatMap((fb) => (fb.beam === undefined ? [] : [fb.beam])), P, options.theme ?? (sty?.theme === 'dark' ? 'dark' : 'light'));
+  if (beamSvg !== '') put('beams', el('g', { id: 'beams' }, beamSvg));
+
   // ── extension elements: their symbols (Core 12.6) when the caller gave their bytes, else their
   // kind's outline — a bed, a sofa, a toilet, a tub (FLR-T-12.24) — else their fallback boxes ──
   if (scene.fallbacks.size) {
@@ -1248,11 +1254,40 @@ function renovationLegend(filter: RenovationFilter, x: number, y: number, pal: P
   return el('g', { id: 'renovation-legend' }, g);
 }
 
+/**
+ * The beams' one warm tint and dashed edge (FLR-T-15.5, the board's P15/Beam), by theme: a fixed
+ * style, so a beam never reads as a quantity.
+ */
+export const BEAM_STYLE: Readonly<Record<ThemeName, { readonly fill: string; readonly opacity: number; readonly edge: string; readonly bulb: string }>> = {
+  light: { fill: '#e9c46a', opacity: 0.38, edge: '#b8892b', bulb: '#d79a1e' },
+  dark: { fill: '#e0b45a', opacity: 0.3, edge: '#e3b85c', bulb: '#f2c464' },
+};
+
+/** Every beam: its outline filled in the warm tint, its edge dashed; a string's bulbs as dots. */
+function beamsSvg(beams: readonly Beam[], P: (ring: readonly Pt[]) => XY[], theme: ThemeName): string {
+  const b = BEAM_STYLE[theme];
+  let out = '';
+  for (const beam of beams) {
+    const d = ringsPath([P(beam.ring)]);
+    out += el('path', { 'data-beam': beam.id, 'data-shape': beam.shape, d, fill: b.fill, 'fill-opacity': beam.shape === 'string' ? b.opacity * 0.5 : b.opacity, stroke: b.edge, 'stroke-width': 1, 'stroke-dasharray': '3 2' });
+    if (beam.bulbs !== undefined) {
+      const pts = P(beam.bulbs);
+      const [a, z] = [P([beam.ring[0]!, beam.ring[3]!]), P([beam.ring[1]!, beam.ring[2]!])];
+      const mid = (p: XY, q: XY): XY => [(p[0] + q[0]) / 2, (p[1] + q[1]) / 2];
+      const s = mid(a[0]!, a[1]!);
+      const e = mid(z[0]!, z[1]!);
+      out += el('path', { d: `M${num(s[0])} ${num(s[1])}L${num(e[0])} ${num(e[1])}`, stroke: b.edge, 'stroke-width': 1, fill: 'none' });
+      for (const p of pts) out += el('circle', { cx: num(p[0]), cy: num(p[1]), r: 2.5, fill: b.bulb });
+    }
+  }
+  return out;
+}
+
 /** The building systems: in their own mode their devices are drawn solid (FLR-T-18.3). */
 const TRADES: ReadonlySet<PlanLayer> = new Set(['electrical', 'plumbing', 'mechanical', 'lowvoltage']);
 
 /** The layers whose ghosts the filter greys. */
-const PLAN_GHOSTS: readonly PlanLayer[] = ['walls', 'openings', 'rooms', 'furniture', 'casework', 'dimensions', 'roof', 'electrical', 'plumbing', 'mechanical', 'lowvoltage', 'landscape'];
+const PLAN_GHOSTS: readonly PlanLayer[] = ['walls', 'openings', 'rooms', 'furniture', 'casework', 'dimensions', 'roof', 'electrical', 'beams', 'plumbing', 'mechanical', 'lowvoltage', 'landscape'];
 
 /** A ghost is grey: every colour desaturated, then faded (FLR-T-18.3). */
 const GHOST_FILTER = el('filter', { id: 'fs-ghost', 'color-interpolation-filters': 'sRGB' }, el('feColorMatrix', { type: 'saturate', values: 0 }));

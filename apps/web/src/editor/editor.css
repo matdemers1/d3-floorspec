@@ -2452,6 +2452,61 @@ line.fs-diff {
   opacity: 0.6;
   stroke-dasharray: 3 2;
 }
+/* FLR-T-15.5: exterior lights — a path light's dot, a string's bulbs — and their beams: where the
+   light lands, in one warm tint with a dashed edge (the board's P15/Beam), under the devices. A
+   picture of each fixture, never a calculation, so the style is fixed. */
+.fs-sym__dot,
+.fs-sym__bulb,
+.fs-beam__bulb {
+  fill: var(--color-warning);
+  stroke: none;
+}
+.fs-beam polygon {
+  fill: var(--color-warning);
+  fill-opacity: 0.2;
+  stroke: var(--color-warning);
+  stroke-width: 1;
+  stroke-dasharray: 4 3;
+}
+.fs-beam--string polygon {
+  fill-opacity: 0.1;
+}
+.fs-beam.is-selected polygon {
+  fill-opacity: 0.32;
+  stroke-width: 1.5;
+}
+.fs-beam--ghost {
+  opacity: 0.75;
+}
+.fs-ext-tag rect {
+  fill: var(--color-surface-raised);
+  stroke: var(--color-border);
+}
+.fs-ext-tag--accent rect {
+  fill: var(--color-accent);
+  stroke: none;
+}
+.fs-ext-tag text {
+  fill: var(--color-fg);
+  font-family: var(--font-mono);
+  font-size: var(--text-11);
+}
+.fs-ext-tag--accent text {
+  fill: var(--color-accent-contrast);
+}
+.fs-ext-anchor {
+  fill: var(--color-warning);
+  stroke: var(--color-surface-card);
+  stroke-width: 2;
+}
+.fs-ext-hint rect {
+  fill: var(--color-surface-raised);
+  stroke: var(--color-border);
+}
+.fs-ext-hint text {
+  fill: var(--color-fg);
+  font-size: var(--text-12);
+}
 /* Furniture and plumbing outlines (FLR-T-12.27, render2d's plansymbols): a plumbing fixture's lines
    take its system's tone from .fs-sym; furniture's are the plan's muted and faint ink. */
 .fs-sym__pad {
@@ -2806,6 +2861,42 @@ line.fs-diff {
 .fs-gap__tag {
   fill: var(--color-surface-raised);
   stroke: var(--color-warning);
+}
+/* FLR-T-15.5: a walk's stretch no exterior light reaches, dashed along its centre line. */
+.fs-gap--dark {
+  stroke-dasharray: 2 6;
+  opacity: 0.9;
+}
+.fs-assistant__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--space-6);
+}
+.fs-assistant__list li {
+  display: grid;
+  gap: 2px;
+  font-size: var(--text-12);
+}
+.fs-assistant__detail,
+.fs-assistant__sum {
+  color: var(--color-fg-muted);
+  font-size: var(--text-11);
+}
+.fs-assistant__sum {
+  font-family: var(--font-mono);
+}
+.fs-assistant__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-6);
+  align-items: center;
+}
+.fs-ext-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
 }
 .fs-gap__text {
   fill: var(--color-fg);

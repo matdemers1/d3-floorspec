@@ -2,7 +2,8 @@ import { defaultClearances, type FloorspecDocument } from '@floorspec/engine';
 import { migrationBatch } from '@floorspec/migrate';
 import type { Operation } from '@floorspec/ops';
 import type { Batch } from '../ops';
-import { extensionVersion, membersFor, type DeviceKind, type ReceptacleOptions } from './catalog';
+import { exteriorMembers } from '@floorspec/render2d';
+import { extensionVersion, membersFor, type Box, type DeviceKind, type ReceptacleOptions } from './catalog';
 import { compareIds, elementOfExtension, elementsOfExtension, recordsOf, RECORD_COLLECTIONS } from './view';
 
 /**
@@ -38,9 +39,10 @@ export function declarationOps(document: FloorspecDocument, extension: string): 
 }
 
 /** The new element's members: its fallback box, the kind's members, the default envelopes (each spec's 2.x). */
-export function newElement(kind: DeviceKind, options: { receptacle?: ReceptacleOptions; height?: number; name?: string } = {}): Json {
-  const members = membersFor(kind, options.receptacle);
-  const fallback = { box: structuredClone(kind.box) };
+export function newElement(kind: DeviceKind, options: { receptacle?: ReceptacleOptions; height?: number; name?: string; box?: Box; patch?: { beam?: number; reach?: number; bulbs?: number } } = {}): Json {
+  // FLR-T-15.5: an exterior light's members carry its kind, beam and reach (its record, extras.d3floorspec.exterior).
+  const members = kind.exterior === undefined ? membersFor(kind, options.receptacle) : exteriorMembers(kind.exterior, options.patch ?? {});
+  const fallback = { box: structuredClone(options.box ?? kind.box) };
   // A panel's envelope runs down to the floor, so it needs the height its frame stands at.
   const host = kind.mount === 'wall' ? { mode: 'wallFace' as const, wall: '', side: 'left' as const, offset: 0, height: options.height ?? 0 } : undefined;
   const clearances = defaultClearances(kind.extension, kind.collection, { ...members, fallback: { level: '', box: fallback.box }, ...(host === undefined ? {} : { host }) });
@@ -53,7 +55,7 @@ export function newElement(kind: DeviceKind, options: { receptacle?: ReceptacleO
 }
 
 /** Place a new device: the declaration if this is its extension's first, then placeElement. */
-export function placeDevice(document: FloorspecDocument, kind: DeviceKind, host: HostRef, options: { receptacle?: ReceptacleOptions; name?: string } = {}): Batch {
+export function placeDevice(document: FloorspecDocument, kind: DeviceKind, host: HostRef, options: { receptacle?: ReceptacleOptions; name?: string; box?: Box; patch?: { beam?: number; reach?: number; bulbs?: number } } = {}): Batch {
   const height = host.mode === 'wallFace' && typeof host.height === 'number' ? host.height : undefined;
   // A panel is called by a panel schedule's name for it: P1, P2 …
   if (kind.collection === 'panels' && options.name === undefined) options = { ...options, name: nextPanelName(document) };
