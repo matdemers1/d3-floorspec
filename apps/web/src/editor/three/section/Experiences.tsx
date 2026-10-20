@@ -1,6 +1,6 @@
 import { useEffect, useId, type ComponentType, type KeyboardEvent, type ReactNode } from 'react';
 import { Button, IconButton, Menu, MenuContent, MenuItem, MenuTrigger, Switch, Tooltip, useToast } from '@d3cloud/ui';
-import { Camera, Crop, Crosshair, Move, Pause, Play, Ruler, UnfoldVertical, X } from 'lucide-react';
+import { Camera, Columns2, Crop, Crosshair, Move, Pause, Play, Ruler, UnfoldVertical, X } from 'lucide-react';
 import type { EditorStore } from '../../store';
 import { prettyLen, type UnitSystem } from '../../units';
 import { sunOf, useSunState } from '../sun/study';
@@ -9,13 +9,15 @@ import { planeFrom, sizeOf, SPREAD_MAX, SPREAD_MIN, type Box, type Face, type Se
 import { download, stillName, stillPng, stillSvg, styleOf, type StillFormat } from './still';
 import type { SectionRig } from './rig';
 import type { Drawing } from './SectionOverlay';
+import { toggleCompare, useCompareChoices } from '../compare/CompareOverlay';
 import './section.css';
 
 /**
  * The 3D view's second toolbar cluster (FLR-P-14, the read-me "14.9 · Experiences — one system"): the
- * experiences beside the view — Section box (X) now; X-ray (⌥X), Daylight (⌥D), Compare (⌥C), Edit
- * in 3D (E) and the tape measure (⇧M) slot into `EXPERIENCES` as FLR-T-14.5, 14.7, 14.4 and 14.8
- * land — each opening a floating panel anchored to it, as Camera and Sun do on the first cluster.
+ * experiences beside the view — Section box (X), Compare (⌥C, FLR-T-14.4), Edit in 3D (E) and the
+ * tape measure (⇧M); X-ray (⌥X) and Daylight (⌥D) slot into `EXPERIENCES` as FLR-T-14.5 and 14.7
+ * land. Section opens a floating panel anchored to it, as Camera and Sun do on the first cluster;
+ * Compare its bar under the view and its Comparing panel in the right column.
  *
  * FLR-T-14.6's two panels: Section (the box, the plane, its caps and its outside, the board's frame
  * "14.6 · Section box") and Exploded view (the frame "14.6 · Exploded axonometric", on the Section
@@ -53,7 +55,8 @@ interface Experience {
 
 const EXPERIENCES: readonly Experience[] = [
   { id: 'section', Button: SectionButton },
-  // FLR-T-14.5 X-ray, FLR-T-14.7 Daylight and FLR-T-14.4 Compare come here.
+  // FLR-T-14.5 X-ray and FLR-T-14.7 Daylight come here.
+  { id: 'compare', Button: CompareButton },
   { id: 'edit', Button: EditButton },
   { id: 'tape', Button: TapeButton },
 ];
@@ -113,11 +116,24 @@ function SectionButton({ ctx }: { ctx: ExperienceContext }) {
   );
 }
 
+/** FLR-T-14.4: Compare (⌥C) — A and B from one camera, with a swipe divider or side by side. */
+function CompareButton({ ctx }: { ctx: ExperienceContext }) {
+  const open = useThreeState(ctx.store, (s) => s.compare.open);
+  const exploded = useThreeState(ctx.store, (s) => s.explode.open);
+  const choices = useCompareChoices(ctx.store);
+  return (
+    <Tooltip content={open ? 'Close Compare (⌥C)' : 'Compare: this design beside a changeset, an option or a version, from one camera (⌥C)'}>
+      <IconButton label="Compare" icon={<Columns2 />} size="sm" pressed={open} disabled={exploded} aria-keyshortcuts="Alt+C" onClick={() => { toggleCompare(ctx.store, choices); }} />
+    </Tooltip>
+  );
+}
+
 /** FLR-T-14.8: Edit in 3D (E) — drag items on their host and openings along their walls. */
 function EditButton({ ctx }: { ctx: ExperienceContext }) {
   const three = threeOf(ctx.store);
   const on = useThreeState(ctx.store, (s) => s.edit === 'move');
-  const exploded = useThreeState(ctx.store, (s) => s.explode.open);
+  // Not while exploded, nor while comparing: what is dragged would be one side's.
+  const exploded = useThreeState(ctx.store, (s) => s.explode.open || s.compare.open);
   return (
     <Tooltip content={on ? 'Stop editing in 3D (E)' : 'Edit in 3D: drag furniture, fixtures and openings (E)'}>
       <IconButton label="Edit in 3D" icon={<Move />} size="sm" pressed={on} disabled={exploded} aria-keyshortcuts="E" onClick={() => { three.setEdit(on ? null : 'move'); }} />
@@ -129,7 +145,7 @@ function EditButton({ ctx }: { ctx: ExperienceContext }) {
 function TapeButton({ ctx }: { ctx: ExperienceContext }) {
   const three = threeOf(ctx.store);
   const on = useThreeState(ctx.store, (s) => s.edit === 'tape');
-  const exploded = useThreeState(ctx.store, (s) => s.explode.open);
+  const exploded = useThreeState(ctx.store, (s) => s.explode.open || s.compare.open);
   return (
     <Tooltip content={on ? 'Put the tape away (⇧M)' : 'Tape measure: click two points on the house (⇧M)'}>
       <IconButton label="Tape measure" icon={<Ruler />} size="sm" pressed={on} disabled={exploded} aria-keyshortcuts="Shift+M" onClick={() => { three.setEdit(on ? null : 'tape'); }} />

@@ -67,9 +67,13 @@ export class ThreeController {
     this.commit(preset);
   }
 
-  /** Frame a box again from the way the camera faces now: after the view's shape changes (split, a resized window). */
-  reframe(box: { min: Vec3; max: Vec3 }): void {
-    const fitted = fitOrbit(box, 'sw', FOV, this.size.width / Math.max(1, this.size.height));
+  /**
+   * Frame a box again from the way the camera faces now: after the view's shape changes (split, a
+   * resized window) — or for a picture of another shape (`aspect`, width over height: a half of
+   * Compare's side by side, FLR-T-14.4).
+   */
+  reframe(box: { min: Vec3; max: Vec3 }, aspect: number = this.size.width / Math.max(1, this.size.height)): void {
+    const fitted = fitOrbit(box, 'sw', FOV, aspect);
     this.orbit = this.orbit === null ? fitted : { ...fitted, azimuth: this.orbit.azimuth, elevation: this.orbit.elevation };
     this.commit(this.three.get().preset ?? undefined);
   }

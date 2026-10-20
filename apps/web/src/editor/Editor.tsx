@@ -23,6 +23,7 @@ import { Drawer, DrawerHead, Edges, FullScreenButton, PinButton, useChrome } fro
 import { confirmPrompt, newLevel, switchUnits } from './actions';
 import { connectLive } from './live';
 import { ProposalPanel } from './Proposal';
+import { ComparePanel as Compare3dPanel } from './three/compare/ComparePanel';
 import { ComparePanel, HistoryPanel } from './HistoryPanel';
 import { Palette } from './Palette';
 import { ShortcutSheet } from './ShortcutSheet';
@@ -110,6 +111,8 @@ function EditorFrame({ store, tools, you }: { store: EditorStore; tools: ToolCon
     s.compare !== null ? 'compare' : s.optionCompare !== null ? 'optionCompare' : s.side === 'review' && s.review !== null ? 'review' : s.findingsOpen ? 'findings' : s.side === 'options' ? 'options' : 'inspector',
   );
   const optionCompare = useEditor(store, (s) => s.optionCompare !== null);
+  // FLR-T-14.4: Compare in 3D takes the inspector's place while it is open in the 3D view.
+  const compare3d = useThreeState(store, (s) => s.compare.open && s.mode === '3d' && !s.walking) && right === 'inspector';
   const toast = useToast();
   const viewMode = useThreeState(store, (s) => s.mode);
   const walking = useThreeState(store, (s) => s.walking);
@@ -118,7 +121,7 @@ function EditorFrame({ store, tools, you }: { store: EditorStore; tools: ToolCon
   // Full screen and the edge drawers (FLR-T-18.2): the frame carries which chrome and each drawer's state.
   const chrome = useChrome(store);
   // A proposal, the findings, a comparison or the comments asked for: a hidden right drawer comes out to show them.
-  const showing = comments ? 'comments' : right;
+  const showing = comments ? 'comments' : compare3d ? 'compare3d' : right;
   useEffect(() => {
     if (showing !== 'inspector') drawersOf(store).reveal('right');
   }, [showing, store]);
@@ -133,7 +136,7 @@ function EditorFrame({ store, tools, you }: { store: EditorStore; tools: ToolCon
   useClipboard(store);
   useAltHover(store);
 
-  const rightLabel = comments ? 'Comments' : right === 'review' ? 'Proposal' : right === 'compare' ? 'Comparison' : right === 'findings' ? 'Findings' : right === 'options' || right === 'optionCompare' ? 'Design options' : 'Inspector';
+  const rightLabel = comments ? 'Comments' : compare3d ? 'Comparing' : right === 'review' ? 'Proposal' : right === 'compare' ? 'Comparison' : right === 'findings' ? 'Findings' : right === 'options' || right === 'optionCompare' ? 'Design options' : 'Inspector';
 
   if (status === 'missing' || status === 'error') {
     return (
@@ -157,7 +160,7 @@ function EditorFrame({ store, tools, you }: { store: EditorStore; tools: ToolCon
   }
 
   return (
-    <div className="fs-editor" tabIndex={-1} {...chrome} data-tree={treeOpen ? 'open' : 'closed'} data-inspector={idle && !comments ? 'idle' : 'active'} data-walk={walking ? 'on' : undefined}>
+    <div className="fs-editor" tabIndex={-1} {...chrome} data-tree={treeOpen ? 'open' : 'closed'} data-inspector={idle && !comments && !compare3d ? 'idle' : 'active'} data-walk={walking ? 'on' : undefined}>
       <Drawer store={store} side="top">
         <TopBar store={store} tools={tools} you={you} />
       </Drawer>
@@ -189,6 +192,8 @@ function EditorFrame({ store, tools, you }: { store: EditorStore; tools: ToolCon
             <TreeSkeleton />
           ) : comments ? (
             <EditorComments store={store} />
+          ) : compare3d ? (
+            <Compare3dPanel store={store} />
           ) : right === 'compare' ? (
             <ComparePanel store={store} />
           ) : right === 'optionCompare' ? (
