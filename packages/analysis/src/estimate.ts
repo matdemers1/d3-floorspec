@@ -302,7 +302,7 @@ const DIRECTION: Record<Orientation, string> = { N: 'north', E: 'east', S: 'sout
 const W_PER_M2_TO_BTUH_FT2 = 1 / BTUH_TO_W / FT2_PER_M2;
 
 /** Does the document use FS_thermal (FLR-ADR-066)? Then its assemblies are its own. */
-export const usesThermal = (doc: FloorspecDocument): boolean => Object.hasOwn((doc.extensionsUsed ?? {}) as object, 'FS_thermal');
+export const usesThermal = (doc: FloorspecDocument): boolean => Object.hasOwn((doc.extensionsUsed ?? {}), 'FS_thermal');
 
 /** One surface's or air's share of the loss, before it is grouped into rows and rooms. */
 interface Exposure {
@@ -371,7 +371,7 @@ function estimateEnvelope(doc: FloorspecDocument, envelope: Envelope, derived: R
     const v =
       mine !== undefined
         ? { u: mine, source: 'yours' as const, text: 'Your value' }
-        : a?.u != null
+        : a !== undefined && a.u !== null
           ? { u: a.u, source: thermalOrigin(a), text: thermalText(a) }
           : { u: typ.wall * U_IP_TO_SI, source: 'typical' as const, text: typical(`frame wall U-${String(typ.wall)}`) };
     wallU.set(k, v);
@@ -449,7 +449,7 @@ function estimateEnvelope(doc: FloorspecDocument, envelope: Envelope, derived: R
       const v =
         mine !== undefined
           ? { u: mine, source: 'yours' as ValueOrigin, text: 'Your value' }
-          : a?.u != null
+          : a !== undefined && a.u !== null
             ? { u: a.u, source: thermalOrigin(a), text: thermalText(a) }
             : { u: typ.ceiling * U_IP_TO_SI, source: 'typical' as ValueOrigin, text: typical(`ceiling U-${String(typ.ceiling)}`) };
       const roofName = roof === undefined ? undefined : ((doc.roofs as Record<string, { name?: string }> | undefined)?.[roof]?.name ?? roof);
@@ -465,7 +465,7 @@ function estimateEnvelope(doc: FloorspecDocument, envelope: Envelope, derived: R
       const v =
         mine !== undefined
           ? { u: mine, source: 'yours' as ValueOrigin, text: 'Your value' }
-          : a?.u != null
+          : a !== undefined && a.u !== null
             ? { u: a.u, source: thermalOrigin(a), text: thermalText(a) }
             : { u: typ.floor * U_IP_TO_SI, source: 'typical' as ValueOrigin, text: typical(`floor U-${String(typ.floor)}`) };
       exposures.push({ room: c.room, kind: 'floor', key, label: e.toward === 'outside' ? 'Floors over the outside' : 'Floors over unconditioned rooms', elements: [c.room], quantity: area, unit: 'm2', value: v.u, factor, ua: v.u * area * factor, source: v.source, sourceText: v.text + (factor === 1 ? '' : '; counted at half ΔT') });

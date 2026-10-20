@@ -82,7 +82,7 @@ export function roomCovers(doc: FloorspecDocument, derived: Derived, conditioned
   const polys = new Map<string, Poly>();
   for (const id of Object.keys(rooms)) {
     const d = derived.rooms[id];
-    if (d) polys.set(id, { outer: d.outer as P[], holes: d.holes as P[][] });
+    if (d) polys.set(id, { outer: d.outer, holes: d.holes });
   }
   const levelOf = (id: string) => rooms[id]!.level;
   // Each building's levels, low to high.
@@ -99,7 +99,7 @@ export function roomCovers(doc: FloorspecDocument, derived: Derived, conditioned
   const roofs = Object.entries((doc.roofs ?? {}) as Record<string, { level: string }>)
     .flatMap(([id, r]) => {
       const d = derived.roofs?.[id];
-      return d ? [{ id, elevation: levels[r.level]?.elevation ?? 0, outline: d.outline as P[] }] : [];
+      return d ? [{ id, elevation: levels[r.level]?.elevation ?? 0, outline: d.outline }] : [];
     })
     .sort((a, b) => a.elevation - b.elevation || (a.id < b.id ? -1 : 1));
 
