@@ -116,3 +116,23 @@ export {
   type FilmKey,
   type FilmShot,
 } from './films.js';
+export {
+  DASH,
+  DEFAULT_HEADER_DEPTH,
+  DEFAULT_STUD_SPACING,
+  DEFAULT_STUD_WIDTH,
+  RUN_HEIGHT,
+  studLayout,
+  XRAY_SYSTEMS,
+  xrayMeshes,
+  xrayPlan,
+  type FrameBox,
+  type XrayFraming,
+  type XrayMesh,
+  type XrayPiece,
+  type XrayPlan,
+  type XrayRun,
+  type XrayStyle,
+  type XraySystem,
+  type XrayWall,
+} from './xray/index.js';

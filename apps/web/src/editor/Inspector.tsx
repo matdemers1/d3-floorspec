@@ -54,6 +54,7 @@ import {
   type ClearOpening,
 } from './openings';
 import { ThreeSection } from './three/ThreeSection';
+import { XraySection } from './three/xray/XraySection';
 import { SiteSection } from './three/sun/SiteFields';
 import { FurnitureBody } from '../furniture/Inspector';
 import { StagingSection } from './systems/Staging';
@@ -138,6 +139,7 @@ export function Inspector({ store, tools }: { store: EditorStore; tools: ToolCon
       <OptionMembership store={store} model={model} id={selection} element={element} readOnly={ctx.readOnly} />
       <RenovationSection store={store} model={model} id={selection} readOnly={ctx.readOnly} />
       <ThreeSection store={store} id={selection} kind={kind} />
+      <XraySection store={store} id={selection} kind={kind} />
       {!ctx.readOnly ? (
         <div className="fs-inspector__actions">
           <Button variant="danger-ghost" size="sm" icon={<Trash2 />} onClick={() => { requestRemove(store, selection); }}>

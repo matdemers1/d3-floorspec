@@ -386,3 +386,87 @@ export function joinery(): Json {
   if (!ev.valid) throw new Error(`the joinery house is not valid: ${JSON.stringify(ev.diagnostics.filter((d) => d.severity === 'error').slice(0, 3))}`);
   return doc;
 }
+
+/**
+ * FLR-T-14.5's X-ray house: one 16′ × 12′ room of 2x6 exterior walls (insulated cores, OSB sheathing)
+ * with a 3′ window in its south wall and a door in its west wall; a heat-pump water heater, a
+ * lavatory and a water closet on a stack; a panel on the west wall feeding two receptacles on the east
+ * wall and a ceiling light; a furnace with a ceiling supply register and a return grille.
+ */
+export function xrayHouse(): Json {
+  const at = (x: number, y: number): [number, number] => [x * IN, y * IN];
+  const box = (x0: number, y0: number, z0: number, x1: number, y1: number, z1: number) => ({ min: [x0 * IN, y0 * IN, z0 * IN], max: [x1 * IN, y1 * IN, z1 * IN] });
+  const onWall = (wall: string, offset: number, height: number, side: 'left' | 'right' = 'left') => ({ mode: 'wallFace', wall, offset: offset * IN, height: height * IN, side });
+  const onFloor = (x: number, y: number, rotation: number) => ({ mode: 'surface', room: 'R1', surface: 'floor', position: at(x, y), rotation });
+  return {
+    floorspec: '0.4',
+    project: { name: 'X-ray' },
+    buildings: { H: { name: 'House' } },
+    levels: { L1: { building: 'H', elevation: 0, height: 108 * IN, ceilingHeight: 96 * IN, name: 'Ground floor' } },
+    junctions: {
+      A: { level: 'L1', position: at(0, 0) },
+      B: { level: 'L1', position: at(192, 0) },
+      C: { level: 'L1', position: at(192, 144) },
+      D: { level: 'L1', position: at(0, 144) },
+    },
+    walls: {
+      WS: { level: 'L1', start: 'A', end: 'B', type: 'EXT' },
+      WE: { level: 'L1', start: 'B', end: 'C', type: 'EXT' },
+      WN: { level: 'L1', start: 'C', end: 'D', type: 'EXT' },
+      WW: { level: 'L1', start: 'D', end: 'A', type: 'EXT' },
+    },
+    rooms: { R1: { level: 'L1', anchor: at(96, 72), name: 'Room', function: 'bath' } },
+    materials: {
+      studs: { name: 'Wood stud framing, insulated cavities', color: '#dcc28c' },
+      osb: { name: 'OSB sheathing', color: '#c09a5b' },
+      gyp: { name: 'Gypsum board', color: '#efede8' },
+    },
+    types: {
+      EXT: {
+        kind: 'wallType',
+        name: '2x6 exterior',
+        layers: [
+          { thickness: 7 * IN / 16, function: 'substrate', material: 'osb' },
+          { thickness: 11 * IN / 2, function: 'core', material: 'studs' },
+          { thickness: IN / 2, function: 'finish', material: 'gyp' },
+        ],
+      },
+      WIN: { kind: 'windowType', name: 'Window', width: 36 * IN, height: 48 * IN, sill: 36 * IN },
+      DOOR: { kind: 'doorType', name: 'Door', width: 36 * IN, height: 80 * IN },
+    },
+    openings: { O1: { wall: 'WS', offset: 60 * IN, fill: 'WIN' }, O2: { wall: 'WW', offset: 72 * IN, fill: 'DOOR', sill: 0 } },
+    extensionsUsed: { FS_electrical: '0.1.0', FS_plumbing: '0.1.0', FS_mechanical: '0.1.0' },
+    extensions: {
+      FS_plumbing: {
+        stacks: { K1: { levels: ['L1'], name: 'Main stack' } },
+        collections: {
+          waterHeaters: { WH: { heater: 'heatPump', energy: 'electric', fallback: { level: 'L1', box: box(-12, -12, 0, 12, 12, 60) }, host: onFloor(168, 120, -90_000_000) } },
+          fixtures: {
+            LAV: { fixture: 'lavatory', supply: ['cold', 'hot'], hotFrom: 'WH', drain: 'K1', fallback: { level: 'L1', box: box(0, -10, 30, 20, 10, 34) }, host: onFloor(100, 3.5, 90_000_000) },
+            WC: { fixture: 'waterCloset', supply: ['cold'], drain: 'K1', fallback: { level: 'L1', box: box(0, -9, 0, 28, 9, 30) }, host: onFloor(140, 3.5, 90_000_000) },
+          },
+        },
+      },
+      FS_electrical: {
+        collections: {
+          panels: { P1: { volts: [120, 240], rating: 200, spaces: 40, fallback: { level: 'L1', box: box(0, -7, -16, 4, 7, 16) }, host: onWall('WW', 36, 60) } },
+          receptacles: {
+            RA: { fallback: { level: 'L1', box: box(0, -1.5, -2, 1, 1.5, 2) }, host: onWall('WE', 36, 16) },
+            RB: { fallback: { level: 'L1', box: box(0, -1.5, -2, 1, 1.5, 2) }, host: onWall('WE', 108, 16) },
+          },
+          lights: { LT: { fixture: 'ceiling', fallback: { level: 'L1', box: box(-6, -6, -4, 6, 6, 0) }, host: { mode: 'surface', room: 'R1', surface: 'ceiling', position: at(96, 72), rotation: 0 } } },
+        },
+        circuits: { C1: { panel: 'P1', breaker: 20, volts: 120, loads: ['RA', 'RB', 'LT'], name: 'Room' } },
+      },
+      FS_mechanical: {
+        collections: {
+          equipment: { F1: { equipment: 'furnace', fallback: { level: 'L1', box: box(-12, -12, 0, 12, 12, 48) }, host: onFloor(24, 120, 0) } },
+          terminals: {
+            S1: { terminal: 'supply', equipment: 'F1', fallback: { level: 'L1', box: box(-6, -6, -1, 6, 6, 0) }, host: { mode: 'surface', room: 'R1', surface: 'ceiling', position: at(120, 72), rotation: 0 } },
+            T1: { terminal: 'return', equipment: 'F1', fallback: { level: 'L1', box: box(-8, -8, 0, 8, 8, 1) }, host: onFloor(60, 120, 0) },
+          },
+        },
+      },
+    },
+  };
+}
