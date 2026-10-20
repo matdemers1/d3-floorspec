@@ -825,8 +825,8 @@ describe('the MCP server', () => {
     expect(params('floorspec_render')['mode']).toMatchObject({ enum: ['construction', 'decorator', 'electrical', 'plumbing', 'mechanical', 'lowvoltage', 'landscape'] });
     expect(params('floorspec_render')['sky']).toMatchObject({ enum: ['clear', 'overcast', 'dusk', 'night', 'studio'] });
     expect(params('floorspec_render')['doors']).toMatchObject({ enum: ['closed', 'open'] });
-    expect(params('floorspec_propose')['assistant']).toMatchObject({ enum: ['electrical', 'staging'] });
-    expect(Object.keys(params('floorspec_propose')).sort()).toEqual(['assistant', 'batch', 'changeset', 'exterior', 'locks', 'name', 'project', 'render', 'rooms']);
+    expect(params('floorspec_propose')['assistant']).toMatchObject({ enum: ['electrical', 'staging', 'solar'] });
+    expect(Object.keys(params('floorspec_propose')).sort()).toEqual(['assistant', 'batch', 'changeset', 'exterior', 'kwh', 'locks', 'name', 'project', 'render', 'rooms']);
     expect(Object.keys(params('floorspec_apply')).sort()).toEqual(['batch', 'changeset', 'ifMatch', 'locks', 'option', 'project', 'render']);
   });
 
