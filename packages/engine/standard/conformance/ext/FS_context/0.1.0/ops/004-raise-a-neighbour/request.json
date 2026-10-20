@@ -1,0 +1,10 @@
+{
+  "batch": [
+    {
+      "op": "setProperty",
+      "id": "$document",
+      "path": "/extensions/FS_context/neighbours/NB1/height",
+      "value": 7412736
+    }
+  ]
+}

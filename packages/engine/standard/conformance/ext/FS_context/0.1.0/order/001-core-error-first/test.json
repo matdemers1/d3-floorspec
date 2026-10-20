@@ -1,0 +1,6 @@
+{
+  "description": "A Core invariant breaks - the lot's boundary crosses itself, FS-INV-009 - and so does FS_context's schema: Core's error is reported, and FS_context is not evaluated.",
+  "covers": [
+    "FS-CTXT-1.2.2"
+  ]
+}

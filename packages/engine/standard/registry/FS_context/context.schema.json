@@ -1,0 +1,250 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://d3cloud.io/floorspec/schema/ext/FS_context/0.1.0/context.schema.json",
+  "$comment": "Normative (FLR-ADR-006, FLR-ADR-007, FLR-ADR-064): FS_context 0.1.0, registry/FS_context/spec.md. Applied to the extension's top-level data, extensions.FS_context, by a validator that implements FS_context and knows it (spec.md 1.2). FS_context adds no kind of element and requires no other extension: its data is what surrounds a lot - streets, neighbouring buildings as massing and trees beyond the lot - records in the document's one space of IDs, never part of the design (spec.md 1.5). IDs that are taken, a street's repeated point, a footprint that is not a simple polygon and a gable or hip roof on a footprint that is not a rectangle are checked by the invariants (spec.md 1.3, 2.1, 3.1 and 3.2).",
+  "title": "FS_context 0.1.0",
+  "description": "What surrounds a house and is not part of it: the street with its curbs, strips and sidewalks, the neighbours as simple massing, and the trees beyond the lot.",
+  "type": "object",
+  "properties": {
+    "streets": {
+      "type": "object",
+      "propertyNames": {
+        "$ref": "#/$defs/id"
+      },
+      "additionalProperties": {
+        "$ref": "#/$defs/street"
+      },
+      "description": "2.1: the streets: an ID -> record map; the IDs share the document's one space of IDs."
+    },
+    "neighbours": {
+      "type": "object",
+      "propertyNames": {
+        "$ref": "#/$defs/id"
+      },
+      "additionalProperties": {
+        "$ref": "#/$defs/neighbour"
+      },
+      "description": "3.1: the neighbouring buildings as massing: an ID -> record map; the IDs share the document's one space of IDs."
+    },
+    "trees": {
+      "type": "object",
+      "propertyNames": {
+        "$ref": "#/$defs/id"
+      },
+      "additionalProperties": {
+        "$ref": "#/$defs/tree"
+      },
+      "description": "4: the trees beyond the lot: an ID -> record map; the IDs share the document's one space of IDs."
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$",
+      "description": "Core 3.1.1: an ID."
+    },
+    "length": {
+      "description": "Core 2.1: a length, an integer number of base units of 1/1280 mm.",
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
+    "distance": {
+      "description": "Core 2.1: a length of at least 0.",
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991
+    },
+    "positive": {
+      "description": "Core 2.1: a length of at least 1.",
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 9007199254740991
+    },
+    "point": {
+      "description": "1.4: a point of the plan, [x, y]: plan coordinates (Core 2.3), each a length.",
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/length"
+      },
+      "minItems": 2,
+      "maxItems": 2
+    },
+    "name": {
+      "description": "What it is called, 1-200 characters.",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200
+    },
+    "extras": {
+      "description": "As Core 1.7: data no specification defines.",
+      "type": "object"
+    },
+    "street": {
+      "title": "Street",
+      "description": "2.1: a road drawn along its centreline, symmetric about it: the carriageway, then on each side a curb, a planting strip and a sidewalk (FS-CTXT-2.1.1: no two consecutive points equal).",
+      "type": "object",
+      "required": [
+        "points",
+        "width"
+      ],
+      "properties": {
+        "points": {
+          "description": "2.1: the centreline's vertices, in order.",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/point"
+          },
+          "minItems": 2,
+          "maxItems": 4096
+        },
+        "width": {
+          "description": "2.1: the carriageway, curb face to curb face.",
+          "$ref": "#/$defs/positive"
+        },
+        "curb": {
+          "description": "2.1: each curb's width. Default 195072 (6\").",
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991,
+          "default": 195072
+        },
+        "curbHeight": {
+          "description": "2.1: each curb's height above the carriageway. Default 195072 (6\").",
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991,
+          "default": 195072
+        },
+        "strip": {
+          "description": "2.1: each planting strip's width, between the curb and the sidewalk. Default 0: none.",
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991,
+          "default": 0
+        },
+        "sidewalk": {
+          "description": "2.1: each sidewalk's width, beyond the strip. Default 0: none.",
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991,
+          "default": 0
+        },
+        "elevation": {
+          "description": "2.1: the carriageway's elevation above project zero (1.4). Default 0.",
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991,
+          "default": 0
+        },
+        "name": {
+          "$ref": "#/$defs/name"
+        },
+        "extras": {
+          "$ref": "#/$defs/extras"
+        }
+      },
+      "additionalProperties": false
+    },
+    "neighbour": {
+      "title": "Neighbour",
+      "description": "3.1: a building that is not the design, as massing: a footprint extruded to its eaves under a simple roof (FS-CTXT-3.1.1: a simple polygon enclosing a positive area; FS-CTXT-3.2.1: a gable or hip roof on a rectangle).",
+      "type": "object",
+      "required": [
+        "boundary",
+        "height"
+      ],
+      "properties": {
+        "boundary": {
+          "description": "3.1: its footprint in plan, a polygon (Core 2.6).",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/point"
+          },
+          "minItems": 3
+        },
+        "height": {
+          "description": "3.1: its eaves above its ground.",
+          "$ref": "#/$defs/positive"
+        },
+        "roof": {
+          "description": "3.2: the roof's form. Default flat.",
+          "enum": [
+            "flat",
+            "gable",
+            "hip"
+          ],
+          "default": "flat"
+        },
+        "rise": {
+          "description": "3.1: the roof's ridge above the eaves. Default 0.",
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991,
+          "default": 0
+        },
+        "elevation": {
+          "description": "3.1: its ground, above project zero (1.4). Default 0.",
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991,
+          "default": 0
+        },
+        "name": {
+          "$ref": "#/$defs/name"
+        },
+        "extras": {
+          "$ref": "#/$defs/extras"
+        }
+      },
+      "additionalProperties": false
+    },
+    "tree": {
+      "title": "Tree",
+      "description": "4: a tree beyond the lot: a trunk and a crown.",
+      "type": "object",
+      "required": [
+        "at",
+        "height",
+        "spread"
+      ],
+      "properties": {
+        "at": {
+          "description": "4: where its trunk stands, in plan.",
+          "$ref": "#/$defs/point"
+        },
+        "height": {
+          "description": "4: the top of its crown above its ground.",
+          "$ref": "#/$defs/positive"
+        },
+        "spread": {
+          "description": "4: its crown's diameter.",
+          "$ref": "#/$defs/positive"
+        },
+        "form": {
+          "description": "4: whether it loses its leaves in winter. Default deciduous.",
+          "enum": [
+            "deciduous",
+            "evergreen"
+          ],
+          "default": "deciduous"
+        },
+        "elevation": {
+          "description": "4: its ground, above project zero (1.4). Default 0.",
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991,
+          "default": 0
+        },
+        "name": {
+          "$ref": "#/$defs/name"
+        },
+        "extras": {
+          "$ref": "#/$defs/extras"
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

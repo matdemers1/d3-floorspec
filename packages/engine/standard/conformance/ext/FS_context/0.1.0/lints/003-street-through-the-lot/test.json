@@ -1,0 +1,6 @@
+{
+  "description": "A street whose centreline turns through the lot: FS-CTXT-LINT-001.",
+  "covers": [
+    "FS-CTXT-1.2.3"
+  ]
+}

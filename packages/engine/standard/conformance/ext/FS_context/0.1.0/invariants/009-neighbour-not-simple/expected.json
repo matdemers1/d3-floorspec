@@ -1,0 +1,10 @@
+{
+  "valid": false,
+  "diagnostics": [
+    {
+      "code": "FS-CTXT-INV-003",
+      "severity": "error",
+      "elements": ["NB1"]
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "batch": [
+    {
+      "op": "setProperty",
+      "id": "$document",
+      "path": "/extensions/FS_context/neighbours/NB1/boundary",
+      "value": [[-25359360, -5852160], [-13655040, -5852160], [-13655040, 0], [-19507200, 0], [-19507200, 7802880], [-25359360, 7802880]]
+    }
+  ]
+}

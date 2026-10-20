@@ -1,0 +1,7 @@
+{
+  "description": "FS_context used with empty top-level data: valid, and nothing derived but three empty maps.",
+  "covers": [
+    "FS-CTXT-1.3.1",
+    "FS-CTXT-8.1.1"
+  ]
+}

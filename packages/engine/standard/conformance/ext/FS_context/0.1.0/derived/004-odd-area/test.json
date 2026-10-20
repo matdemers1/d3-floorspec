@@ -1,0 +1,6 @@
+{
+  "description": "A flat-roofed neighbour on a right triangle with legs of 1 and 3 base units: its area is 1.5, written as Core writes a half.",
+  "covers": [
+    "FS-CTXT-8.1.1"
+  ]
+}

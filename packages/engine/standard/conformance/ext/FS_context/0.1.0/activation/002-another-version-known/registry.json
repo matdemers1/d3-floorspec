@@ -1,0 +1,20 @@
+[
+  {
+    "name": "FS_context",
+    "version": "0.2.0",
+    "status": "draft",
+    "schema": "https://d3cloud.io/floorspec/schema/ext/FS_context/0.1.0/context.schema.json",
+    "title": "Context: the street, neighbouring massing and trees beyond the lot",
+    "requires": {},
+    "kinds": {},
+    "terms": {
+      "roomFunctions": []
+    },
+    "implementations": [
+      {
+        "name": "D3 Floorspec (@floorspec/engine)",
+        "url": "https://github.com/matdemers1/d3-floorspec"
+      }
+    ]
+  }
+]

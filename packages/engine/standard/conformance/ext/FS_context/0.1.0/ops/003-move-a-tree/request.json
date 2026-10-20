@@ -1,0 +1,10 @@
+{
+  "batch": [
+    {
+      "op": "setProperty",
+      "id": "$document",
+      "path": "/extensions/FS_context/trees/TR1/at",
+      "value": [3901440, 17556480]
+    }
+  ]
+}

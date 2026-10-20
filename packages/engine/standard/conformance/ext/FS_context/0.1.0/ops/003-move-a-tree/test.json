@@ -1,0 +1,8 @@
+{
+  "description": "setProperty of $document /extensions/FS_context/trees/TR1/at moves the deciduous tree 10' east. It commits, and nothing derived changes but the tree's place.",
+  "covers": [
+    "FS-CTXT-1.2.1",
+    "FS-CTXT-8.1.1",
+    "FS-OPS-2.3.1"
+  ]
+}

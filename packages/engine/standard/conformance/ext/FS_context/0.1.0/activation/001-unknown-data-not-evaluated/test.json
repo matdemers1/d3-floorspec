@@ -1,0 +1,6 @@
+{
+  "description": "A tree's position has three numbers, which FS_context's schema does not allow, but no extension is known: nothing of it is evaluated, and the document is valid.",
+  "covers": [
+    "FS-CTXT-1.2.1"
+  ]
+}

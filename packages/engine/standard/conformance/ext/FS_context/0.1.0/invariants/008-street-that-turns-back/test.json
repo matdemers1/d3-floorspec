@@ -1,0 +1,7 @@
+{
+  "description": "A street whose centreline turns at a corner and returns past its start: its consecutive points differ, so it is valid; its length is each segment's.",
+  "covers": [
+    "FS-CTXT-2.1.1",
+    "FS-CTXT-8.1.1"
+  ]
+}

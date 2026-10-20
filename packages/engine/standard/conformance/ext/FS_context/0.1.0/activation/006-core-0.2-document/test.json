@@ -1,0 +1,9 @@
+{
+  "description": "The garden on its street declaring Core \"0.2\", a draft FS_context 0.1.0 lists (1.1): FS_context is evaluated, reports nothing and derives what it derives for the garden declaring \"0.4\".",
+  "covers": [
+    "FS-CTXT-1.2.1",
+    "FS-CTXT-1.2.3",
+    "FS-CTXT-1.2.4",
+    "FS-CTXT-8.1.1"
+  ]
+}

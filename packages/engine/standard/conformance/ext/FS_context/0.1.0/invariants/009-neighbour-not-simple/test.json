@@ -1,0 +1,7 @@
+{
+  "description": "A neighbour whose footprint crosses itself, a bow tie: FS-CTXT-INV-003 - and, though its roof is a gable, not FS-CTXT-INV-004 as well.",
+  "covers": [
+    "FS-CTXT-3.1.1",
+    "FS-CTXT-3.2.1"
+  ]
+}

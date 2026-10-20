@@ -1,0 +1,8 @@
+{
+  "description": "A flat roof on an L-shaped footprint: valid - only a gable or a hip needs a rectangle.",
+  "covers": [
+    "FS-CTXT-3.1.1",
+    "FS-CTXT-3.2.1",
+    "FS-CTXT-8.1.1"
+  ]
+}

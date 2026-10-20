@@ -2,6 +2,7 @@
 // The defaults the official extensions give the members of their elements and records (Rules 4.5).
 export const ELEMENT_DEFAULTS: Readonly<Record<string, Readonly<Record<string, Readonly<Record<string, unknown>>>>>> = {
   "FS_annotation": {},
+  "FS_context": {},
   "FS_electrical": {
     "alarms": {
       "power": "mainsWithBattery",
@@ -102,6 +103,24 @@ export const RECORD_DEFAULTS: Readonly<Record<string, Readonly<Record<string, Re
   "FS_annotation": {
     "dimensions": {},
     "notes": {}
+  },
+  "FS_context": {
+    "neighbours": {
+      "elevation": 0,
+      "rise": 0,
+      "roof": "flat"
+    },
+    "streets": {
+      "curb": 195072,
+      "curbHeight": 195072,
+      "elevation": 0,
+      "sidewalk": 0,
+      "strip": 0
+    },
+    "trees": {
+      "elevation": 0,
+      "form": "deciduous"
+    }
   },
   "FS_electrical": {
     "circuits": {

@@ -1,0 +1,10 @@
+{
+  "status": "rejected",
+  "diagnostics": [
+    {
+      "code": "FS-CTXT-INV-001",
+      "severity": "error",
+      "elements": ["GP1"]
+    }
+  ]
+}

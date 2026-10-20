@@ -1,0 +1,6 @@
+{
+  "description": "A tree on the rear lot line and a neighbour whose west side is the lot's east line: on the boundary is not in the lot, so nothing is reported.",
+  "covers": [
+    "FS-CTXT-1.2.3"
+  ]
+}
