@@ -45,7 +45,7 @@ export function FencePanel({ store, readOnly }: { store: EditorStore; readOnly: 
   );
 }
 
-const gallons = (volume: string): number => Number(BigInt(volume) / 1_280n ** 3n) / 3.785411784;
+const gallons = (volume: string): number => Number(BigInt(volume) / 1_280n ** 3n) / 1e6 / 3.785411784;
 
 /** A selected FS_outdoor element: what is derived from it, and a fence's gates. */
 export function OutdoorSection({ ctx }: { ctx: SystemsCtx }) {
