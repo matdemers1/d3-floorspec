@@ -1,0 +1,7 @@
+{
+  "description": "The house roof's footprint written clockwise, its gables renumbered: its south edge is now edge 2, whose outward normal is still (0, -24'), so PV1 on face 2 facing south is valid and derives what it derived on face 0.",
+  "covers": [
+    "FS-ENGY-2.3.2",
+    "FS-ENGY-7.1.1"
+  ]
+}

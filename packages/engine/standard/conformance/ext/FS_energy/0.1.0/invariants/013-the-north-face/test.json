@@ -1,0 +1,7 @@
+{
+  "description": "PV1 moved to the north face, sloped edge 2, facing north - rotation 90,000,000, the direction of (0, 20'), the edge's outward normal: valid. It is clear and derives a footprint north of the ridge.",
+  "covers": [
+    "FS-ENGY-2.3.2",
+    "FS-ENGY-7.1.1"
+  ]
+}

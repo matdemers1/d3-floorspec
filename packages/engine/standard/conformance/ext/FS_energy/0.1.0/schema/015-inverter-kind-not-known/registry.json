@@ -1,0 +1,33 @@
+[
+  {
+    "name": "FS_energy",
+    "version": "0.1.0",
+    "status": "draft",
+    "schema": "https://d3cloud.io/floorspec/schema/ext/FS_energy/0.1.0/energy.schema.json",
+    "title": "Energy: solar arrays on the roof, their inverters and rapid shutdown",
+    "requires": {},
+    "kinds": {
+      "pvArrays": {
+        "title": "Solar array",
+        "fallback": {}
+      },
+      "inverters": {
+        "title": "Inverter",
+        "fallback": {}
+      },
+      "shutdowns": {
+        "title": "Rapid-shutdown initiator",
+        "fallback": {}
+      }
+    },
+    "terms": {
+      "roomFunctions": []
+    },
+    "implementations": [
+      {
+        "name": "D3 Floorspec (@floorspec/engine)",
+        "url": "https://github.com/matdemers1/d3-floorspec"
+      }
+    ]
+  }
+]

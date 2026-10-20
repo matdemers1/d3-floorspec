@@ -1,0 +1,7 @@
+{
+  "description": "The same removal, with INV1's and RS1's arrays set without PV2 in the same batch: it commits.",
+  "covers": [
+    "FS-ENGY-3.1.1",
+    "FS-ENGY-1.2.1"
+  ]
+}

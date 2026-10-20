@@ -1,0 +1,25 @@
+{
+  "valid": false,
+  "diagnostics": [
+    {
+      "code": "FS-ENGY-INV-001",
+      "severity": "error",
+      "elements": ["PV1"]
+    },
+    {
+      "code": "FS-ENGY-INV-002",
+      "severity": "error",
+      "elements": ["PV2"]
+    },
+    {
+      "code": "FS-ENGY-INV-003",
+      "severity": "error",
+      "elements": ["PV2"]
+    },
+    {
+      "code": "FS-ENGY-INV-005",
+      "severity": "error",
+      "elements": ["RS1"]
+    }
+  ]
+}

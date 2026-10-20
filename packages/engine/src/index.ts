@@ -108,6 +108,37 @@ export * as annotation from './extensions/fs/annotation.js';
 export * as site from './extensions/fs/site.js';
 export * as outdoor from './extensions/fs/outdoor.js';
 export * as context from './extensions/fs/context.js';
+export * as energy from './extensions/fs/energy.js';
+export {
+  type DerivedEnergy,
+  type DerivedArray,
+  type SolarArray,
+  type Inverter,
+  type ShutdownInitiator,
+  type PvModule,
+  type EnergySetbacks,
+  type EdgeKind as EnergyEdgeKind,
+  energyData,
+  energyCollection,
+  usesEnergy,
+  setbacksOf,
+  roofSlopes,
+  faceOk,
+  outwardNormal,
+  faceRotation,
+  facePitch,
+  toPlan,
+  moduleSides,
+  arrayExtents,
+  arrayFrame,
+  arrayFootprint,
+  edgeKind as energyEdgeKind,
+  tooNear,
+  facePolygons,
+  cornerClear,
+  GAP as PV_GAP,
+  SETBACKS as PV_SETBACKS,
+} from './extensions/fs/energy.js';
 export { type DerivedContext, contextData, contextRecords, usesContext, streetMeasures, neighbourHeights } from './extensions/fs/context.js';
 export {
   contextDrawing,

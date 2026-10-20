@@ -150,7 +150,7 @@ see; they make sure nothing is merged that the lifecycle forbids.
 Every kind an extension adds carries a fallback — a box, and optionally a glTF model and a 2D
 symbol — so that a reader without the extension still shows that something is there. An extension
 never changes what core data means (Core 12.7). Building systems — electrical, plumbing,
-mechanical, low-voltage, structural, furniture, lighting — the landscape around a house, its outdoor rooms, the ground it stands on and the street and neighbours around it, the views it is meant to be seen
+mechanical, low-voltage, structural, furniture, lighting — the landscape around a house, its outdoor rooms, the ground it stands on and the street and neighbours around it, the solar arrays on its roof, the views it is meant to be seen
 from, a remodel's existing, demolished and new work, and the dimensions and notes drawn on its plans, ship as first-party `FS_` extensions (FLR-ADR-001).
 
 ## Official extensions
@@ -168,19 +168,20 @@ from, a remodel's existing, demolished and new work, and the dimensions and note
 | [`FS_renovation`](FS_renovation/spec.md) | 0.1.0 | Draft | a remodel: each element's renovation status - existing, to be demolished, or new - and the house's two states, as it stands and when the work is done, each a valid Core view; the existing, demolition, proposed and combined filters and their drafting conventions; quantities and the rooms' areas before and after; it requires nothing and adds no kind of element | `FS-RENO-` |
 | [`FS_annotation`](FS_annotation/spec.md) | 0.1.0 | Draft | the drawing annotation its owner keeps: dimension strings associated with the junctions, wall faces and opening centres they measure — their lengths derived exactly, every time, so they follow the walls — and notes with leaders, about what they point at; it requires nothing and adds no kind of element | `FS-ANNO-` |
 | [`FS_context`](FS_context/spec.md) | 0.1.0 | Draft | what surrounds a house and is never part of it: the street with its curbs, planting strips and sidewalks, the neighbours as simple massing - a footprint, eaves and a flat, gable or hip roof - and the trees beyond the lot; records, not elements, so no quantity, schedule or rule ever counts them, drawn in one neutral context style that casts shade; it requires nothing and adds no kind of element | `FS-CTXT-` |
+| [`FS_energy`](FS_energy/spec.md) | 0.1.0 | Draft | the energy a house makes on its site: solar arrays - modules of a given size and watts in rows and columns on a roof face Core derives, flush or racked at a tilt on a flat roof, their plan footprint derived exactly and kept clear of the face's eaves, ridges and rakes by setbacks that are Floorspec's defaults, never a code's - the inverters that serve them and the rapid-shutdown initiators that control them, which FS_electrical's circuits feed as loads; production is informative, a range with its method; it requires nothing | `FS-ENGY-` |
 | [`FS_outdoor`](FS_outdoor/spec.md) | 0.1.0 | Draft | outdoor rooms: pools, plunge pools and spas with their coping and water; fences and garden walls drawn as lines with gates as openings along them; pergolas, covered porches and shade sails whose posts are derived from their box and a greatest spacing, so a stretched one is re-spaced; outdoor kitchens and fire features — placed like furniture, with a starter library ([`library.json`](FS_outdoor/library.json), CC0 1.0); never a pool barrier's or a fence's code check | `FS-OUTD-` |
 | [`FS_site`](FS_site/spec.md) | 0.1.0 | Draft | the ground a house stands on: setbacks drawn from Core's lot line, the terrain a survey's spot elevations and contour lines make — one triangulated surface, defined uniquely — and the grading: patios, walks and drives on the ground and pads under a house, each with its cut and fill, exact estimates, never an engineered grading plan; it requires nothing and adds no kind of element | `FS-SITE-` |
 | [`FS_views`](FS_views/spec.md) | 0.1.0 | Draft | the house's saved views: named cameras — where each stands and what it looks at, its lens, two-point perspective, picture shape, depth of field and exposure — and what each shows: the whole house or a level cut away, the sky, the date and time that place the sun, and the lights, all on or as an FS_lighting scene sets them; it requires nothing and adds no kind of element | `FS-VIEW-` |
 
 The first six list one implementation, D3 Floorspec's engine, with evidence of its passing their
 suites at e5fd4ca in a public CI run (`<NAME>/evidence/`); FS_landscape, FS_lighting, FS_views, FS_renovation, FS_annotation,
-FS_site, FS_outdoor and FS_context, Drafts, list the engine too, and have no evidence yet. Each Release Candidate stays one until a
+FS_site, FS_outdoor, FS_context and FS_energy, Drafts, list the engine too, and have no evidence yet. Each Release Candidate stays one until a
 second, independent implementation passes its suite (FLR-REQ-092). FS_structural is a Draft whose
 suite the engine passes; it becomes a Release Candidate by its own pull request, which freezes it, and so do FS_landscape, FS_lighting, FS_views, FS_renovation,
-FS_annotation, FS_site, FS_outdoor and FS_context. The conformance oracle in `tools/oracle/ext/` implements all fourteen, and is evidence for none.
+FS_annotation, FS_site, FS_outdoor, FS_context and FS_energy. The conformance oracle in `tools/oracle/ext/` implements all fifteen, and is evidence for none.
 
 Every official extension follows the same conventions, each stated in its own specification's
-chapter 1: its rules apply to a document of a Core draft it lists — all fourteen list Core 0.2, 0.3
+chapter 1: its rules apply to a document of a Core draft it lists — all fifteen list Core 0.2, 0.3
 and 0.4 — that uses it at a version a validator both implements and knows; its diagnostics are `FS-<CODE>-SCH-`, `-INV-` and `-LINT-`, evaluated after
 Core's invariants and never with a Core error; its errors make a document invalid; and what it
 derives is `extensions.<NAME>` of the derived values. Records that are not elements — circuits,

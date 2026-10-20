@@ -1,0 +1,14 @@
+{
+  "extensions": {
+    "FS_energy": {
+      "colour": "red"
+    }
+  },
+  "extensionsUsed": {
+    "FS_energy": "0.1.0"
+  },
+  "floorspec": "0.1",
+  "project": {
+    "name": "Old"
+  }
+}

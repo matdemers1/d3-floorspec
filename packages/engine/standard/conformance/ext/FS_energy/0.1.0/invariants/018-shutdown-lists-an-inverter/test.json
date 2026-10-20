@@ -1,0 +1,6 @@
+{
+  "description": "RS1 lists INV1 among the arrays it controls: FS-ENGY-INV-005.",
+  "covers": [
+    "FS-ENGY-3.2.1"
+  ]
+}

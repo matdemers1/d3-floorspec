@@ -1,0 +1,8 @@
+{
+  "description": "The sunny house declaring Core \"0.2\", a draft FS_energy 0.1.0 lists (1.1): a 0.2 document has no roofs, so FS_energy is evaluated and PV1 names no roof, FS-ENGY-INV-001.",
+  "covers": [
+    "FS-ENGY-1.2.1",
+    "FS-ENGY-1.2.3",
+    "FS-ENGY-2.2.1"
+  ]
+}

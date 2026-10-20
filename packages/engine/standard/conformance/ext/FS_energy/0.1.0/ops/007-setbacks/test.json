@@ -1,0 +1,8 @@
+{
+  "description": "setProperty of $document /extensions/FS_energy/setbacks sets an eave setback of 2' 6\": PV1, 2' from the eave, is now inside it - a lint, which never rejects a batch. It commits.",
+  "covers": [
+    "FS-ENGY-1.2.1",
+    "FS-ENGY-4.3.1",
+    "FS-OPS-2.3.1"
+  ]
+}

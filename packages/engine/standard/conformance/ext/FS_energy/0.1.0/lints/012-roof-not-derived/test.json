@@ -1,0 +1,7 @@
+{
+  "description": "The house roof a \"0.3\" hip of two pitches, whose surface Core does not derive: PV1 is on it - FS-ENGY-LINT-003, beside Core's FS-LINT-015 - and is not tested against setbacks.",
+  "covers": [
+    "FS-ENGY-2.2.3",
+    "FS-ENGY-4.3.1"
+  ]
+}

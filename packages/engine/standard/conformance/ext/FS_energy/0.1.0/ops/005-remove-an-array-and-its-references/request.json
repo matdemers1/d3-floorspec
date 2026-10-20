@@ -1,0 +1,20 @@
+{
+  "batch": [
+    {
+      "op": "setProperty",
+      "id": "INV1",
+      "path": "/arrays",
+      "value": ["PV1"]
+    },
+    {
+      "op": "setProperty",
+      "id": "RS1",
+      "path": "/arrays",
+      "value": ["PV1"]
+    },
+    {
+      "op": "removeElement",
+      "id": "PV2"
+    }
+  ]
+}

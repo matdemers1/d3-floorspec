@@ -1,0 +1,76 @@
+{
+  "status": "committed",
+  "diagnostics": [],
+  "hash": "9680ff1c193d1c6dd471d91d63af181e154f3da73fb01b9e13413e949a08a3bd",
+  "created": [],
+  "removed": ["PV2"],
+  "resolved": [
+    {
+      "op": "setProperty",
+      "id": "INV1",
+      "path": "/arrays",
+      "value": ["PV1"]
+    },
+    {
+      "op": "setProperty",
+      "id": "RS1",
+      "path": "/arrays",
+      "value": ["PV1"]
+    },
+    {
+      "op": "removeElement",
+      "id": "PV2"
+    }
+  ],
+  "inverse": [
+    {
+      "op": "setProperty",
+      "id": "INV1",
+      "path": "/arrays",
+      "value": ["PV1", "PV2"]
+    },
+    {
+      "op": "setProperty",
+      "id": "RS1",
+      "path": "/arrays",
+      "value": ["PV1", "PV2"]
+    },
+    {
+      "op": "addElement",
+      "collection": "pvArrays",
+      "id": "PV2",
+      "element": {
+        "columns": 3,
+        "fallback": {
+          "level": "L1",
+          "box": {
+            "max": [0, 5917184, 3846144],
+            "min": [-3051260, 0, 3456000]
+          }
+        },
+        "host": {
+          "level": "L1",
+          "position": [10143744, 0],
+          "mode": "free",
+          "rotation": -90000000
+        },
+        "layout": "landscape",
+        "module": {
+          "length": 1950720,
+          "watts": 350,
+          "width": 1170432
+        },
+        "name": "Carport",
+        "rapidShutdown": "array",
+        "roof": "RF2",
+        "rowGap": 780288,
+        "rows": 2,
+        "tilt": {
+          "rise": 3,
+          "run": 12
+        }
+      },
+      "extension": "FS_energy"
+    }
+  ]
+}

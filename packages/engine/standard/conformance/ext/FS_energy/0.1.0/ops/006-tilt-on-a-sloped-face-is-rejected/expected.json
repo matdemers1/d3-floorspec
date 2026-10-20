@@ -1,0 +1,10 @@
+{
+  "status": "rejected",
+  "diagnostics": [
+    {
+      "code": "FS-ENGY-INV-004",
+      "severity": "error",
+      "elements": ["PV1"]
+    }
+  ]
+}

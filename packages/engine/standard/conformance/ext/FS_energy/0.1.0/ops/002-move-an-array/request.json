@@ -1,0 +1,14 @@
+{
+  "batch": [
+    {
+      "op": "moveElement",
+      "element": "PV2",
+      "host": {
+        "mode": "free",
+        "level": "L1",
+        "at": ["30'", "0'"],
+        "rotation": -90000000
+      }
+    }
+  ]
+}

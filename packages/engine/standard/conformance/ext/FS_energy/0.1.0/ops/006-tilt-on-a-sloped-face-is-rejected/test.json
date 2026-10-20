@@ -1,0 +1,8 @@
+{
+  "description": "setProperty of PV1's /tilt racks it on the sloped house roof: the result breaks 2.3.2, and the batch is rejected.",
+  "covers": [
+    "FS-ENGY-2.3.2",
+    "FS-ENGY-1.2.1",
+    "FS-OPS-1.2.3"
+  ]
+}

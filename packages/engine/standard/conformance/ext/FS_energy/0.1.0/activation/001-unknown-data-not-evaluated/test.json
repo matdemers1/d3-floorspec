@@ -1,0 +1,6 @@
+{
+  "description": "An array with no rows, which FS_energy's schema does not allow, but no extension is known: nothing of it is evaluated, and the document is valid.",
+  "covers": [
+    "FS-ENGY-1.2.1"
+  ]
+}

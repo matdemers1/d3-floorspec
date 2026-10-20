@@ -1,0 +1,7 @@
+{
+  "description": "PV2, one module on one rack, facing south-west: its footprint is mapped by Core 13.1 and each corner rounded once - its corner is its host's position, and its sides are the rack's depth and the module's length.",
+  "covers": [
+    "FS-ENGY-7.1.1",
+    "FS-CORE-13.1.1"
+  ]
+}

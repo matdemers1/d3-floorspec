@@ -1,0 +1,6 @@
+{
+  "description": "At most 1,000 modules in a row.",
+  "covers": [
+    "FS-ENGY-1.3.1"
+  ]
+}

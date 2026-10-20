@@ -1,0 +1,7 @@
+{
+  "description": "The house read with every official entry known, by an implementation of FS_energy alone: only FS_energy is evaluated and derived.",
+  "covers": [
+    "FS-ENGY-1.2.1",
+    "FS-ENGY-1.2.4"
+  ]
+}

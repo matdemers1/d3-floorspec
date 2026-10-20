@@ -1,0 +1,6 @@
+{
+  "description": "An eave setback of 3': PV1, 2' from the house roof's eave, and PV2, 2' from the carport's south edge - an eave of a flat roof - are both inside it, FS-ENGY-LINT-001 each; the ridge and rake setbacks keep their defaults.",
+  "covers": [
+    "FS-ENGY-4.3.1"
+  ]
+}

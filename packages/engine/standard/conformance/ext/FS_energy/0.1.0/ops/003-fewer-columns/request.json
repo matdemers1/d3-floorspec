@@ -1,0 +1,10 @@
+{
+  "batch": [
+    {
+      "op": "setProperty",
+      "id": "PV1",
+      "path": "/columns",
+      "value": 4
+    }
+  ]
+}

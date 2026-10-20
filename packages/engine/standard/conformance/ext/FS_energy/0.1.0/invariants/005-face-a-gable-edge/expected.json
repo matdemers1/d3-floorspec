@@ -1,0 +1,10 @@
+{
+  "valid": false,
+  "diagnostics": [
+    {
+      "code": "FS-ENGY-INV-002",
+      "severity": "error",
+      "elements": ["PV1"]
+    }
+  ]
+}
