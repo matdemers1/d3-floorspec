@@ -1,0 +1,125 @@
+/* FLR-T-15.1: the Site panel. Cut and fill have no design-system token: amber and blue as render2d draws
+   them, each with its own pattern so colour is never the only cue (FS_site 5.2.1). */
+:root {
+  --fs-site-cut: #a86a00; /* d3-allow: FS_site's cut, amber, as render2d draws it; @d3cloud/ui has no categorical token (FLR-T-15.1) */
+  --fs-site-fill: #2f6fb0; /* d3-allow: FS_site's fill, blue, as render2d draws it (FLR-T-15.1) */
+}
+[data-theme='dark'] {
+  --fs-site-cut: #e7b45d; /* d3-allow: FS_site's cut in the dark theme (FLR-T-15.1) */
+  --fs-site-fill: #87c3ff; /* d3-allow: FS_site's fill in the dark theme (FLR-T-15.1) */
+}
+
+.fs-site-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+}
+.fs-site__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+}
+.fs-site__hint {
+  margin: 0;
+}
+.fs-site__facts {
+  margin: 0 0 var(--space-8);
+  display: grid;
+  gap: var(--space-4);
+}
+.fs-site__fact {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-8);
+  font-size: var(--text-13);
+}
+.fs-site__fact dt {
+  color: var(--color-fg-muted);
+}
+.fs-site__fact dd {
+  margin: 0;
+  color: var(--color-fg);
+  font-family: var(--font-mono);
+  font-size: var(--text-12);
+  text-align: right;
+}
+.fs-site__status {
+  margin: var(--space-4) 0;
+  font-size: var(--text-13);
+  color: var(--color-fg);
+}
+.fs-site__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--text-13);
+}
+.fs-site__table th,
+.fs-site__table td {
+  padding: var(--space-4) 0;
+  text-align: right;
+  font-weight: normal;
+  color: var(--color-fg);
+}
+.fs-site__table th[scope='row'],
+.fs-site__table thead th:first-child {
+  text-align: left;
+}
+.fs-site__table thead th {
+  color: var(--color-fg-muted);
+  font-size: var(--text-12);
+}
+.fs-site__table td {
+  font-family: var(--font-mono);
+  font-size: var(--text-12);
+}
+.fs-site__table tfoot th,
+.fs-site__table tfoot td {
+  border-top: 1px solid var(--color-border);
+}
+.fs-site__legend {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  margin: var(--space-8) 0 0;
+  font-size: var(--text-12);
+  color: var(--color-fg-muted);
+}
+.fs-site__swatch {
+  display: inline-block;
+  width: 14px;
+  height: 10px;
+  border-radius: 2px;
+  margin-left: var(--space-8);
+}
+.fs-site__swatch:first-child {
+  margin-left: 0;
+}
+.fs-site__swatch--cut {
+  background: repeating-linear-gradient(45deg, var(--fs-site-cut) 0 2px, transparent 2px 5px);
+  border: 1px solid var(--fs-site-cut);
+}
+.fs-site__swatch--fill {
+  background: repeating-linear-gradient(90deg, var(--fs-site-fill) 0 4px, transparent 4px 7px);
+  border: 1px dashed var(--fs-site-fill);
+}
+.fs-site__records ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.fs-site__record {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  font-size: var(--text-13);
+  color: var(--color-fg);
+}
+.fs-site__record-id {
+  font-family: var(--font-mono);
+  font-size: var(--text-12);
+  color: var(--color-fg-muted);
+  min-width: 3.5em;
+}
+.fs-site__record-text {
+  flex: 1;
+}

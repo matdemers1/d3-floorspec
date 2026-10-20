@@ -1,3 +1,4 @@
+import { SitePanel } from './site/Panel';
 import type { ReactNode } from 'react';
 import { RenovationSection } from './renovation';
 import { PlacingPanel } from '../placing/PlacingPanel';
@@ -112,6 +113,14 @@ export function Inspector({ store, tools }: { store: EditorStore; tools: ToolCon
   // FLR-T-18.7: what is being placed, with buttons to turn it (a finger has no R key).
   if (tool === 'place' && readOnly === null) return <PlacingPanel store={store} />;
   // The measure tool (FLR-T-18.9) draws nothing: the inspector stays on the selection.
+  // FLR-T-15.1: the site's tools draw with the Site panel beside them: its heights, the lot, the cut and fill.
+  const lvl = model.levels.find((l) => l.id === levelId);
+  if ((tool === 'lot' || tool === 'setback' || tool === 'spot' || tool === 'contour' || tool === 'pad') && readOnly === null && lvl !== undefined)
+    return (
+      <div className="fs-inspector__body">
+        <SitePanel store={store} model={model} level={lvl} units={units} readOnly={false} tool={tool} />
+      </div>
+    );
   if (tool !== 'select' && tool !== 'measure' && tool !== 'dimension' && tool !== 'note' && readOnly === null) return <DrawPanel store={store} model={model} />;
   // FLR-T-18.8: several selected — the fields they share.
   if (many) return <MultiInspector store={store} />;

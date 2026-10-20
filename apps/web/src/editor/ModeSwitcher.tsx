@@ -1,3 +1,4 @@
+import { SitePanel } from './site/Panel';
 import './modes.css';
 import { useMemo, useState, type ReactNode } from 'react';
 import { Button, IconButton, Input, Menu, MenuContent, MenuItem, MenuLabel, MenuSeparator, MenuTrigger, Modal, SegmentedControl, Switch, Tooltip } from '@d3cloud/ui';
@@ -517,6 +518,8 @@ export function ModeSummary({ store, model, units }: { store: EditorStore; model
         </div>
       ))}
       {trade === 'construction' ? <AnnotationSummary store={store} model={model} level={level} units={units} /> : null}
+      {/* FLR-T-15.1: Landscape's Site panel — the lot, its setbacks, the terrain, grading. */}
+      {trade === 'landscape' ? <SitePanel store={store} model={model} level={level} units={units} readOnly={store.get().readOnly !== null} /> : null}
       <ExportPlan store={store} label={plan} />
     </section>
   );
