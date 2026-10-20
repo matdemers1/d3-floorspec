@@ -115,8 +115,10 @@ export interface ExteriorHoverOptions {
 export function exteriorHover(model: EditorModel, level: LevelView, kind: DeviceKind, p: Point, o: ExteriorHoverOptions): (DeviceHover & ExteriorHoverExtra) | null {
   const ext = kind.exterior;
   if (ext === undefined || kind.mount === 'wall') return null;
-  const free = (at: Point, rotation: number, extra: ExteriorHoverExtra = {}): DeviceHover & ExteriorHoverExtra => {
+  const free = (at: Point, turn: number, extra: ExteriorHoverExtra = {}): DeviceHover & ExteriorHoverExtra => {
     const pos = snap(at, 1);
+    // Core's angles are in (−180°, 180°]: a turn rounded to −180° is 180°.
+    const rotation = turn <= -180 * MICRO ? 180 * MICRO : turn;
     const rad = (rotation / MICRO) * (Math.PI / 180);
     return { host: { mode: 'free', level: level.id, at: pos, ...(rotation === 0 ? {} : { rotation }) }, point: pos, facing: [Math.cos(rad), Math.sin(rad)], ...extra };
   };
@@ -137,7 +139,8 @@ export function exteriorHover(model: EditorModel, level: LevelView, kind: Device
     const near = levelWalks(model, level.id)
       .map((w) => ({ w, on: onWalk(w, p) }))
       .filter((x) => x.on.off <= reach(x.w))
-      .sort((a, b) => a.on.off - b.on.off)[0];
+      // The walk whose edge is nearest: a wide drive's centre line is far from a pointer beside it.
+      .sort((a, b) => a.on.off - a.w.halfWidth - (b.on.off - b.w.halfWidth))[0];
     if (near === undefined) return free(snap(p, o.grid), 0, { hint: `${def.label} · ${beamWords(def.beam)} pool · near a walk it snaps to its edge, ${formatLen(EXTERIOR_DEFAULTS.walkSpacing, o.units)} apart` });
     const { w, on } = near;
     const spacing = w.kind === 'drive' ? EXTERIOR_DEFAULTS.driveSpacing : EXTERIOR_DEFAULTS.walkSpacing;

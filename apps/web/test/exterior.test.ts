@@ -84,10 +84,11 @@ describe('placing them', () => {
     expect(h.tag).toBe('into the canopy');
     expect(h.patch?.reach).toBeGreaterThan(10 * FT);
     expect(h.point[0]).toBeGreaterThan(tree.placement!.point[0]);
-    // Facing west, at the trunk.
+    // Facing west, at the trunk: 180°, never −180° (Core's angles are in (−180°, 180°]).
     expect(h.facing[0]).toBeCloseTo(-1, 5);
+    expect(h.host.mode === 'free' ? h.host.rotation : null).toBe(180_000_000);
     const batch = placeDevice(model.document, kind, h.host, { ...(h.patch === undefined ? {} : { patch: h.patch }) });
-    const el = (batch.at(-1) as { element: Record<string, unknown> }).element;
+    const el = (batch.at(-1) as unknown as { element: Record<string, unknown> }).element;
     expect(exteriorOf(el)).toMatchObject({ kind: 'uplight', reach: h.patch!.reach });
     const beam = beamOf('U', el, { point: h.point, facing: 180_000_000 })!;
     expect(Math.min(...beam.ring.map((p) => p[0]))).toBeLessThan(tree.placement!.point[0]);
@@ -102,7 +103,7 @@ describe('placing them', () => {
     expect(run.patch?.bulbs).toBe(12);
     expect(run.tag).toBe('24\'-0" · 12 bulbs');
     const batch = placeDevice(model.document, kind, run.host, { box: run.box!, patch: run.patch! });
-    expect((batch.at(-1) as { element: { watts: number } }).element.watts).toBe(12 * EXTERIOR_DEFS.string.watts);
+    expect((batch.at(-1) as unknown as { element: { watts: number } }).element.watts).toBe(12 * EXTERIOR_DEFS.string.watts);
   });
 
   it('says a beam by its kind and spread', () => {

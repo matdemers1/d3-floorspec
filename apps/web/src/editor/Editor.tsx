@@ -632,7 +632,7 @@ function RailButton({ store, tools, item, canDraw }: { store: EditorStore; tools
     const command = kind === undefined ? undefined : commandById(`tool.${kind.system}`);
     return (
       <Tooltip content={`${label}${command?.hint === undefined ? '' : ` (${command.hint})`}`} side="right">
-        <IconButton label={`Place a ${label.toLowerCase()}`} icon={DEVICE_ICONS[item.device] ?? <PlugIcon />} pressed={tool === 'device' && device === item.device} disabled={!canDraw} onClick={() => { tools.useDevice(item.device); }} />
+        <IconButton label={`Place ${/^[aeiou]/i.test(label) ? 'an' : 'a'} ${label.toLowerCase()}`} icon={DEVICE_ICONS[item.device] ?? <PlugIcon />} pressed={tool === 'device' && device === item.device} disabled={!canDraw} onClick={() => { tools.useDevice(item.device); }} />
       </Tooltip>
     );
   }

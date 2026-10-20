@@ -196,6 +196,8 @@ export function ElectricalOverview({ store, model, units }: { store: EditorStore
   const roomOf = (id: string) => Object.entries(derived?.rooms ?? {}).find(([, ids]) => ids.includes(id))?.[0];
   return (
     <>
+      {/* FLR-T-15.5: with an exterior light's tool in hand, the assistant for the grounds comes first. */}
+      {exterior ? <ExteriorAssistantCard store={store} model={model} units={units} /> : null}
       {panels.length === 0 ? (
         <p className="fs-note">No panel yet. Circuits start at a panel: place one, then add circuits to it from its inspector.</p>
       ) : (
@@ -236,8 +238,7 @@ export function ElectricalOverview({ store, model, units }: { store: EditorStore
           </ul>
         </Section>
       ) : null}
-      {/* FLR-T-15.5: with an exterior light's tool in hand, the assistant offers the grounds' lighting instead. */}
-      {exterior ? <ExteriorAssistantCard store={store} model={model} units={units} /> : <AssistantCard store={store} model={model} units={units} />}
+      {exterior ? null : <AssistantCard store={store} model={model} units={units} />}
       <Legend units={units} />
     </>
   );
