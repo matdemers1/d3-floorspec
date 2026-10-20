@@ -1,5 +1,5 @@
 /**
- * Seasons and weather (FLR-T-15.4): two looks a house is seen in, beside the sky and the time — any
+ * Seasons and weather (FLR-T-15.4, FLR-ADR-061): two looks a house is seen in, beside the sky and the time — any
  * season with any weather, and the time always the sun's. Each is a LOOK, never a change to the
  * model: nothing here is written to a document, and nothing in a quantity or a finding moves.
  *

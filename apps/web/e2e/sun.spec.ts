@@ -76,11 +76,25 @@ async function shoot(page: Page, name: string): Promise<void> {
   }
 }
 
+/** The theme switched and settled: two frames after it, no CSS transition still running (as edit3d.spec.ts). */
+async function themeSettled(page: Page): Promise<void> {
+  await page.waitForFunction(
+    () => new Promise<boolean>((resolve) => {
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        resolve(document.getAnimations().every((a) => !(a instanceof CSSTransition) || a.playState !== 'running'));
+      }));
+    }),
+    undefined,
+    { timeout: 30_000, polling: 250 },
+  );
+}
+
 async function axe(page: Page, state: string): Promise<void> {
   for (const theme of ['light', 'dark'] as const) {
     await page.emulateMedia({ colorScheme: theme });
     await expect(page.locator('html')).toHaveAttribute('data-theme', theme);
-    await page.waitForTimeout(200);
+    await page.waitForTimeout(800);
+    await themeSettled(page);
     const results = await new AxeBuilder({ page }).withTags(TAGS).analyze();
     expect(results.violations.map((v) => `${v.id}: ${v.help} — ${v.nodes.map((n) => n.target.join(' ')).join(', ')}`), `${state} (${theme})`).toEqual([]);
   }
