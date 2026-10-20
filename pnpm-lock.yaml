@@ -315,6 +315,18 @@ importers:
         specifier: workspace:*
         version: link:../../render2d
 
+  packages/assistants/solar:
+    dependencies:
+      '@floorspec/analysis':
+        specifier: workspace:*
+        version: link:../../analysis
+      '@floorspec/engine':
+        specifier: workspace:*
+        version: link:../../engine
+      '@floorspec/ops':
+        specifier: workspace:*
+        version: link:../../ops
+
   packages/assistants/staging:
     dependencies:
       '@floorspec/assistant-electrical':

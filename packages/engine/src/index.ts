@@ -76,7 +76,7 @@ export {
   type DerivedStair,
   type EnvelopeRef,
 } from './derive/derive.js';
-export { surfaceNotDerivedReason } from './roofs/roofs.js';
+export { surfaceNotDerivedReason, deriveRoofs } from './roofs/roofs.js';
 export { analyseCirculation, type CirculationAnalysis, type BuildingCirculation } from './circulation/circulation.js';
 export { analyseProgram, type ProgramAnalysis } from './derive/program.js';
 export { loadKnownExtensions, knownEntry, satisfies as versionSatisfies, compareVersions } from './validate/registry.js';
@@ -127,7 +127,7 @@ export {
   outwardNormal,
   faceRotation,
   facePitch,
-  toPlan,
+  toPlan as slopeToPlan,
   moduleSides,
   arrayExtents,
   arrayFrame,
@@ -139,6 +139,21 @@ export {
   GAP as PV_GAP,
   SETBACKS as PV_SETBACKS,
 } from './extensions/fs/energy.js';
+export {
+  solarDrawing,
+  roofFaces,
+  setbackBands,
+  arrayModules,
+  solarBearingOf,
+  compassOf,
+  RACK_BASE,
+  STANDOFF,
+  type SolarDrawing,
+  type DrawRoofFace,
+  type DrawFaceEdge,
+  type DrawArray,
+  type DrawModule,
+} from './extensions/fs/energy-draw.js';
 export { type DerivedContext, contextData, contextRecords, usesContext, streetMeasures, neighbourHeights } from './extensions/fs/context.js';
 export {
   contextDrawing,
