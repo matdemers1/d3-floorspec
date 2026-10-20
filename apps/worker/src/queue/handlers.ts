@@ -14,6 +14,7 @@ import { renderSavedView, renderShots, type Shot } from '../pathtrace/views.js';
 import { storeZip } from '../export/gltf/zip.js';
 import { FILM_FORMATS, FILM_LIGHTS, FILM_QUALITIES, FILM_RATES, FILM_SIZES, renderFilm, type FilmFormat, type FilmLight, type FilmQuality, type FilmRate, type FilmSize } from '../film/index.js';
 import { timelapseProblem, type Timelapse } from '@floorspec/mesh/sky';
+import { daylightStudy, DAYLIGHT_SKIES, type DaylightSky } from '../pathtrace/daylight.js';
 
 export interface JobRow {
   readonly id: string;
@@ -367,6 +368,23 @@ export interface HandlerOptions {
 }
 
 /** The job table, reading maps from `assetDir` when it is given. */
+/** The parameters of a daylight study (FLR-T-14.7), as the api writes them. */
+export interface DaylightParams {
+  /** A date and time at the site (`AT_PATTERN`). */
+  readonly at: string;
+  readonly sky: DaylightSky;
+  readonly design?: Record<string, string>;
+}
+
+export function daylightParams(raw: unknown): DaylightParams {
+  const p = (raw ?? {}) as Record<string, unknown>;
+  const at = typeof p['at'] === 'string' && AT_PATTERN.test(p['at']) ? p['at'] : null;
+  if (at === null) throw new RangeError('a daylight study needs a date and time at the site');
+  const sky = (DAYLIGHT_SKIES as readonly unknown[]).includes(p['sky']) ? (p['sky'] as DaylightSky) : 'clear';
+  const design = designOf(p['design']);
+  return { at, sky, ...(design === undefined ? {} : { design }) };
+}
+
 export function createHandlers(opts: HandlerOptions = {}): Readonly<Record<string, Handler>> {
   const store = { images: assetDirImages(opts.assetDir), models: assetDirModels(opts.assetDir) };
   return {
@@ -484,6 +502,21 @@ export function createHandlers(opts: HandlerOptions = {}): Readonly<Record<strin
           design: r.design,
           ms: r.ms,
         },
+      };
+    },
+    /**
+     * FLR-T-14.7: a daylight study — illuminance on every floor's work plane at a date and time,
+     * sun-hours, and glare at desks and beds — as JSON; the api waits for it and keeps it, per
+     * version and time, for as long as job outputs are kept.
+     */
+    'analysis.daylight': async (document, job) => {
+      const p = daylightParams(job.params);
+      const study = await daylightStudy(document, { ...p, ...(job.signal === undefined ? {} : { signal: job.signal }) });
+      return {
+        name: `daylight-${job.versionHash.slice(0, 8)}-${p.at.replace(/[^0-9T]/g, '').slice(0, 13)}.json`,
+        contentType: 'application/json',
+        bytes: new TextEncoder().encode(JSON.stringify(study)),
+        summary: { at: study.at, sky: study.sky, rooms: study.rooms.length, glare: study.glare.length, ms: study.ms },
       };
     },
     /**
