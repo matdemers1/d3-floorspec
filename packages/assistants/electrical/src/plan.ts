@@ -129,7 +129,7 @@ function facesInto(facing: number, d: Point, side: 'left' | 'right'): boolean {
 
 const centroid = (ps: readonly Point[]): Point => [Math.round(ps.reduce((a, p) => a + p[0], 0) / ps.length), Math.round(ps.reduce((a, p) => a + p[1], 0) / ps.length)];
 
-function insideRoom(p: Point, outer: readonly Point[], holes: readonly (readonly Point[])[]): boolean {
+export function insideRoom(p: Point, outer: readonly Point[], holes: readonly (readonly Point[])[]): boolean {
   const q: [bigint, bigint] = [BigInt(p[0]), BigInt(p[1])];
   const ring = (r: readonly Point[]) => r.map(([x, y]) => [BigInt(x), BigInt(y)] as [bigint, bigint]);
   return predicates.locate(q, ring(outer)) === 'inside' && holes.every((h) => predicates.locate(q, ring(h)) === 'outside');

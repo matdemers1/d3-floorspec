@@ -37,6 +37,7 @@
   },
   "dependencies": {
     "@floorspec/engine": "workspace:*",
+    "@floorspec/render2d": "workspace:*",
     "manifold-3d": "3.2.1"
   },
   "devDependencies": {

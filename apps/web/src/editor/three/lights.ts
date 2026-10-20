@@ -103,6 +103,10 @@ export interface ViewLight {
   /** A spot's half-angle (radians) and penumbra (0–1, three.js's). */
   readonly angle?: number;
   readonly penumbra?: number;
+  /** An aimed spot's axis (an exterior light's, FLR-T-15.5), unit, z up; a spot without one points straight down. */
+  readonly aim?: Vec3;
+  /** A key unique among the lamps: a light with several (a string's bulbs) gives each its part. */
+  readonly key: string;
 }
 
 const hex = (c: readonly [number, number, number]): string => {
@@ -131,7 +135,7 @@ function viewLight(l: FixtureLight, model: EditorModel, mesh: HouseMesh, shadow:
   const o = mesh.origin;
   const position: Vec3 = [(l.position[0] - o[0]) / k, (l.position[1] - o[1]) / k, (l.position[2] - o[2]) / k];
   const distance = shadow ? 0 : Math.round(SPILL * (roomReach(l, model, k) ?? OUTSIDE / SPILL) * 100) / 100;
-  const base = { id: l.id, level: l.level, position, color: hex(l.color), lumens: l.lumens, distance, shadow, size: Math.max(0.01, l.radius / k) };
+  const base = { id: l.id, key: l.part === undefined ? l.id : `${l.id}:${String(l.part)}`, level: l.level, position, color: hex(l.color), lumens: l.lumens, distance, shadow, size: Math.max(0.01, l.radius / k), ...(l.aim === undefined ? {} : { aim: l.aim }) };
   if (l.cone === undefined) return { ...base, kind: 'point', intensity: l.lumens / (4 * Math.PI) };
   const outer = Math.min(MAX_SPOT_ANGLE, Math.acos(l.cone.outer));
   const inner = Math.acos(l.cone.inner);
@@ -157,6 +161,16 @@ function byRoom(lights: readonly FixtureLight[]): FixtureLight[] {
   return [...out, ...none];
 }
 
+/**
+ * Whether a lighting is an exterior one (FLR-T-15.5): it turns on more of the lights in no room — the
+ * path lights, uplights, wall-washers and lanterns — than of those in rooms. The view then lights the
+ * grounds first, so a night exterior is not left dark because the rooms took every lamp.
+ */
+export function exteriorFirst(lights: readonly FixtureLight[]): boolean {
+  const outside = lights.filter((l) => l.room === null).length;
+  return outside > 0 && outside >= lights.length - outside;
+}
+
 /** The lamps to draw for a model's mesh, seen at `level` (null: none chosen), cut away or not, under a lighting. */
 export function viewLights(model: EditorModel, mesh: HouseMesh, v: { level: string | null; cutaway: boolean; order: ReadonlyMap<string, number> }, lighting: Lighting = ALL_ON, shadowed = MAX_SHADOWED): ViewLight[] {
   if (model.derived === null) return [];
@@ -168,6 +182,16 @@ export function viewLights(model: EditorModel, mesh: HouseMesh, v: { level: stri
     return at === undefined || at <= current;
   });
   const here = (l: FixtureLight) => (v.level !== null && l.level === v.level) || (v.level === null && current === undefined);
-  const ordered = [...byRoom(shown.filter(here)), ...byRoom(shown.filter((l) => !here(l)))].slice(0, MAX_LIGHTS);
+  const rooms = [...byRoom(shown.filter(here)), ...byRoom(shown.filter((l) => !here(l)))];
+  if (exteriorFirst(shown)) {
+    // FLR-T-15.5: the grounds' lamps first, unshadowed — a lamp outside has no room to keep its light
+    // in, and its shadow map would spend a texture unit the surfaces need (shadowBudget) — then the rooms'.
+    const outside = rooms.filter((l) => l.room === null);
+    const inside = rooms.filter((l) => l.room !== null);
+    const ordered = [...outside, ...inside].slice(0, MAX_LIGHTS);
+    let shadows = 0;
+    return ordered.map((l) => viewLight(l, model, mesh, l.room !== null && shadows++ < Math.min(shadowed, MAX_SHADOWED)));
+  }
+  const ordered = rooms.slice(0, MAX_LIGHTS);
   return ordered.map((l, i) => viewLight(l, model, mesh, i < Math.min(shadowed, MAX_SHADOWED)));
 }

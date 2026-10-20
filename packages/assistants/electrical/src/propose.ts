@@ -173,7 +173,7 @@ export function fillRun(run: WallRun, existing: readonly number[], spacing: numb
 const PLATE_TOP = 76_800;
 
 /** An opening in a wall: its span along the wall, the sill it comes down to, and whether it is a door. */
-interface Hole {
+export interface Hole {
   id: string;
   kind: 'door' | 'window' | 'opening';
   from: number;
@@ -182,7 +182,7 @@ interface Hole {
 }
 
 /** The openings in a wall (Core 7.2: own width and sill, else its fill's): a door or a cased opening comes down to the floor. */
-function holesIn(doc: FloorspecDocument, wall: string): Hole[] {
+export function holesIn(doc: FloorspecDocument, wall: string): Hole[] {
   const types = (doc.types ?? {}) as Record<string, { kind?: string; width?: number; sill?: number } | undefined>;
   return Object.entries((doc.openings ?? {}) as Record<string, { wall?: string; offset?: number; width?: number; sill?: number; fill?: string } | undefined>)
     .flatMap(([id, o]) => {
@@ -252,12 +252,12 @@ export function analyseGaps(document: string | Uint8Array | FloorspecDocument | 
 }
 
 /** A length for a sentence, in the plan's display units (Core 1.7 extras, as the editor keeps them). */
-function lengthText(document: FloorspecDocument, v: number): string {
+export function lengthText(document: FloorspecDocument, v: number): string {
   const units = ((document.extras as Json | undefined)?.['d3floorspec'] as Json | undefined)?.['units'];
   return units === 'metric' ? formatLength(v, { system: 'metric' }) : formatLength(v, { denominator: 2 });
 }
 
-const list = (xs: readonly string[]): string => (xs.length <= 1 ? (xs[0] ?? '') : `${xs.slice(0, -1).join(', ')} and ${xs[xs.length - 1] ?? ''}`);
+export const list = (xs: readonly string[]): string => (xs.length <= 1 ? (xs[0] ?? '') : `${xs.slice(0, -1).join(', ')} and ${xs[xs.length - 1] ?? ''}`);
 
 /** Propose an electrical layout: one batch, with what it adds and why. */
 export function proposeElectrical(document: string | Uint8Array | FloorspecDocument | object, options: ElectricalOptions = {}): ElectricalProposal {
@@ -596,7 +596,7 @@ const PANEL_BOX = { min: [0, -260_096, -520_192], max: [130_048, 260_096, 520_19
  * into the room, at least 800 mm wide centred on the panel, floor to 2,000 mm (FS-ELEC-2.7.2) —
  * the extension's round defaults, not a code's requirement.
  */
-function workingSpace(h: number): Json {
+export function workingSpace(h: number): Json {
   const MM = 1280;
   return {
     purpose: 'workingSpace',

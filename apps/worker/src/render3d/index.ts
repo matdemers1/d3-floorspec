@@ -340,7 +340,9 @@ export function rasterStage(scene: Scene, images?: ImageSource): RasterStage {
       return scene.lights.flatMap((l): RasterLamp[] => {
         const at = order.get(l.level) ?? Infinity;
         if (cut !== undefined && (at > cut || (only === true && at !== cut))) return [];
-        const room = l.room === null ? undefined : rooms.get(l.room);
+        // A lamp outside (FLR-T-15.5: a path light, an uplight) lights what is about it: a square of
+        // LAMP_REACH each way, from the ground under it to well over the eaves.
+        const room = l.room === null ? outsideOf(l.position) : rooms.get(l.room);
         if (room === undefined) return [];
         const sr = l.spot === undefined ? 4 * Math.PI : 2 * Math.PI * (1 - (l.spot.inner + l.spot.outer) / 2);
         const cd = l.lumens / sr;
@@ -348,6 +350,16 @@ export function rasterStage(scene: Scene, images?: ImageSource): RasterStage {
       });
     },
   };
+}
+
+/** Metres each way an exterior lamp's light is followed by the rasterizer. */
+const LAMP_REACH = 8;
+
+/** The "room" an exterior lamp lights, in the draw list's frame (metres, +Y up): about it, ground to sky. */
+function outsideOf(p: readonly [number, number, number]): { outer: [number, number][]; floor: number; ceiling: number } {
+  const [x, y, z] = p;
+  const r = LAMP_REACH;
+  return { outer: [[x - r, -z - r], [x + r, -z - r], [x + r, -z + r], [x - r, -z + r]], floor: Math.min(0, y) - 2, ceiling: y + 20 };
 }
 
 /** Render a scene: from a named view, or from inside a room. */

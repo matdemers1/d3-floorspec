@@ -16,7 +16,7 @@ export function FixtureLights({ lights }: { lights: readonly ViewLight[] }) {
   useEffect(() => { invalidate(); }, [lights, invalidate]);
   return (
     <>
-      {lights.map((l) => (l.kind === 'spot' ? <SpotLamp key={l.id} light={l} /> : <PointLamp key={l.id} light={l} />))}
+      {lights.map((l) => (l.kind === 'spot' ? <SpotLamp key={l.key} light={l} /> : <PointLamp key={l.key} light={l} />))}
     </>
   );
 }
@@ -58,7 +58,9 @@ function SpotLamp({ light }: { light: ViewLight }) {
   const target = useMemo(() => new THREE.Object3D(), []);
   useLayoutEffect(() => {
     const [x, y, z] = light.position;
-    target.position.set(x, y, z - 1);
+    // Straight down, or along an exterior light's aim (FLR-T-15.5).
+    const [ax, ay, az] = light.aim ?? [0, 0, -1];
+    target.position.set(x + ax, y + ay, z + az);
     target.updateMatrixWorld();
     if (ref.current !== null && light.shadow) shade(ref.current.shadow, light.distance > 0 ? light.distance : REACH);
   }, [light, target]);
