@@ -223,12 +223,21 @@ const OPENS_STEP = new Set(['sel.moveWall', 'sel.moveJunction', 'set.nudge', 'dr
 
 const LABEL = 'Search commands and the plan';
 
-/** Run `fn` once the palette's dialog has gone (it returns focus on its way out), within a second. */
+/**
+ * Run `fn` once the palette's dialog has gone and has handed the focus back, within a second.
+ *
+ * The dialog hands the focus back (to what had it before ⌘K) in a task of its own after it has
+ * unmounted, not as it goes; a busy page can draw a frame in between. A command run in that frame
+ * that takes the focus itself — the phrase bar's field, a new room's name — would have it taken
+ * straight back, and the phrase bar closes when its field loses the focus (FLR-T-18.20). So wait,
+ * too, for the focus to have left the body, where the removed input leaves it.
+ */
 function afterClose(fn: () => unknown): void {
   const start = performance.now();
   const check = () => {
     const still = document.querySelector(`[role="dialog"][aria-label="${LABEL}"], [role="dialog"] input[aria-label="${LABEL}"]`) !== null;
-    if (still && performance.now() - start < 1000) requestAnimationFrame(check);
+    const handedBack = document.activeElement !== null && document.activeElement !== document.body;
+    if ((still || !handedBack) && performance.now() - start < 1000) requestAnimationFrame(check);
     else fn();
   };
   requestAnimationFrame(check);
