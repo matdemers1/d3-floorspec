@@ -61,7 +61,7 @@ test('the energy estimate of a template, its climate changed, and a path-traced 
   await expect(page.getByRole('heading', { name: 'Energy & comfort', level: 1 })).toBeVisible();
   await expect(page.getByText('An estimate to compare options — not an energy-code calculation.')).toBeVisible();
   await expect(page.getByText('Advisory — for comparing options')).toBeVisible();
-  const loads = page.getByRole('group', { name: 'Loads' });
+  const loads = page.getByRole('group', { name: 'Loads', exact: true });
   await expect(loads).toContainText('Heating design load');
   await expect(loads).toContainText('Cooling, typical year');
   const facades = page.getByRole('table', { name: /by the way each wall faces/ });

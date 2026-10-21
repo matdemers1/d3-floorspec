@@ -326,7 +326,7 @@ function Rooms({ estimate: e, units }: { estimate: EnergyEstimate; units: UnitSy
         <span className="fs-spacer" />
         <Badge size="sm" tone="neutral">Estimate ±20%</Badge>
       </div>
-      <Table columns={columns} rows={rows} rowKey={(r) => r.room} caption="Each room's heating and cooling design loads, highest heating first" captionHidden />
+      <Table columns={columns} rows={rows} rowKey={(r) => r.room} caption="Heating and cooling for each room on the design days, the highest heating first" captionHidden />
       <RoomLegend units={units} />
       <p className="fs-caption">{ROOM_METHOD}</p>
     </Card>

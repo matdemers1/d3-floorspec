@@ -153,7 +153,7 @@ test('the envelope: the kitchen wall type layer by layer, brick tried in the sid
   // ── The energy screen: heat loss room by room.
   await page.goto(`/projects/${project}/energy`);
   await expect(page.getByRole('heading', { name: 'Energy & comfort', level: 1 })).toBeVisible();
-  const rooms = page.getByRole('table', { name: /Each room's heating and cooling design loads/ });
+  const rooms = page.getByRole('table', { name: /^Heating and cooling for each room on the design days/ });
   await expect(rooms).toBeVisible();
   await expect(rooms.getByRole('row', { name: /^Kitchen/ })).toContainText(/[\d,]+–[\d,]+ Btu\/h/);
   await expect(rooms.getByRole('row', { name: /^Great room/ })).toBeVisible();
