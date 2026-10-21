@@ -1,0 +1,10 @@
+{
+  "status": "rejected",
+  "diagnostics": [
+    {
+      "code": "FS-THRM-INV-001",
+      "severity": "error",
+      "elements": ["M-GAP"]
+    }
+  ]
+}

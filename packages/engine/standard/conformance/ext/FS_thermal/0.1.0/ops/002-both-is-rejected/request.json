@@ -1,0 +1,10 @@
+{
+  "batch": [
+    {
+      "op": "setProperty",
+      "id": "M-GAP",
+      "path": "/extensions/FS_thermal/conductivity",
+      "value": 26
+    }
+  ]
+}

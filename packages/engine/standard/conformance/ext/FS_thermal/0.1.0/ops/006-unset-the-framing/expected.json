@@ -1,0 +1,29 @@
+{
+  "status": "committed",
+  "diagnostics": [],
+  "hash": "da55de102d6b3a429530c6c3b58924cf8d7398878586e910ee49b2d48abc8413",
+  "created": [],
+  "removed": [],
+  "resolved": [
+    {
+      "op": "unsetProperty",
+      "id": "IW1",
+      "path": "/extensions/FS_thermal/framing"
+    }
+  ],
+  "inverse": [
+    {
+      "op": "setProperty",
+      "id": "IW1",
+      "path": "/extensions",
+      "value": {
+        "FS_thermal": {
+          "framing": {
+            "fraction": 160,
+            "material": "M-SPF"
+          }
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "description": "WT1 has a framing: a door or window type's data is its whole unit's rating.",
+  "covers": [
+    "FS-THRM-1.3.2"
+  ]
+}

@@ -136,6 +136,8 @@ export interface Envelope {
   readonly trueNorth: number;
   /** Degrees north, when the site has a location. */
   readonly latitude?: number;
+  /** Degrees east (negative west), when the site has a location. */
+  readonly longitude?: number;
   /** Openings in the envelope with no width or height to measure (left out). */
   readonly unmeasured: string[];
 }
@@ -148,6 +150,7 @@ export function envelopeOf(ev: Evaluation, derived: Derived = deriveEvaluation(e
   const analysis = ev.analysis!;
   const trueNorth = (doc.site?.trueNorth ?? 0) / 1e6;
   const latitude = doc.site?.location === undefined ? undefined : doc.site.location.latitude / 1e6;
+  const longitude = doc.site?.location === undefined ? undefined : doc.site.location.longitude / 1e6;
 
   // Rooms.
   const rooms = new Map<string, EnvelopeRoom>();
@@ -298,6 +301,7 @@ export function envelopeOf(ev: Evaluation, derived: Derived = deriveEvaluation(e
     volume: conditioned.reduce((s, r) => s + r.volume, 0),
     trueNorth,
     ...(latitude === undefined ? {} : { latitude }),
+    ...(longitude === undefined ? {} : { longitude }),
     unmeasured,
   };
 }

@@ -1,0 +1,489 @@
+{
+  "buildings": {
+    "B1": {}
+  },
+  "extensionsUsed": {
+    "FS_thermal": "0.1.0"
+  },
+  "floorspec": "0.2",
+  "junctions": {
+    "J1": {
+      "level": "L1",
+      "position": [
+        0,
+        0
+      ]
+    },
+    "J2": {
+      "level": "L1",
+      "position": [
+        0,
+        4681728
+      ]
+    },
+    "J3": {
+      "level": "L1",
+      "position": [
+        4681728,
+        4681728
+      ]
+    },
+    "J4": {
+      "level": "L1",
+      "position": [
+        7802880,
+        4681728
+      ]
+    },
+    "J5": {
+      "level": "L1",
+      "position": [
+        7802880,
+        0
+      ]
+    },
+    "J6": {
+      "level": "L1",
+      "position": [
+        4681728,
+        0
+      ]
+    },
+    "J7": {
+      "level": "L1",
+      "position": [
+        4681728,
+        2340864
+      ]
+    },
+    "J8": {
+      "level": "L1",
+      "position": [
+        7802880,
+        2340864
+      ]
+    }
+  },
+  "levels": {
+    "L1": {
+      "building": "B1",
+      "elevation": 0,
+      "height": 3456000
+    }
+  },
+  "materials": {
+    "M-BATT": {
+      "color": "#c9a35a",
+      "extensions": {
+        "FS_thermal": {
+          "citation": "Floorspec thermal library 0.1.0 (CC0 1.0): typical values",
+          "conductivity": 35,
+          "density": 40,
+          "specificHeat": 840
+        }
+      },
+      "name": "Mineral-wool batt"
+    },
+    "M-CAV": {
+      "color": "#20242a",
+      "extensions": {
+        "FS_thermal": {
+          "citation": "Floorspec thermal library 0.1.0 (CC0 1.0): typical values",
+          "density": 1,
+          "resistance": 160,
+          "specificHeat": 1005
+        }
+      },
+      "name": "Air in a stud cavity"
+    },
+    "M-CONC": {
+      "color": "#9a9a96",
+      "extensions": {
+        "FS_thermal": {
+          "citation": "Floorspec thermal library 0.1.0 (CC0 1.0): typical values",
+          "conductivity": 1700,
+          "density": 2300,
+          "specificHeat": 900
+        }
+      },
+      "name": "Concrete slab"
+    },
+    "M-FC": {
+      "color": "#8a8f86",
+      "extensions": {
+        "FS_thermal": {
+          "citation": "Floorspec thermal library 0.1.0 (CC0 1.0): typical values",
+          "conductivity": 250,
+          "density": 1300,
+          "emittance": 900,
+          "solarReflectance": 300,
+          "specificHeat": 1000
+        }
+      },
+      "name": "Fibre-cement lap siding"
+    },
+    "M-GAP": {
+      "color": "#1f2329",
+      "extensions": {
+        "FS_thermal": {
+          "citation": "Floorspec thermal library 0.1.0 (CC0 1.0): typical values",
+          "density": 1,
+          "resistance": 35,
+          "specificHeat": 1005
+        }
+      },
+      "name": "Ventilated rainscreen gap"
+    },
+    "M-GYP": {
+      "color": "#eeeeea",
+      "extensions": {
+        "FS_thermal": {
+          "citation": "Floorspec thermal library 0.1.0 (CC0 1.0): typical values",
+          "conductivity": 160,
+          "density": 800,
+          "specificHeat": 1090
+        }
+      },
+      "name": "Gypsum board"
+    },
+    "M-OAK": {
+      "color": "#a0743c",
+      "extensions": {
+        "FS_thermal": {
+          "citation": "Floorspec thermal library 0.1.0 (CC0 1.0): typical values",
+          "conductivity": 160,
+          "density": 720,
+          "specificHeat": 1630
+        }
+      },
+      "name": "Oak flooring"
+    },
+    "M-OSB": {
+      "color": "#c79a4a",
+      "extensions": {
+        "FS_thermal": {
+          "citation": "Floorspec thermal library 0.1.0 (CC0 1.0): typical values",
+          "conductivity": 100,
+          "density": 650,
+          "specificHeat": 1880
+        }
+      },
+      "name": "OSB sheathing"
+    },
+    "M-PLY": {
+      "color": "#c4a06a",
+      "extensions": {
+        "FS_thermal": {
+          "citation": "Floorspec thermal library 0.1.0 (CC0 1.0): typical values",
+          "conductivity": 120,
+          "density": 545,
+          "specificHeat": 1880
+        }
+      },
+      "name": "Plywood subfloor"
+    },
+    "M-SPF": {
+      "color": "#d9b77e",
+      "extensions": {
+        "FS_thermal": {
+          "citation": "Floorspec thermal library 0.1.0 (CC0 1.0): typical values",
+          "conductivity": 120,
+          "density": 450,
+          "specificHeat": 1630
+        }
+      },
+      "name": "SPF framing lumber"
+    },
+    "M-WFB": {
+      "color": "#9c6b30",
+      "extensions": {
+        "FS_thermal": {
+          "citation": "Floorspec thermal library 0.1.0 (CC0 1.0): typical values",
+          "conductivity": 38,
+          "density": 160,
+          "specificHeat": 2100
+        }
+      },
+      "name": "Wood-fibre board"
+    },
+    "M-WRAP": {
+      "color": "#d8dde3",
+      "extensions": {
+        "FS_thermal": {
+          "citation": "Floorspec thermal library 0.1.0 (CC0 1.0): typical values",
+          "density": 400,
+          "resistance": 0,
+          "specificHeat": 1300
+        }
+      },
+      "name": "Housewrap"
+    }
+  },
+  "openings": {
+    "O1": {
+      "fill": "DT1",
+      "name": "Back door",
+      "offset": 1170432,
+      "wall": "W7"
+    },
+    "O2": {
+      "fill": "WT1",
+      "name": "Kitchen window",
+      "offset": 1560576,
+      "wall": "W2"
+    },
+    "O3": {
+      "height": 2600960,
+      "name": "Bath door",
+      "offset": 780288,
+      "wall": "W10",
+      "width": 975360
+    },
+    "O4": {
+      "height": 2600960,
+      "name": "Utility door",
+      "offset": 390144,
+      "wall": "W8",
+      "width": 975360
+    }
+  },
+  "project": {
+    "name": "Phase 16 envelope house"
+  },
+  "rooms": {
+    "R1": {
+      "anchor": [
+        2340864,
+        2340864
+      ],
+      "extensions": {
+        "FS_thermal": {
+          "floor": {
+            "framing": {
+              "fraction": 120,
+              "material": "M-SPF"
+            },
+            "layers": [
+              {
+                "function": "finish",
+                "material": "M-OAK",
+                "thickness": 24384
+              },
+              {
+                "function": "substrate",
+                "material": "M-PLY",
+                "thickness": 24384
+              },
+              {
+                "function": "core",
+                "material": "M-BATT",
+                "thickness": 300736
+              }
+            ]
+          }
+        }
+      },
+      "function": "kitchen",
+      "level": "L1",
+      "name": "Kitchen"
+    },
+    "R2": {
+      "anchor": [
+        6242304,
+        3511296
+      ],
+      "extensions": {
+        "FS_thermal": {
+          "floor": {
+            "edgeResistance": 1761,
+            "layers": [
+              {
+                "function": "core",
+                "material": "M-CONC",
+                "thickness": 130048
+              }
+            ]
+          }
+        }
+      },
+      "function": "bath",
+      "level": "L1",
+      "name": "Bath"
+    },
+    "R3": {
+      "anchor": [
+        6242304,
+        1170432
+      ],
+      "function": "mechanical",
+      "level": "L1",
+      "name": "Utility"
+    }
+  },
+  "types": {
+    "DT1": {
+      "extensions": {
+        "FS_thermal": {
+          "uFactor": 1990
+        }
+      },
+      "height": 2600960,
+      "kind": "doorType",
+      "name": "Insulated steel door",
+      "width": 1170432
+    },
+    "EW1": {
+      "extensions": {
+        "FS_thermal": {
+          "framing": {
+            "fraction": 230,
+            "material": "M-SPF"
+          }
+        }
+      },
+      "kind": "wallType",
+      "layers": [
+        {
+          "function": "finish",
+          "material": "M-FC",
+          "thickness": 10160
+        },
+        {
+          "function": "airGap",
+          "material": "M-GAP",
+          "thickness": 12192
+        },
+        {
+          "function": "membrane",
+          "material": "M-WRAP",
+          "thickness": 508
+        },
+        {
+          "function": "insulation",
+          "material": "M-WFB",
+          "thickness": 48768
+        },
+        {
+          "function": "substrate",
+          "material": "M-OSB",
+          "thickness": 14224
+        },
+        {
+          "function": "insulation",
+          "material": "M-BATT",
+          "thickness": 178816
+        },
+        {
+          "function": "finish",
+          "material": "M-GYP",
+          "thickness": 16256
+        }
+      ],
+      "name": "Exterior · 2x6 at 16\""
+    },
+    "IW1": {
+      "extensions": {
+        "FS_thermal": {
+          "framing": {
+            "fraction": 160,
+            "material": "M-SPF"
+          }
+        }
+      },
+      "kind": "wallType",
+      "layers": [
+        {
+          "function": "finish",
+          "material": "M-GYP",
+          "thickness": 16256
+        },
+        {
+          "function": "core",
+          "material": "M-CAV",
+          "thickness": 113792
+        },
+        {
+          "function": "finish",
+          "material": "M-GYP",
+          "thickness": 16256
+        }
+      ],
+      "name": "Interior · 2x4"
+    },
+    "WT1": {
+      "extensions": {
+        "FS_thermal": {
+          "shgc": 250,
+          "uFactor": 1700
+        }
+      },
+      "height": 1560576,
+      "kind": "windowType",
+      "name": "Casement, double glazed",
+      "sill": 1170432,
+      "width": 1560576
+    }
+  },
+  "walls": {
+    "W1": {
+      "end": "J2",
+      "level": "L1",
+      "start": "J1",
+      "type": "EW1"
+    },
+    "W10": {
+      "end": "J8",
+      "level": "L1",
+      "start": "J7",
+      "type": "IW1"
+    },
+    "W2": {
+      "end": "J3",
+      "level": "L1",
+      "start": "J2",
+      "type": "EW1"
+    },
+    "W3": {
+      "end": "J4",
+      "level": "L1",
+      "start": "J3",
+      "type": "EW1"
+    },
+    "W4": {
+      "end": "J8",
+      "level": "L1",
+      "start": "J4",
+      "type": "EW1"
+    },
+    "W5": {
+      "end": "J5",
+      "level": "L1",
+      "start": "J8",
+      "type": "EW1"
+    },
+    "W6": {
+      "end": "J6",
+      "level": "L1",
+      "start": "J5",
+      "type": "EW1"
+    },
+    "W7": {
+      "end": "J1",
+      "level": "L1",
+      "start": "J6",
+      "type": "EW1"
+    },
+    "W8": {
+      "end": "J7",
+      "level": "L1",
+      "start": "J6",
+      "type": "IW1"
+    },
+    "W9": {
+      "end": "J3",
+      "level": "L1",
+      "start": "J7",
+      "type": "IW1"
+    }
+  }
+}

@@ -7,7 +7,8 @@
  * Yearly figures are MWh in both: heat delivered or removed, not fuel.
  */
 import { cToF } from './climate.js';
-import { BTUH_TO_W, F_IP_TO_SI, SPREAD, U_IP_TO_SI, type AssemblyRow, type EnergyEstimate } from './estimate.js';
+import { BTUH_TO_W, F_IP_TO_SI, ROOM_METHOD, SPREAD, U_IP_TO_SI, type AssemblyRow, type EnergyEstimate, type RoomLoad } from './estimate.js';
+import { rText, uText, type AssemblyThermal } from './assemblies.js';
 
 export type UnitSystem = 'imperial' | 'metric';
 
@@ -127,8 +128,30 @@ export function describeEstimate(e: EnergyEstimate, system: UnitSystem): string 
   lines.push(`Conditioned: ${area(e.summary.conditionedArea, system)}, ${volume(e.summary.volume, system)}.`);
   lines.push('Façades: ' + e.facades.map((f) => `${f.orientation} ${area(f.wallArea, system)} wall, ${area(f.windowArea, system)} window (${percent(f.wwr)}), ${sunDay(f.solarJuly)} July`).join('; ') + '.');
   lines.push('Assemblies: ' + e.assemblies.map((a) => `${a.label} ${assemblyQuantity(a, system)} ${assemblyValue(a, system)} (${a.sourceText})`).join('; ') + '.');
+  if (e.thermal && e.envelope.length) lines.push('Envelope (FS_thermal): ' + describeAssemblies(e.envelope) + '.');
+  if (e.rooms.length) lines.push('Heat loss and gain by room (' + ROOM_METHOD + '): ' + describeRooms(e.rooms, system) + '.');
   if (e.notes.length) lines.push('Comfort notes: ' + e.notes.map((n) => `${n.title} — ${n.detail}`).join('; ') + '.');
   if (e.options) lines.push('Design options: ' + e.options.map((o) => `${o.label}: heating ${loadRange(o.heating, system).text}, cooling ${loadRange(o.cooling, system).text} ${loadRange(o.cooling, system).unit}`).join('; ') + '.');
   lines.push('Assumed: ' + e.assumptions.map((a) => a.text).join(' '));
   return lines.join('\n');
+}
+
+/** A room's load as a range in Btu/h (or W): "6,200–9,400 Btu/h". */
+export function roomRange(watts: number, system: UnitSystem): string {
+  return system === 'imperial' ? `${range(watts / BTUH_TO_W).text} Btu/h` : `${range(watts).text} W`;
+}
+
+/** Every room's heating and cooling loads, highest heating first: what MCP's describe and the energy resource carry. */
+export function describeRooms(rooms: readonly RoomLoad[], system: UnitSystem): string {
+  return [...rooms]
+    .sort((a, b) => b.heating - a.heating || (a.room < b.room ? -1 : 1))
+    .map((r) => `${r.name} (${r.room}, ${area(r.area, system)}) heating ${roomRange(r.heating, system)}, cooling ${roomRange(r.cooling, system)} at ${hourText(r.coolingHour)}; most through ${r.heatingParts[0]?.label.toLowerCase() ?? 'nothing'}`)
+    .join('; ');
+}
+
+/** Every assembly's R and U, layer by layer in brief: "EW1 (2x6 exterior wall) R-24, U-0.042, 7 layers, framing 23%". */
+export function describeAssemblies(assemblies: readonly AssemblyThermal[]): string {
+  return assemblies
+    .map((a) => `${a.key} (${a.label}) ${a.rEffective === null ? 'R not known (a layer has no thermal value)' : `${rText(a.rEffective)}, ${uText(a.u!)}`}, ${String(a.layers.length)} layer${a.layers.length === 1 ? '' : 's'}${a.framing ? `, framing ${String(Math.round(a.framing.fraction * 100))}%` : ''}${a.fromDocument ? '' : ', some values from the thermal library'}`)
+    .join('; ');
 }

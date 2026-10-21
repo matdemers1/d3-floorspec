@@ -13,6 +13,7 @@ import { daylightOf } from '../../daylight/state';
 import type { Drawing } from './SectionOverlay';
 import { toggleCompare, useCompareChoices } from '../compare/CompareOverlay';
 import { XrayButton } from '../xray/XrayPanel';
+import { HeatLossButton } from '../../envelope/Envelope';
 import { EnterVrButton } from '../xr/VrPanel';
 import './section.css';
 
@@ -61,6 +62,8 @@ const EXPERIENCES: readonly Experience[] = [
   { id: 'section', Button: SectionButton },
   { id: 'xray', Button: XrayButton },
   { id: 'daylight', Button: DaylightToolButton },
+  // FLR-T-16.4: the heat-loss map — the envelope's surfaces coloured by the heat they lose on the design day.
+  { id: 'heatLoss', Button: HeatLossToolButton },
   { id: 'compare', Button: CompareButton },
   { id: 'edit', Button: EditButton },
   { id: 'tape', Button: TapeButton },
@@ -128,6 +131,12 @@ function SectionButton({ ctx }: { ctx: ExperienceContext }) {
 function DaylightToolButton({ ctx }: { ctx: ExperienceContext }) {
   const exploded = useThreeState(ctx.store, (s) => s.explode.open);
   return <DaylightButton store={ctx.store} disabled={exploded} />;
+}
+
+/** FLR-T-16.4: the heat-loss map. */
+function HeatLossToolButton({ ctx }: { ctx: ExperienceContext }) {
+  const exploded = useThreeState(ctx.store, (s) => s.explode.open);
+  return <HeatLossButton store={ctx.store} disabled={exploded} />;
 }
 
 /** FLR-T-14.4: Compare (⌥C) — A and B from one camera, with a swipe divider or side by side. */

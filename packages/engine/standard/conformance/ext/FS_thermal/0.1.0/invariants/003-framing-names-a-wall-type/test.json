@@ -1,0 +1,6 @@
+{
+  "description": "EW1's framing is \"IW1\", a wall type, not a material.",
+  "covers": [
+    "FS-THRM-2.2.1"
+  ]
+}

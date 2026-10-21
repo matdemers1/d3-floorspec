@@ -1,0 +1,12 @@
+{
+  "description": "The Phase 16 envelope house, read by an implementation of FS_thermal that knows it: materials with their conductivity, density and specific heat - or, for the rainscreen gap, the wrap and an empty stud cavity, a resistance stated whole - the exterior wall type EW1 layer by layer with 23% SPF framing, the interior type IW1, a window and a door rated as whole units, the Kitchen's framed floor over a crawl space and the Bath's slab with R-10 at its edge. The document has no top-level FS_thermal data. It is valid, reports nothing, and derives every wall type's and floor's layers, clear path and framed path: EW1's batts 3991 thousandths of m2.K/W (25 x 178816 / (32 x 35) = 3991.43), through the studs 1164; heat capacities wherever a layer's material states its density and specific heat, and null - never left out - wherever one does not.",
+  "covers": [
+    "FS-THRM-1.2.1",
+    "FS-THRM-1.2.3",
+    "FS-THRM-1.2.4",
+    "FS-THRM-1.3.1",
+    "FS-THRM-1.3.2",
+    "FS-THRM-3.1.1",
+    "FS-THRM-5.1.1"
+  ]
+}

@@ -1,0 +1,7 @@
+{
+  "description": "Three layers of 40 base units at 25 mW/(m.K), each 1.25 thousandths, rounded to 1: the clear path is 3, the sum of the rounded values, where the exact sum would be 3.75. A heat capacity of 1,920,000 base units at 1 kg/m3 and 1 J/(kg.K) is 1.5, rounded to 2 (its resistance 60000).",
+  "covers": [
+    "FS-THRM-3.1.1",
+    "FS-THRM-5.1.1"
+  ]
+}

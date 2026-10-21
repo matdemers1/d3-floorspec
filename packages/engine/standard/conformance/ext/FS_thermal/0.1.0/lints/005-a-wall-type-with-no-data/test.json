@@ -1,0 +1,7 @@
+{
+  "description": "A third wall type, used by no wall, its one core layer of no material: FS-THRM-LINT-002 is reported for every wall type.",
+  "covers": [
+    "FS-THRM-1.2.3",
+    "FS-THRM-5.1.1"
+  ]
+}

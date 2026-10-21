@@ -1,0 +1,9 @@
+{
+  "description": "The envelope house declaring Core \"0.3\", a draft FS_thermal 0.1.0 lists (1.1): FS_thermal is evaluated, reports nothing, and derives exactly what it derives for the house declaring \"0.2\".",
+  "covers": [
+    "FS-THRM-1.2.1",
+    "FS-THRM-1.2.3",
+    "FS-THRM-1.2.4",
+    "FS-THRM-5.1.1"
+  ]
+}

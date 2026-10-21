@@ -1,0 +1,13 @@
+{
+  "batch": [
+    {
+      "op": "setProperty",
+      "id": "WT1",
+      "path": "/extensions/FS_thermal",
+      "value": {
+        "uFactor": 800,
+        "shgc": 400
+      }
+    }
+  ]
+}

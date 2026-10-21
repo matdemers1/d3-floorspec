@@ -1,0 +1,299 @@
+{
+  "valid": true,
+  "diagnostics": [
+    {
+      "code": "FS-LINT-006",
+      "severity": "info",
+      "elements": ["M-CONC"]
+    },
+    {
+      "code": "FS-LINT-006",
+      "severity": "info",
+      "elements": ["M-OAK"]
+    },
+    {
+      "code": "FS-LINT-006",
+      "severity": "info",
+      "elements": ["M-PLY"]
+    },
+    {
+      "code": "FS-LINT-006",
+      "severity": "info",
+      "elements": ["M-SPF"]
+    },
+    {
+      "code": "FS-THRM-LINT-002",
+      "severity": "info",
+      "elements": ["R2"]
+    }
+  ],
+  "hash": "b58165c332ac199f29e75635ba428f34f88d73d6598586d3909609c7c196deb9",
+  "derived": {
+    "walls": {
+      "W1": {
+        "startRight": [140462, 140462],
+        "endRight": [140462, 4541266],
+        "endLeft": [-140462, 4822190],
+        "startLeft": [-140462, -140462],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "W10": {
+        "startRight": [4754880, 2267712],
+        "endRight": [7662418, 2267712],
+        "endLeft": [7662418, 2414016],
+        "startLeft": [4754880, 2414016],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "W2": {
+        "startRight": [140462, 4541266],
+        "endRight": [4608576, 4541266],
+        "endLeft": [4681728, 4822190],
+        "startLeft": [-140462, 4822190],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "W3": {
+        "startRight": [4754880, 4541266],
+        "endRight": [7662418, 4541266],
+        "endLeft": [7943342, 4822190],
+        "startLeft": [4681728, 4822190],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "W4": {
+        "startRight": [7662418, 4541266],
+        "endRight": [7662418, 2414016],
+        "endLeft": [7943342, 2340864],
+        "startLeft": [7943342, 4822190],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "W5": {
+        "startRight": [7662418, 2267712],
+        "endRight": [7662418, 140462],
+        "endLeft": [7943342, -140462],
+        "startLeft": [7943342, 2340864],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "W6": {
+        "startRight": [7662418, 140462],
+        "endRight": [4754880, 140462],
+        "endLeft": [4681728, -140462],
+        "startLeft": [7943342, -140462],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "W7": {
+        "startRight": [4608576, 140462],
+        "endRight": [140462, 140462],
+        "endLeft": [-140462, -140462],
+        "startLeft": [4681728, -140462],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "W8": {
+        "startRight": [4754880, 140462],
+        "endRight": [4754880, 2267712],
+        "endLeft": [4608576, 2340864],
+        "startLeft": [4608576, 140462],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      },
+      "W9": {
+        "startRight": [4754880, 2414016],
+        "endRight": [4754880, 4541266],
+        "endLeft": [4608576, 4541266],
+        "startLeft": [4608576, 2340864],
+        "baseElevation": 0,
+        "topElevation": 3456000
+      }
+    },
+    "junctionFills": {
+      "J3": [[4608576, 4541266], [4754880, 4541266], [4681728, 4822190]],
+      "J6": [[4608576, 140462], [4681728, -140462], [4754880, 140462]],
+      "J7": [[4608576, 2340864], [4754880, 2267712], [4754880, 2414016]],
+      "J8": [[7662418, 2267712], [7943342, 2340864], [7662418, 2414016]]
+    },
+    "rooms": {
+      "R1": {
+        "outer": [[140462, 140462], [4608576, 140462], [4608576, 2340864], [4608576, 4541266], [140462, 4541266]],
+        "holes": [],
+        "area": "19663293963656"
+      },
+      "R2": {
+        "outer": [[4754880, 2414016], [7662418, 2414016], [7662418, 4541266], [4754880, 4541266]],
+        "holes": [],
+        "area": "6185060210500"
+      },
+      "R3": {
+        "outer": [[4754880, 140462], [7662418, 140462], [7662418, 2267712], [4754880, 2267712]],
+        "holes": [],
+        "area": "6185060210500"
+      }
+    },
+    "unanchored": [],
+    "openings": {
+      "O1": {
+        "start": [3511296, 0],
+        "end": [2340864, 0],
+        "sillElevation": 0,
+        "headElevation": 2600960
+      },
+      "O2": {
+        "start": [1560576, 4681728],
+        "end": [3121152, 4681728],
+        "sillElevation": 1170432,
+        "headElevation": 2731008
+      },
+      "O3": {
+        "start": [5462016, 2340864],
+        "end": [6437376, 2340864],
+        "sillElevation": 0,
+        "headElevation": 2600960
+      },
+      "O4": {
+        "start": [4681728, 390144],
+        "end": [4681728, 1365504],
+        "sillElevation": 0,
+        "headElevation": 2600960
+      }
+    },
+    "program": {
+      "items": {},
+      "adjacency": []
+    },
+    "fallbacks": {},
+    "placements": {},
+    "clearances": {},
+    "clearanceOverlaps": [],
+    "circulation": {
+      "R1": {
+        "entry": true,
+        "reachable": true
+      },
+      "R2": {
+        "entry": false,
+        "reachable": true
+      },
+      "R3": {
+        "entry": false,
+        "reachable": true
+      }
+    },
+    "extensions": {
+      "FS_thermal": {
+        "floors": {
+          "R1": {
+            "clear": {
+              "heatCapacity": 49770,
+              "resistance": 6991
+            },
+            "framed": {
+              "fraction": 120,
+              "heatCapacity": 214212,
+              "resistance": 2236
+            },
+            "layers": [
+              {
+                "heatCapacity": 22357,
+                "resistance": 119
+              },
+              {
+                "heatCapacity": 19519,
+                "resistance": 159
+              },
+              {
+                "heatCapacity": 7894,
+                "resistance": 6713
+              }
+            ]
+          },
+          "R2": {
+            "clear": {
+              "heatCapacity": 210312,
+              "resistance": null
+            },
+            "layers": [
+              {
+                "heatCapacity": 210312,
+                "resistance": null
+              }
+            ]
+          }
+        },
+        "roofs": {},
+        "wallTypes": {
+          "EW1": {
+            "clear": {
+              "heatCapacity": 52684,
+              "resistance": 5251
+            },
+            "framed": {
+              "fraction": 230,
+              "heatCapacity": 150460,
+              "resistance": 2424
+            },
+            "layers": [
+              {
+                "heatCapacity": 10319,
+                "resistance": 32
+              },
+              {
+                "heatCapacity": 10,
+                "resistance": 35
+              },
+              {
+                "heatCapacity": 206,
+                "resistance": 0
+              },
+              {
+                "heatCapacity": 12802,
+                "resistance": 1003
+              },
+              {
+                "heatCapacity": 13579,
+                "resistance": 111
+              },
+              {
+                "heatCapacity": 4694,
+                "resistance": 3991
+              },
+              {
+                "heatCapacity": 11074,
+                "resistance": 79
+              }
+            ]
+          },
+          "IW1": {
+            "clear": {
+              "heatCapacity": 22237,
+              "resistance": 318
+            },
+            "framed": {
+              "fraction": 160,
+              "heatCapacity": 87356,
+              "resistance": 899
+            },
+            "layers": [
+              {
+                "heatCapacity": 11074,
+                "resistance": 79
+              },
+              {
+                "heatCapacity": 89,
+                "resistance": 160
+              },
+              {
+                "heatCapacity": 11074,
+                "resistance": 79
+              }
+            ]
+          }
+        }
+      }
+    }
+  }
+}

@@ -268,6 +268,14 @@ export function summaryText(s: DocumentSummary): string {
     for (const n of c.neighbours) out.push(`- neighbour ${n.id}${q(n.name)}: ${n.roof} roof, ${String(n.storeys)} storey${n.storeys === 1 ? '' : 's'}, ${n.footprint.toLocaleString('en-US')} sq ft footprint, eaves ${n.eaves}, ridge ${n.ridge} above the floor${n.generated ? ' (generated)' : ''}`);
     if (c.trees.ids.length > 0) out.push(`- trees beyond the lot: ${String(c.trees.deciduous)} deciduous, ${String(c.trees.evergreen)} evergreen`);
   }
+  if (s.envelope) {
+    const v = s.envelope;
+    out.push('', '## Envelope (FS_thermal; advisory, ±20% — an estimate to compare options, never an energy-code calculation)');
+    out.push(`- climate: ${v.climate}`);
+    out.push(`- assemblies (parallel paths, ASHRAE surface resistances): ${v.assemblies}`);
+    out.push(`- whole house: heating ${v.heating}, cooling ${v.cooling}`);
+    out.push(`- by room (${v.method}): ${v.rooms}`);
+  }
   if (s.circulation) {
     const c = s.circulation;
     out.push('', '## Circulation');

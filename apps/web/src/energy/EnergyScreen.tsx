@@ -15,13 +15,16 @@ import {
   sunDay,
   temperature,
   type AssemblyRow,
+  type AssemblyThermal,
+  type RoomLoad,
+  ROOM_METHOD,
   type EnergyEstimate,
   type EnergyInputs,
   type FacadeRow,
   type OptionRow,
   type UnitSystem,
 } from '@floorspec/analysis';
-import { ChevronRight, Flame, GitBranch, LayoutGrid, MapPin, PanelsTopLeft, Settings, Wind } from 'lucide-react';
+import { ChevronRight, Flame, GitBranch, Layers, LayoutGrid, MapPin, PanelsTopLeft, Settings, Thermometer, Wind } from 'lucide-react';
 import { api, ApiError, messageOf } from '../lib/api';
 import { useLiveTick } from '../dashboard/live';
 import { postBatch } from '../editor/api';
@@ -30,6 +33,8 @@ import { unitsOf } from '../editor/units';
 import type { ProjectDetail } from '../screens/Project';
 import { estimateOf, hasInputs, setInputs } from './model';
 import { InputsDialog } from './InputsDialog';
+import { RoomLegend } from '../editor/envelope/Envelope';
+import { BANDS, perAreaText, rIn, uIn, wattsRange } from '../editor/envelope/state';
 
 type State =
   | { status: 'loading' }
@@ -199,10 +204,12 @@ function Estimate({ estimate: e, units }: { estimate: EnergyEstimate; units: Uni
           </StatGroup>
           <Facades estimate={e} units={units} />
           <Assemblies estimate={e} units={units} />
+          <Rooms estimate={e} units={units} />
+          {e.thermal ? <LayerByLayer estimate={e} units={units} /> : null}
         </div>
         <div className="fs-dashboard__col">
           <Alert tone="info" title="Advisory — for comparing options">
-            From the walls, windows and orientation you drew, by a simple steady-state method. Not a Manual J load or an energy-code calculation, and never a statement that the house meets a code.
+            From the walls, windows and orientation you drew{e.thermal ? ' and their own assemblies, layer by layer' : ''}, by a simple steady-state method, room by room in the manner of Manual J. Not a sizing report or an energy-code calculation, and never a statement that the house meets a code.
           </Alert>
           {e.problems.length > 0 ? (
             <Alert tone="warning" title="Some saved values were not used">
@@ -216,7 +223,7 @@ function Estimate({ estimate: e, units }: { estimate: EnergyEstimate; units: Uni
                 Climate
               </h2>
               <span className="fs-spacer" />
-              {c.source === 'assumed' ? <Badge size="sm" tone="warning">Assumed</Badge> : null}
+              {c.source === 'assumed' ? <Badge size="sm" tone="warning">Assumed</Badge> : c.source === 'site' ? <Badge size="sm" tone="neutral">Nearest station</Badge> : null}
             </div>
             <p className="fs-energy__lead">{c.label}</p>
             <DescriptionList>
@@ -224,7 +231,7 @@ function Estimate({ estimate: e, units }: { estimate: EnergyEstimate; units: Uni
               <DescriptionItem term="Degree days, heat / cool">{`${degreeDays(c.hdd, units)} / ${degreeDays(c.cdd, units)}`}</DescriptionItem>
               <DescriptionItem term="Latitude, for the sun">{`${c.latitude.toFixed(1)}° ${c.latitude >= 0 ? 'N' : 'S'} (${c.latitudeSource === 'site' ? 'site' : 'assumed'})`}</DescriptionItem>
             </DescriptionList>
-            <p className="fs-caption">Presets are rounded values for one city in each zone; set your site’s own from ASHRAE climatic design data.</p>
+            <p className="fs-caption">{c.source === 'site' ? 'The station nearest the site’s location, its values rounded' : 'Presets are rounded values for one city in each zone'}; set your site’s own from ASHRAE climatic design data.</p>
           </Card>
           <Notes estimate={e} />
           {e.options !== undefined ? <Options rows={e.options} units={units} /> : null}
@@ -295,6 +302,55 @@ function Assemblies({ estimate: e, units }: { estimate: EnergyEstimate; units: U
         <span className="fs-energy__muted">{`Whole house ${loss(e.loads.ua, units)}`}</span>
       </div>
       <Table className="fs-energy__envelope" columns={columns} rows={e.assemblies} rowKey={(a) => `${a.kind}:${a.key}`} caption="Each assembly's area, the value assumed for it, its heat loss and where the value came from" captionHidden />
+    </Card>
+  );
+}
+
+function Rooms({ estimate: e, units }: { estimate: EnergyEstimate; units: UnitSystem }) {
+  const rows = [...e.rooms].sort((a, b) => b.heating - a.heating || (a.room < b.room ? -1 : 1));
+  const columns: TableColumn<RoomLoad>[] = [
+    { key: 'name', header: 'Room', cell: (r) => <strong className="fs-energy__strong">{r.name}</strong>, width: '24%' },
+    { key: 'area', header: 'Floor', numeric: true, cell: (r) => area(r.area, units) },
+    { key: 'heating', header: 'Heating', numeric: true, cell: (r) => wattsRange(r.heating, units) },
+    { key: 'perArea', header: 'Per area', cell: (r) => <span className="fs-envelope__band-chip"><span className={`fs-envelope__swatch fs-envelope__swatch--${r.band}`} aria-hidden="true" />{`${BANDS.find((b) => b.id === r.band)?.label ?? r.band} · ${perAreaText(r.perArea, units)}`}</span> },
+    { key: 'cooling', header: 'Cooling', numeric: true, cell: (r) => `${wattsRange(r.cooling, units)} · ${hourText(r.coolingHour)}` },
+    { key: 'most', header: 'Most through', cell: (r) => <span className="fs-energy__muted">{r.heatingParts[0]?.label ?? '—'}</span> },
+  ];
+  return (
+    <Card as="section" className="fs-card" aria-labelledby="heat-loss-by-room" id="heat-loss-by-room-card">
+      <div className="fs-card-head">
+        <Thermometer aria-hidden="true" />
+        <h2 id="heat-loss-by-room" className="fs-card-head__title">
+          Heat loss room by room
+        </h2>
+        <span className="fs-spacer" />
+        <Badge size="sm" tone="neutral">Estimate ±20%</Badge>
+      </div>
+      <Table columns={columns} rows={rows} rowKey={(r) => r.room} caption="Heating and cooling for each room on the design days, the highest heating first" captionHidden />
+      <RoomLegend units={units} />
+      <p className="fs-caption">{ROOM_METHOD}</p>
+    </Card>
+  );
+}
+
+function LayerByLayer({ estimate: e, units }: { estimate: EnergyEstimate; units: UnitSystem }) {
+  const columns: TableColumn<AssemblyThermal>[] = [
+    { key: 'label', header: 'Assembly', cell: (a) => <strong className="fs-energy__strong">{a.label}</strong>, width: '34%' },
+    { key: 'layers', header: 'Layers', numeric: true, cell: (a) => String(a.layers.length) },
+    { key: 'framing', header: 'Framing', numeric: true, cell: (a) => (a.framing ? `${String(Math.round(a.framing.fraction * 100))}%` : '—') },
+    { key: 'r', header: 'Effective', numeric: true, cell: (a) => (a.rEffective === null || a.u === null ? 'not known' : `${rIn(a.rEffective, units)} · ${uIn(a.u, units)}`) },
+    { key: 'from', header: 'Values', cell: (a) => <span className="fs-energy__muted">{a.fromDocument ? 'the plan’s own' : 'with the thermal library’s typical values'}</span> },
+  ];
+  return (
+    <Card as="section" className="fs-card" aria-labelledby="fs-energy-layers">
+      <div className="fs-card-head">
+        <Layers aria-hidden="true" />
+        <h2 id="fs-energy-layers" className="fs-card-head__title">
+          Assemblies · layer by layer
+        </h2>
+      </div>
+      <Table columns={columns} rows={e.envelope} rowKey={(a) => a.key} caption="Each wall type's, roof's and floor's effective R and U from its layers" captionHidden />
+      <p className="fs-caption">FS_thermal: each layer's resistance from its material, the cavity and framing paths in parallel with ASHRAE's surface resistances. Select a wall type in the editor to see it layer by layer.</p>
     </Card>
   );
 }

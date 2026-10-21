@@ -1,0 +1,8 @@
+{
+  "description": "setProperty of M-BATT /extensions/FS_thermal/conductivity: denser batts at 33 mW/(m.K). It commits, and EW1's batts are 25 x 178816 / (32 x 33) = 4233.33, 4233.",
+  "covers": [
+    "FS-THRM-1.2.1",
+    "FS-THRM-3.1.1",
+    "FS-OPS-2.3.1"
+  ]
+}

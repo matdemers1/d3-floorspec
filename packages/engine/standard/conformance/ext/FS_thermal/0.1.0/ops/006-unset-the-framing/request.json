@@ -1,0 +1,9 @@
+{
+  "batch": [
+    {
+      "op": "unsetProperty",
+      "id": "IW1",
+      "path": "/extensions/FS_thermal/framing"
+    }
+  ]
+}

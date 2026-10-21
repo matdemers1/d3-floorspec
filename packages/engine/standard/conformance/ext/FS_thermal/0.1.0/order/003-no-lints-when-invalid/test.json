@@ -1,0 +1,7 @@
+{
+  "description": "An invariant breaks and a lint would apply too - IW1's cavity has no material: the document is invalid, so no lint is reported, FS_thermal's or Core's.",
+  "covers": [
+    "FS-THRM-1.2.2",
+    "FS-THRM-1.2.3"
+  ]
+}

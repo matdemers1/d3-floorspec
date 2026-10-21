@@ -1,0 +1,31 @@
+{
+  "batch": [
+    {
+      "op": "addElement",
+      "collection": "materials",
+      "id": "M-BRICK",
+      "element": {
+        "name": "Brick veneer",
+        "color": "#8c4a32",
+        "extensions": {
+          "FS_thermal": {
+            "conductivity": 720,
+            "density": 1920,
+            "specificHeat": 800,
+            "citation": "Floorspec thermal library 0.1.0 (CC0 1.0): typical values"
+          }
+        }
+      }
+    },
+    {
+      "op": "setProperty",
+      "id": "EW1",
+      "path": "/layers/0",
+      "value": {
+        "thickness": 113792,
+        "function": "finish",
+        "material": "M-BRICK"
+      }
+    }
+  ]
+}

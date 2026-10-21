@@ -171,3 +171,4 @@ export {
   type TourSize,
   type YawPitch,
 } from './tour.js';
+export { heatLossMesh, earClip, LOSS_BANDS, type HeatLossBand, type HeatLossMesh, type HeatLossSurface } from './heatloss.js';

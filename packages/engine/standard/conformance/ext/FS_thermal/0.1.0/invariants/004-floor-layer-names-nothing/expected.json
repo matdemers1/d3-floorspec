@@ -1,0 +1,10 @@
+{
+  "valid": false,
+  "diagnostics": [
+    {
+      "code": "FS-THRM-INV-002",
+      "severity": "error",
+      "elements": ["R1"]
+    }
+  ]
+}

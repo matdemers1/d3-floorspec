@@ -1,0 +1,8 @@
+{
+  "description": "setProperty of EW1 /layers/0/material: brick for fibre cement, the material added in the same batch - the comparison of two sidings is two documents' derived values. It commits.",
+  "covers": [
+    "FS-THRM-1.2.1",
+    "FS-THRM-5.1.1",
+    "FS-OPS-2.3.1"
+  ]
+}
