@@ -403,7 +403,7 @@ export function solarSummary(doc: FloorspecDocument, x: DerivedEnergy | undefine
         roof: a.roof,
         ...(a.face === undefined ? {} : { face: a.face }),
         mount: a.mount,
-        facing: d?.bearing == null ? 'flat' : compassOf(d.bearing),
+        facing: d?.bearing === undefined || d.bearing === null ? 'flat' : compassOf(d.bearing),
         tilt: Math.round(d?.tilt ?? 0),
         modules: a.modules,
         kw: a.watts / 1000,

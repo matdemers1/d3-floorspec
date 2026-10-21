@@ -373,7 +373,7 @@ function samplesOf(mods: readonly DrawModule[], arrayId: string): { p: V3; skip:
 }
 
 /** What shades the array's points most over the year, by name: crowns by ID, neighbours, the house. */
-function shadersOf(occ: Occluders, sky: readonly MonthSky[], normal: V3, pts: readonly { p: V3; skip: (o: string) => boolean }[], latitude: number): string[] {
+function shadersOf(occ: Occluders, sky: readonly MonthSky[], normal: V3, pts: readonly { p: V3; skip: (o: string) => boolean }[]): string[] {
   const score = new Map<string, number>();
   for (const ms of sky)
     for (const s of ms.steps) {
@@ -427,7 +427,7 @@ export function estimateArray(a: DrawArray, sky: readonly MonthSky[], occ: Occlu
     shade: open > 0 ? 1 - sum(year.monthly) / open : 0,
     worst: { month: worst, share: losses[worst]! },
     best: { month: best, share: losses[best]! },
-    shadedBy: occ === null ? [] : shadersOf(occ, sky, normal, pts, site.latitude),
+    shadedBy: occ === null ? [] : shadersOf(occ, sky, normal, pts),
   };
 }
 
