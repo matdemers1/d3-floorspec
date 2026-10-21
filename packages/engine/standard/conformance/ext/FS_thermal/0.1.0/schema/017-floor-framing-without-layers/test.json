@@ -1,0 +1,6 @@
+{
+  "description": "The Utility room's floor has a framing and no layers: a framing is through an assembly's core layers, so it needs them.",
+  "covers": [
+    "FS-THRM-1.3.2"
+  ]
+}

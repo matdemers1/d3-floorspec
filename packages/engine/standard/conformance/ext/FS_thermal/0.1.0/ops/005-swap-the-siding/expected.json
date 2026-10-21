@@ -1,0 +1,84 @@
+{
+  "status": "committed",
+  "diagnostics": [],
+  "hash": "5a7dc75deb71d924b2aa99827248ed9c206151c65226b4fa265d34f5d1bf12ba",
+  "created": ["M-BRICK"],
+  "removed": [],
+  "resolved": [
+    {
+      "op": "addElement",
+      "collection": "materials",
+      "id": "M-BRICK",
+      "element": {
+        "color": "#8c4a32",
+        "extensions": {
+          "FS_thermal": {
+            "citation": "Floorspec thermal library 0.1.0 (CC0 1.0): typical values",
+            "conductivity": 720,
+            "density": 1920,
+            "specificHeat": 800
+          }
+        },
+        "name": "Brick veneer"
+      }
+    },
+    {
+      "op": "setProperty",
+      "id": "EW1",
+      "path": "/layers/0",
+      "value": {
+        "function": "finish",
+        "material": "M-BRICK",
+        "thickness": 113792
+      }
+    }
+  ],
+  "inverse": [
+    {
+      "op": "setProperty",
+      "id": "EW1",
+      "path": "/layers",
+      "value": [
+        {
+          "function": "finish",
+          "material": "M-FC",
+          "thickness": 10160
+        },
+        {
+          "function": "airGap",
+          "material": "M-GAP",
+          "thickness": 12192
+        },
+        {
+          "function": "membrane",
+          "material": "M-WRAP",
+          "thickness": 508
+        },
+        {
+          "function": "insulation",
+          "material": "M-WFB",
+          "thickness": 48768
+        },
+        {
+          "function": "substrate",
+          "material": "M-OSB",
+          "thickness": 14224
+        },
+        {
+          "function": "core",
+          "material": "M-BATT",
+          "thickness": 178816
+        },
+        {
+          "function": "finish",
+          "material": "M-GYP",
+          "thickness": 16256
+        }
+      ]
+    },
+    {
+      "op": "removeElement",
+      "id": "M-BRICK"
+    }
+  ]
+}

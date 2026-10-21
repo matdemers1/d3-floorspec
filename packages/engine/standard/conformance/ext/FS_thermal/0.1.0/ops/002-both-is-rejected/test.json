@@ -1,0 +1,8 @@
+{
+  "description": "Setting a conductivity on the rainscreen gap, which states a resistance: the result breaks 2.1.1, and an applier that implements FS_thermal and knows it rejects the batch (Ops 1.2.3).",
+  "covers": [
+    "FS-THRM-2.1.1",
+    "FS-THRM-1.2.1",
+    "FS-OPS-1.2.3"
+  ]
+}

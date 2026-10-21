@@ -1,0 +1,7 @@
+{
+  "description": "A copper flashing at 390,000 mW/(m.K), the top of the range of conductivities, 1/32\" thick: 25 x 1016 / (32 x 390000) rounds to 0.",
+  "covers": [
+    "FS-THRM-3.1.1",
+    "FS-THRM-5.1.1"
+  ]
+}

@@ -400,6 +400,24 @@ export const OFFICIAL_ENTRIES = [
     ]
   },
   {
+    "name": "FS_thermal",
+    "version": "0.1.0",
+    "status": "draft",
+    "schema": "https://d3cloud.io/floorspec/schema/ext/FS_thermal/0.1.0/thermal.schema.json",
+    "title": "Thermal: what materials conduct and store, framing, roof and floor assemblies, and doors' and windows' ratings",
+    "requires": {},
+    "kinds": {},
+    "terms": {
+      "roomFunctions": []
+    },
+    "implementations": [
+      {
+        "name": "D3 Floorspec (@floorspec/engine)",
+        "url": "https://github.com/matdemers1/d3-floorspec"
+      }
+    ]
+  },
+  {
     "name": "FS_views",
     "version": "0.1.0",
     "status": "draft",
@@ -4772,6 +4790,245 @@ export const OFFICIAL_SCHEMAS = {
             "type": "string",
             "minLength": 1,
             "maxLength": 2000
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "FS_thermal": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://d3cloud.io/floorspec/schema/ext/FS_thermal/0.1.0/thermal.schema.json",
+    "$comment": "Normative (FLR-ADR-006, FLR-ADR-007): FS_thermal 0.1.0, registry/FS_thermal/spec.md. The root applies to the extension's top-level data, extensions.FS_thermal, which 0.1 gives no members. FS_thermal's data lives on core elements: the data on a material, a roof or a room (its own extensions.FS_thermal) is checked as the object { C: data } against #/$defs/coreElements, C its collection, and the data on a type as { K: data }, K its kind (spec.md 1.3). That a material does not state both a conductivity and a resistance (2.1.1) and that every material reference names a material (2.2.1) are invariants, not checked here. Every value is an integer (spec.md 1.5); nothing here is an energy-code calculation (spec.md 1.4).",
+    "title": "FS_thermal 0.1.0",
+    "description": "Thermal properties of materials, framing through wall types, the assemblies of roofs and floors, and the U-factor and solar heat gain coefficient of doors and windows.",
+    "type": "object",
+    "properties": {},
+    "additionalProperties": false,
+    "$defs": {
+      "coreElements": {
+        "title": "Data on core elements",
+        "description": "1.3: a material's, a roof's or a room's collection, or a type's kind, mapped to its FS_thermal data. Only materials, wall, door and window types, roofs and rooms carry FS_thermal data.",
+        "type": "object",
+        "properties": {
+          "materials": {
+            "$ref": "#/$defs/material"
+          },
+          "wallType": {
+            "$ref": "#/$defs/wallType"
+          },
+          "doorType": {
+            "$ref": "#/$defs/unit"
+          },
+          "windowType": {
+            "$ref": "#/$defs/unit"
+          },
+          "roofs": {
+            "$ref": "#/$defs/roof"
+          },
+          "rooms": {
+            "$ref": "#/$defs/room"
+          }
+        },
+        "additionalProperties": false
+      },
+      "reference": {
+        "description": "2.2: a reference to a material of the document, which has the form of an ID (Core 3.1). That it names a material is an invariant (FS-THRM-INV-002).",
+        "type": "string",
+        "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$"
+      },
+      "resistance": {
+        "description": "1.5: a thermal resistance, in thousandths of a square metre kelvin per watt.",
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 100000
+      },
+      "material": {
+        "title": "A material's thermal data",
+        "description": "2.1: what a material conducts and stores, and its surface.",
+        "type": "object",
+        "properties": {
+          "conductivity": {
+            "description": "2.1: thermal conductivity, in milliwatts per metre kelvin. Not with a resistance (FS-THRM-INV-001).",
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 1000000
+          },
+          "resistance": {
+            "$ref": "#/$defs/resistance",
+            "description": "2.1: a resistance stated whole, whatever the layer's thickness - an air space, a membrane. Not with a conductivity (FS-THRM-INV-001)."
+          },
+          "density": {
+            "description": "2.1: density, in kilograms per cubic metre.",
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 30000
+          },
+          "specificHeat": {
+            "description": "2.1: specific heat capacity, in joules per kilogram kelvin.",
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 10000
+          },
+          "solarReflectance": {
+            "description": "2.1: the share of sunlight its surface reflects, in thousandths.",
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 1000
+          },
+          "emittance": {
+            "description": "2.1: its surface's thermal emittance, in thousandths.",
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 1000
+          },
+          "citation": {
+            "description": "2.1: where the values come from; provenance, read by no derivation.",
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 400
+          }
+        },
+        "additionalProperties": false
+      },
+      "layer": {
+        "title": "Layer",
+        "description": "2.2: a Core layer (Core 8.3): its thickness, greater than zero, its function, one of Core 4.3's, and its material.",
+        "type": "object",
+        "required": [
+          "thickness",
+          "function"
+        ],
+        "properties": {
+          "thickness": {
+            "description": "2.2, Core 8.3.1: the layer's thickness, a length greater than zero.",
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991
+          },
+          "function": {
+            "description": "2.2, Core 4.3.1: what the layer does.",
+            "type": "string",
+            "enum": [
+              "core",
+              "substrate",
+              "insulation",
+              "membrane",
+              "airGap",
+              "finish"
+            ]
+          },
+          "material": {
+            "$ref": "#/$defs/reference"
+          }
+        },
+        "additionalProperties": false
+      },
+      "layers": {
+        "title": "Layers",
+        "description": "2.2: an assembly, from the outside in; at least one layer.",
+        "type": "array",
+        "items": {
+          "$ref": "#/$defs/layer"
+        },
+        "minItems": 1
+      },
+      "framing": {
+        "title": "Framing",
+        "description": "2.2: the share of an assembly's area that is framing, in place of its core layers.",
+        "type": "object",
+        "required": [
+          "material",
+          "fraction"
+        ],
+        "properties": {
+          "material": {
+            "$ref": "#/$defs/reference"
+          },
+          "fraction": {
+            "description": "2.2: the share of the assembly's area that is framing, in thousandths.",
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 1000
+          }
+        },
+        "additionalProperties": false
+      },
+      "wallType": {
+        "title": "A wall type's thermal data",
+        "description": "2.3: the framing through the type's core layers.",
+        "type": "object",
+        "properties": {
+          "framing": {
+            "$ref": "#/$defs/framing"
+          }
+        },
+        "additionalProperties": false
+      },
+      "unit": {
+        "title": "A door or window type's thermal data",
+        "description": "2.5: the whole unit's rating, as its maker states it.",
+        "type": "object",
+        "properties": {
+          "uFactor": {
+            "description": "2.5: the whole unit's U-factor, in milliwatts per square metre kelvin.",
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 20000
+          },
+          "shgc": {
+            "description": "2.5: the whole unit's solar heat gain coefficient, in thousandths.",
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 1000
+          }
+        },
+        "additionalProperties": false
+      },
+      "roof": {
+        "title": "A roof's thermal data",
+        "description": "2.4: the roof's assembly, from its outside surface to the ceiling under it, and its framing.",
+        "type": "object",
+        "required": [
+          "layers"
+        ],
+        "properties": {
+          "layers": {
+            "$ref": "#/$defs/layers"
+          },
+          "framing": {
+            "$ref": "#/$defs/framing"
+          }
+        },
+        "additionalProperties": false
+      },
+      "room": {
+        "title": "A room's thermal data",
+        "description": "2.4: the room's floor.",
+        "type": "object",
+        "properties": {
+          "floor": {
+            "title": "Floor",
+            "description": "2.4: the floor's assembly from the room down, its framing (which needs its layers), and the resistance of the insulation at its edge.",
+            "type": "object",
+            "properties": {
+              "layers": {
+                "$ref": "#/$defs/layers"
+              },
+              "framing": {
+                "$ref": "#/$defs/framing"
+              },
+              "edgeResistance": {
+                "$ref": "#/$defs/resistance",
+                "description": "2.4: the resistance of the insulation at a floor's edge on the ground, in thousandths of a square metre kelvin per watt."
+              }
+            },
+            "dependentRequired": {
+              "framing": [
+                "layers"
+              ]
+            },
+            "additionalProperties": false
           }
         },
         "additionalProperties": false

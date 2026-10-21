@@ -1,0 +1,8 @@
+{
+  "description": "The same \"0.3\" house with the rainscreen gap stating a conductivity beside its resistance: FS_thermal is evaluated for a Core 0.3 document, so the invariant is reported.",
+  "covers": [
+    "FS-THRM-1.2.1",
+    "FS-THRM-1.2.3",
+    "FS-THRM-2.1.1"
+  ]
+}

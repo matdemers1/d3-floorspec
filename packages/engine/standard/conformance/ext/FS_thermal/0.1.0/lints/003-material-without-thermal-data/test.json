@@ -1,0 +1,6 @@
+{
+  "description": "Oak flooring with no FS_thermal data at all: the Kitchen's floor's clear path is not known.",
+  "covers": [
+    "FS-THRM-1.2.3"
+  ]
+}

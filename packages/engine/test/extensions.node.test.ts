@@ -113,8 +113,8 @@ describe('the official extensions', () => {
       .map((s) => JSON.parse(readFileSync(join(standard, 'registry', s.name, 'extension.json'), 'utf8')) as unknown);
     expect(OFFICIAL_EXTENSIONS).toEqual(vendored);
     for (const e of OFFICIAL_EXTENSIONS) {
-      // FS_structural, FS_landscape, FS_lighting, FS_views, FS_renovation, FS_annotation, FS_site, FS_outdoor, FS_context and FS_energy 0.1.0 are Drafts; the others are Release Candidates.
-      expect(e.status).toBe(['FS_structural', 'FS_landscape', 'FS_lighting', 'FS_views', 'FS_renovation', 'FS_annotation', 'FS_site', 'FS_outdoor', 'FS_context', 'FS_energy'].includes(e.name) ? 'draft' : 'releaseCandidate');
+      // FS_structural, FS_landscape, FS_lighting, FS_views, FS_renovation, FS_annotation, FS_site, FS_outdoor, FS_context, FS_thermal and FS_energy 0.1.0 are Drafts; the others are Release Candidates.
+      expect(e.status).toBe(['FS_structural', 'FS_landscape', 'FS_lighting', 'FS_views', 'FS_renovation', 'FS_annotation', 'FS_site', 'FS_outdoor', 'FS_context', 'FS_thermal', 'FS_energy'].includes(e.name) ? 'draft' : 'releaseCandidate');
       expect(EXTENSION_IMPLEMENTATIONS.get(e.name)?.version).toBe(e.version);
     }
   });
@@ -123,7 +123,7 @@ describe('the official extensions', () => {
     const md = readFileSync(join(standard, 'registry', name, 'spec.md'), 'utf8');
     const rows = [...md.matchAll(/^\| `(FS-[A-Z]+-[A-Z]+-\d{3})` \| (error|warning|info) \|/gm)].map((m) => ({ code: m[1]!, severity: m[2]! }));
     const impl = EXTENSION_IMPLEMENTATIONS.get(name)!;
-    expect(rows.length).toBeGreaterThan(5);
+    expect(rows.length).toBeGreaterThan(4); // FS_thermal's catalogue has five rows
     expect(impl.catalogue.map((c) => ({ code: c.code, severity: c.severity }))).toEqual(rows);
   });
 

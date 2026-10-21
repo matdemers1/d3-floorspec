@@ -1,0 +1,30 @@
+{
+  "status": "committed",
+  "diagnostics": [],
+  "hash": "dec416840629c807da5ae4531d90c008a35353df947ae48ad3c8a20bbbc1e979",
+  "created": [],
+  "removed": [],
+  "resolved": [
+    {
+      "op": "setProperty",
+      "id": "M-BATT",
+      "path": "/extensions/FS_thermal/conductivity",
+      "value": 33
+    }
+  ],
+  "inverse": [
+    {
+      "op": "setProperty",
+      "id": "M-BATT",
+      "path": "/extensions",
+      "value": {
+        "FS_thermal": {
+          "citation": "Floorspec thermal library 0.1.0 (CC0 1.0): typical values",
+          "conductivity": 35,
+          "density": 40,
+          "specificHeat": 840
+        }
+      }
+    }
+  ]
+}

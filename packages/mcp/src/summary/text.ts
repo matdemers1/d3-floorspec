@@ -277,6 +277,14 @@ export function summaryText(s: DocumentSummary): string {
     for (const r of p.shutdowns) out.push(`- rapid-shutdown initiator ${r.id}: ${r.arrays.join(', ') || 'no array'}`);
     out.push(`- ${p.method}`);
   }
+  if (s.envelope) {
+    const v = s.envelope;
+    out.push('', '## Envelope (FS_thermal; advisory, ±20% — an estimate to compare options, never an energy-code calculation)');
+    out.push(`- climate: ${v.climate}`);
+    out.push(`- assemblies (parallel paths, ASHRAE surface resistances): ${v.assemblies}`);
+    out.push(`- whole house: heating ${v.heating}, cooling ${v.cooling}`);
+    out.push(`- by room (${v.method}): ${v.rooms}`);
+  }
   if (s.circulation) {
     const c = s.circulation;
     out.push('', '## Circulation');

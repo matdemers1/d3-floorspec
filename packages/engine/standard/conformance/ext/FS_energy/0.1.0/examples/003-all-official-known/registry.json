@@ -385,6 +385,24 @@
     ]
   },
   {
+    "name": "FS_thermal",
+    "version": "0.1.0",
+    "status": "draft",
+    "schema": "https://d3cloud.io/floorspec/schema/ext/FS_thermal/0.1.0/thermal.schema.json",
+    "title": "Thermal: what materials conduct and store, framing, roof and floor assemblies, and doors' and windows' ratings",
+    "requires": {},
+    "kinds": {},
+    "terms": {
+      "roomFunctions": []
+    },
+    "implementations": [
+      {
+        "name": "D3 Floorspec (@floorspec/engine)",
+        "url": "https://github.com/matdemers1/d3-floorspec"
+      }
+    ]
+  },
+  {
     "name": "FS_energy",
     "version": "0.1.0",
     "status": "draft",

@@ -1,0 +1,7 @@
+{
+  "description": "The Kitchen's floor names \"M-TILE\" in a layer and \"M-LVL\" as its framing: one diagnostic for the room.",
+  "covers": [
+    "FS-THRM-2.2.1",
+    "FS-THRM-1.2.3"
+  ]
+}

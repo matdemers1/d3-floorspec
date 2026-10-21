@@ -1,0 +1,7 @@
+{
+  "description": "The concrete states its density and specific heat but no conductivity: its heat capacity is known, its resistance is not.",
+  "covers": [
+    "FS-THRM-1.2.3",
+    "FS-THRM-5.1.1"
+  ]
+}

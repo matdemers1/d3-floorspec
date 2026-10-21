@@ -1,0 +1,7 @@
+{
+  "description": "The house read with every official entry known, by an implementation of FS_thermal alone: only FS_thermal is evaluated and derived.",
+  "covers": [
+    "FS-THRM-1.2.1",
+    "FS-THRM-1.2.4"
+  ]
+}

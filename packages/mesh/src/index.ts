@@ -172,3 +172,4 @@ export {
   type YawPitch,
 } from './tour.js';
 export { MODULE_THICKNESS, solarPieces } from './solar.js';
+export { heatLossMesh, earClip, LOSS_BANDS, type HeatLossBand, type HeatLossMesh, type HeatLossSurface } from './heatloss.js';

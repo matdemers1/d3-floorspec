@@ -32,7 +32,7 @@ export interface EnergyInputs {
   readonly indoorSummer?: number;
   /** Air changes an hour, natural. */
   readonly ach?: number;
-  /** By assembly key: `wall:<type ID>` (`wall:` for walls with no type), `ceiling`, `slab`, `window`, `door`. */
+  /** By assembly key: `wall:<type ID>` (`wall:` for walls with no type), `roof:<roof ID>`, `ceiling`, `floor`, `floor:<room ID>`, `slab`, `window`, `door`. */
   readonly assemblies?: Readonly<Record<string, AssemblyInput>>;
 }
 
@@ -87,8 +87,8 @@ export function parseInputs(raw: unknown): { inputs: EnergyInputs; problems: Inp
       const a: Record<string, AssemblyInput> = {};
       for (const key of Object.keys(asm).sort()) {
         const v = asm[key];
-        if (!/^(wall:[^/]{0,200}|ceiling|slab|window|door)$/.test(key) || !isObject(v)) {
-          problems.push({ path: `/assemblies/${key}`, message: 'an assembly is wall:<type>, ceiling, slab, window or door, with { u, shgc }' });
+        if (!/^(wall:[^/]{0,200}|roof:[^/]{1,200}|floor(:[^/]{1,200})?|ceiling|slab|window|door)$/.test(key) || !isObject(v)) {
+          problems.push({ path: `/assemblies/${key}`, message: 'an assembly is wall:<type>, roof:<roof>, ceiling, floor, floor:<room>, slab, window or door, with { u, shgc }' });
           continue;
         }
         const one: Record<string, unknown> = {};

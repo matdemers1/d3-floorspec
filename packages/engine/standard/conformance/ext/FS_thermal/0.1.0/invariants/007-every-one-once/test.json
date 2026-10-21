@@ -1,0 +1,8 @@
+{
+  "description": "Two materials state both, and a wall type and a floor name what is not a material: each is reported once, naming its element.",
+  "covers": [
+    "FS-THRM-1.2.3",
+    "FS-THRM-2.1.1",
+    "FS-THRM-2.2.1"
+  ]
+}

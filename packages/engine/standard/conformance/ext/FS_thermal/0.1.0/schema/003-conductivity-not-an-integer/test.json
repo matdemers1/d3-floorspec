@@ -1,0 +1,6 @@
+{
+  "description": "M-BATT's conductivity is \"low\": a conductivity is an integer number of mW/(m.K).",
+  "covers": [
+    "FS-THRM-1.3.2"
+  ]
+}

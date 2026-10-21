@@ -1,0 +1,7 @@
+{
+  "description": "The Utility room's floor states only the resistance at its edge: valid.",
+  "covers": [
+    "FS-THRM-1.3.2",
+    "FS-THRM-5.1.1"
+  ]
+}

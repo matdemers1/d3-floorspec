@@ -1,0 +1,6 @@
+{
+  "description": "A Core invariant breaks - the door O3 runs past the end of W10, FS-INV-302 - and so does FS_thermal's schema: Core's error is reported, and FS_thermal is not evaluated.",
+  "covers": [
+    "FS-THRM-1.2.2"
+  ]
+}

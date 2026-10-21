@@ -10,6 +10,7 @@
    own analysis of a document it has just validated (a level's geometry, a face's cycles, a wall's
    junctions and offsets); under noUncheckedIndexedAccess the assertion states what the engine
    guarantees, as packages/engine does, and a runtime check would be an unreachable branch. */
+import { describeAssemblies, describeRooms, estimateEnergy, EstimateError, loadRange, ROOM_METHOD, usesThermal } from '@floorspec/analysis';
 import { landings } from '../stairwell.js';
 import { describeLens, savedViewsOf } from '@floorspec/mesh';
 import { type DerivedContext, type DerivedEnergy, compassOf, solarDrawing, type DerivedOutdoor, type DerivedSite, analyseCirculation, deriveEvaluation, hasOptions, membership, optionsOf, z765, effectiveClearOpening, evaluate, extElements, OFFICIAL_READER, polylineLength, predicates, type Diagnostic, type Evaluation, type FloorspecDocument, type LevelGeometry } from '@floorspec/engine';
@@ -354,6 +355,8 @@ export interface DocumentSummary {
   readonly context?: ContextSummary;
   /** FS_energy's solar arrays (FLR-T-16.1), with a production estimate; absent when it has none. */
   readonly solar?: SolarSummary;
+  /** FS_thermal's envelope (FLR-T-16.4): assemblies' R and U and heat loss by room, advisory; absent when the document does not use FS_thermal. */
+  readonly envelope?: EnvelopeSummary;
   readonly diagnostics: readonly DiagnosticSummary[];
 }
 
@@ -1014,6 +1017,39 @@ function roomElements(r: RoomSummary): Set<string> {
 
 const involves = (l: { between: readonly [Neighbour, Neighbour] }, id: string): boolean => l.between.some((n) => n.kind === 'room' && n.id === id);
 
+/** The thermal envelope as an agent reads it (FLR-T-16.4): advisory, ranges, its method named. */
+export interface EnvelopeSummary {
+  readonly climate: string;
+  /** "wall:EW1 (Exterior · 2x6) R-24, U-0.042, 7 layers, framing 23%". */
+  readonly assemblies: string;
+  readonly heating: string;
+  readonly cooling: string;
+  readonly method: string;
+  /** Room by room, highest heating first — or the one room asked for. */
+  readonly rooms: string;
+}
+
+function envelopeSummary(document: FloorspecDocument | undefined, valid: boolean, room: string | undefined): EnvelopeSummary | undefined {
+  if (!valid || document === undefined || !usesThermal(document)) return undefined;
+  try {
+    const e = estimateEnergy(document, { compare: false });
+    const rooms = room === undefined ? e.rooms : e.rooms.filter((r) => r.room === room);
+    const h = loadRange(e.loads.heating, 'imperial');
+    const c = loadRange(e.loads.cooling, 'imperial');
+    return {
+      climate: e.climate.label,
+      assemblies: describeAssemblies(e.envelope),
+      heating: `${h.text} ${h.unit}`,
+      cooling: `${c.text} ${c.unit}`,
+      method: ROOM_METHOD,
+      rooms: describeRooms(rooms, 'imperial'),
+    };
+  } catch (error) {
+    if (error instanceof EstimateError) return undefined;
+    throw error;
+  }
+}
+
 /** The summary as structured data. */
 export function describeJson(document: string | Uint8Array | object, options: DescribeOptions = {}): DocumentSummary {
   // The reader implements the official extensions, so circuits and rooms of devices are derived.
@@ -1226,7 +1262,8 @@ export function describeJson(document: string | Uint8Array | object, options: De
   const outdoor = options.room === undefined && options.level === undefined ? outdoorSummary(doc, (derived?.extensions as { FS_outdoor?: DerivedOutdoor } | undefined)?.FS_outdoor) : undefined;
   const context = options.room === undefined && options.level === undefined ? contextSummary(doc, (derived?.extensions as { FS_context?: DerivedContext } | undefined)?.FS_context) : undefined;
   const solar = options.room === undefined && options.level === undefined ? solarSummary(doc, (derived?.extensions as { FS_energy?: DerivedEnergy } | undefined)?.FS_energy) : undefined;
-  return { project: doc.project.name, valid: ev.valid, ...(site && { site }), levels, ...(program && { program }), ...(circulation && { circulation }), ...(area && { area }), ...(optionSets && { options: optionSets }), ...(scenes && { scenes }), ...(views && { views }), ...(outdoor && { outdoor }), ...(context && { context }), ...(solar && { solar }), diagnostics: diags };
+  const envelope = options.level === undefined ? envelopeSummary(ev.document, ev.valid, options.room) : undefined;
+  return { project: doc.project.name, valid: ev.valid, ...(site && { site }), levels, ...(program && { program }), ...(circulation && { circulation }), ...(area && { area }), ...(optionSets && { options: optionSets }), ...(scenes && { scenes }), ...(views && { views }), ...(outdoor && { outdoor }), ...(context && { context }), ...(solar && { solar }), ...(envelope && { envelope }), diagnostics: diags };
 }
 
 const COMPASS = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW'] as const;

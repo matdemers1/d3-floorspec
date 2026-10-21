@@ -1,0 +1,6 @@
+{
+  "description": "The Bath's floor has an empty list of layers: an assembly has at least one.",
+  "covers": [
+    "FS-THRM-1.3.2"
+  ]
+}

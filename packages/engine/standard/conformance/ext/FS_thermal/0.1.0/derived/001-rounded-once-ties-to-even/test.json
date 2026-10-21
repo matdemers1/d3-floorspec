@@ -1,0 +1,7 @@
+{
+  "description": "A wall type of two layers of a material at 25 mW/(m.K), 48 and 16 base units thick: 25 x 48 / (32 x 25) = 1.5, rounded to 2, and 25 x 16 / 800 = 0.5, rounded to 0 - ties to even. Their heat capacities, at 1 kg/m3 and 1 J/(kg.K), are 48 / 1,280,000 and 16 / 1,280,000, both rounded to 0. The clear path is the sum of the rounded values, 2, not the rounded sum of 2.",
+  "covers": [
+    "FS-THRM-3.1.1",
+    "FS-THRM-5.1.1"
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "description": "WT1's solar heat gain coefficient is 1001 thousandths: more than the sun that falls on it.",
+  "covers": [
+    "FS-THRM-1.3.2"
+  ]
+}

@@ -68,6 +68,7 @@ import { StagingSection } from './systems/Staging';
 import { ModeSummary } from './ModeSwitcher';
 import { PlanStyleSection } from './StylePanel';
 import { DaylightRoomSection } from './daylight/Daylight';
+import { MaterialThermalSection, RoomHeatLossSection, UnitThermalSection, WallTypeThermalSection } from './envelope/Envelope';
 
 /**
  * The inspector (FLR-T-3.3): every element kind's members, each edit a setProperty/unsetProperty
@@ -176,6 +177,11 @@ export function Inspector({ store, tools }: { store: EditorStore; tools: ToolCon
       {/* FLR-T-14.7: the room's daylight while the study shows. */}
       {kind === 'room' ? <DaylightRoomSection store={store} room={selection} /> : null}
       {body}
+      {/* FLR-T-16.4: the thermal envelope — a wall type layer by layer, a door's or window's rating, a material's values, a room's loads. */}
+      {kind === 'wallType' ? <WallTypeThermalSection store={store} model={model} id={selection} units={units} readOnly={ctx.readOnly} edit={ctx.edit} /> : null}
+      {kind === 'doorType' || kind === 'windowType' ? <UnitThermalSection model={model} id={selection} units={units} readOnly={ctx.readOnly} edit={ctx.edit} /> : null}
+      {kind === 'material' ? <MaterialThermalSection model={model} id={selection} readOnly={ctx.readOnly} edit={ctx.edit} /> : null}
+      {kind === 'room' ? <RoomHeatLossSection store={store} room={selection} units={units} /> : null}
       {/* FLR-T-18.9: the temporary dimensions, as fields — the keyboard's way to them. */}
       <PositionSection store={store} />
       <OptionMembership store={store} model={model} id={selection} element={element} readOnly={ctx.readOnly} />
@@ -481,6 +487,12 @@ function WallBody({ ctx }: { ctx: Ctx }) {
       <Section title="Type">
         <TypePicker ctx={ctx} kind="wallType" value={str(element['type'])} label="Wall type" path="/type" allowNone={own ? 'Own layers only' : undefined} />
         <p className="fs-note">{describeLayers(layers, units)}{own ? ' · own layers' : ''}</p>
+        {/* FLR-T-16.4: the wall's type, layer by layer — its R and U, its paths, its thermal mass. */}
+        {str(element['type']) !== undefined && !own ? (
+          <Button size="sm" variant="secondary" onClick={() => { ctx.store.select(str(element['type']) ?? null); }}>
+            Wall type, layer by layer
+          </Button>
+        ) : null}
       </Section>
       <Section title="Geometry">
         <LengthField
