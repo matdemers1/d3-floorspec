@@ -51,7 +51,7 @@ describe('solar in the editor', () => {
     const all = schedules(m, 'imperial');
     const solar = all.find((s) => s.id === 'solar')!;
     expect(solar.rows.map((r) => [r.cells['id']!.text, r.cells['roof']!.text, r.cells['facing']!.text, r.cells['panels']!.text, r.cells['inverter']!.text])).toEqual([
-      ['PV1', 'East wing shed roof', 'E', '35', 'INV1'],
+      ['PV1', 'East wing shed roof', 'E', '28', 'INV1'],
       ['PV2', 'Guest wing shed roof', 'N', '15', 'INV1'],
     ]);
     expect(solar.rows[0]!.cells['kwh']!.text).toMatch(/^\d{1,3}(,\d{3})*–\d{1,3}(,\d{3})*$/);

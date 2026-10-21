@@ -1,7 +1,7 @@
 /**
  * FLR-T-16.1: FS_energy in plan — the Courtyard House with solar (apps/worker/test/fixtures/courtyard-house-solar.json):
  * each array's modules as blue cells inside its footprint on its roof's level, the setbacks each face keeps as tinted
- * strips, the slope's arrow, and a tag "PV1 · 35 × 410 W · faces E"; the Solar layer on in Electrical mode, ghosted in
+ * strips, the slope's arrow, and a tag "PV1 · 28 × 410 W · faces E"; the Solar layer on in Electrical mode, ghosted in
  * Construction, off elsewhere; an array inside a setback outlined in the warning colour; and light and dark goldens.
  */
 import { readFileSync } from 'node:fs';
@@ -19,8 +19,8 @@ describe('FS_energy in plan', () => {
     expect(order.every((at) => at >= 0), JSON.stringify(order)).toBe(true);
     expect([...order].sort((a, b) => a - b)).toEqual(order);
     expect(upper.match(/data-array="PV1"/g)).toHaveLength(1);
-    expect(upper.match(/data-module="/g)).toHaveLength(35);
-    expect(upper).toContain('PV1 · 35 × 410 W · faces E');
+    expect(upper.match(/data-module="/g)).toHaveLength(28);
+    expect(upper).toContain('PV1 · 28 × 410 W · faces E');
     expect(upper).not.toContain('data-array="PV2"');
     const lower = renderPlan(SOLAR, { mode: 'electrical', level: 'L1' });
     expect(lower).toContain('PV2 · 15 × 410 W · faces N');

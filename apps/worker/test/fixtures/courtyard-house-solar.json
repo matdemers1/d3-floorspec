@@ -1355,7 +1355,7 @@
           "volts": 120
         },
         "C17": {
-          "breaker": 70,
+          "breaker": 50,
           "loads": [
             "INV1",
             "RS1"
@@ -5516,19 +5516,19 @@
             },
             "inputs": 1,
             "kind": "hybrid",
-            "name": "Inverter · 12.0 kW hybrid",
-            "watts": 12000
+            "name": "Inverter · 9.6 kW hybrid",
+            "watts": 9600
           }
         },
         "pvArrays": {
           "PV1": {
-            "columns": 5,
+            "columns": 4,
             "face": 1,
             "fallback": {
               "box": {
                 "max": [
                   0,
-                  11150848,
+                  8914176,
                   5745178
                 ],
                 "min": [
@@ -5544,7 +5544,7 @@
               "mode": "free",
               "position": [
                 23831296,
-                6908800
+                8026400
               ],
               "rotation": 0
             },
