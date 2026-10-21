@@ -1,0 +1,6 @@
+{
+  "description": "The house roof's south edge pitched 6:12 of its own, the north edge the roof's 9:12: PV1 derives its own edge's pitch; the ridge moves north, to y = 8'.",
+  "covers": [
+    "FS-ENGY-7.1.1"
+  ]
+}

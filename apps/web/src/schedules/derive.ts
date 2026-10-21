@@ -4,6 +4,9 @@ import { formatArea, formatLen, type UnitSystem } from '../editor/units';
 import { kindLabel, words } from '../editor/systems/catalog';
 import { compareIds, elementsOfExtension, recordsOf } from '../editor/systems/view';
 import { clearOpeningOf, formatClearArea, operationLabel } from '../editor/openings';
+import { compassOf } from '@floorspec/engine';
+import { PV_ADVISORY } from '@floorspec/analysis';
+import { solarDrawingOf, solarEstimateOf } from '../editor/solar/data';
 
 /**
  * The schedules (FLR-T-5.8, FLR-REQ-091): rooms, doors, windows, plumbing fixtures and receptacles,
@@ -36,7 +39,7 @@ export interface ScheduleRow {
 }
 
 export interface Schedule {
-  id: 'rooms' | 'doors' | 'windows' | 'fixtures' | 'receptacles' | 'stairs' | 'renovation-areas' | 'renovation-quantities';
+  id: 'rooms' | 'doors' | 'windows' | 'fixtures' | 'receptacles' | 'stairs' | 'renovation-areas' | 'renovation-quantities' | 'solar';
   label: string;
   columns: ScheduleColumn[];
   rows: ScheduleRow[];
@@ -482,11 +485,60 @@ export function renovationQuantitiesSchedule(model: EditorModel, units: UnitSyst
   };
 }
 
+/**
+ * FLR-T-16.1: the solar arrays (FS_energy), one row each — the roof and face it is on, which way it faces and
+ * at what tilt, flush or racked, its panels and kW as FS_energy derives them, and its year as
+ * @floorspec/analysis estimates it: a range, ±20%, never a guarantee.
+ */
+function solarSchedule(model: EditorModel): Schedule | null {
+  const drawing = solarDrawingOf(model);
+  if (drawing.arrays.length === 0) return null;
+  const est = new Map(solarEstimateOf(model).arrays.map((a) => [a.id, a]));
+  const roofName = (id: string): string => {
+    const n = (model.view.roofs?.[id] as { name?: string } | undefined)?.name;
+    return n ?? id;
+  };
+  return {
+    id: 'solar',
+    label: 'Solar arrays',
+    columns: [
+      { key: 'id', header: 'Array' },
+      { key: 'roof', header: 'Roof' },
+      { key: 'facing', header: 'Faces' },
+      { key: 'tilt', header: 'Tilt', numeric: true },
+      { key: 'mount', header: 'Mount' },
+      { key: 'panels', header: 'Panels', numeric: true },
+      { key: 'kw', header: 'kW', numeric: true },
+      { key: 'kwh', header: 'kWh a year (estimate)', numeric: true },
+      { key: 'inverter', header: 'Inverter' },
+    ],
+    rows: drawing.arrays.map((a) => {
+      const e = est.get(a.id);
+      return {
+        key: a.id,
+        cells: {
+          id: text(a.id),
+          roof: text(roofName(a.roof)),
+          facing: a.bearing === null ? text('flat') : text(compassOf(a.bearing), a.bearing),
+          tilt: text(`${String(Math.round(a.tilt))}°`, a.tilt),
+          mount: text(a.mount),
+          panels: text(String(a.modules.length), a.modules.length),
+          kw: text((a.watts / 1000).toFixed(2), a.watts),
+          kwh: e === undefined ? none : text(`${e.low.toLocaleString('en-US')}–${e.high.toLocaleString('en-US')}`, e.annual),
+          inverter: a.inverter === null ? none : text(a.inverter),
+        },
+      };
+    }),
+    footnote: `Panels and kW as FS_energy 0.1.0 derives them (7.2). ${solarEstimateOf(model).methodText} ${PV_ADVISORY}`,
+  };
+}
+
 /** Every schedule, in the board's order; stairs only when the plan has any; a remodel's two when it is one. */
 export function schedules(model: EditorModel, units: UnitSystem): Schedule[] {
   const stairs = stairsSchedule(model, units);
   const areas = renovationAreasSchedule(model, units);
   const quantities = renovationQuantitiesSchedule(model, units);
+  const solar = solarSchedule(model);
   return [
     roomsSchedule(model, units),
     doorsSchedule(model, units),
@@ -496,6 +548,7 @@ export function schedules(model: EditorModel, units: UnitSystem): Schedule[] {
     ...(stairs.rows.length ? [stairs] : []),
     ...(areas === null ? [] : [areas]),
     ...(quantities === null ? [] : [quantities]),
+    ...(solar === null ? [] : [solar]),
   ];
 }
 

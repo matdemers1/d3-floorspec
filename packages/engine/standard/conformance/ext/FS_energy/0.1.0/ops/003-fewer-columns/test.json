@@ -1,0 +1,8 @@
+{
+  "description": "setProperty of PV1's /columns makes it four modules wide. It commits: 1,400 W on the house roof.",
+  "covers": [
+    "FS-ENGY-1.2.1",
+    "FS-ENGY-7.1.1",
+    "FS-OPS-2.3.1"
+  ]
+}

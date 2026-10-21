@@ -36,6 +36,7 @@ export * from './inputs.js';
 export * from './estimate.js';
 export * from './format.js';
 export * from './daylight.js';
+export * from './pv.js';
 export * from './thermal-library.js';
 export * from './assemblies.js';
 export * from './rooms.js';

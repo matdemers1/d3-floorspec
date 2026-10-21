@@ -1,0 +1,7 @@
+{
+  "description": "FS_energy used with empty top-level data: valid, and nothing derived but empty maps and zero totals.",
+  "covers": [
+    "FS-ENGY-1.3.1",
+    "FS-ENGY-7.1.1"
+  ]
+}

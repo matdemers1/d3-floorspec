@@ -1,0 +1,436 @@
+[
+  {
+    "name": "FS_electrical",
+    "version": "0.1.0",
+    "status": "releaseCandidate",
+    "schema": "https://d3cloud.io/floorspec/schema/ext/FS_electrical/0.1.0/electrical.schema.json",
+    "title": "Electrical",
+    "requires": {},
+    "kinds": {
+      "panels": {
+        "title": "Panel",
+        "fallback": {}
+      },
+      "receptacles": {
+        "title": "Receptacle",
+        "fallback": {}
+      },
+      "switches": {
+        "title": "Switch",
+        "fallback": {}
+      },
+      "lights": {
+        "title": "Light",
+        "fallback": {}
+      },
+      "alarms": {
+        "title": "Smoke, CO or heat alarm",
+        "fallback": {}
+      },
+      "evChargers": {
+        "title": "EV charger",
+        "fallback": {}
+      }
+    },
+    "terms": {
+      "roomFunctions": []
+    },
+    "implementations": [
+      {
+        "name": "D3 Floorspec (@floorspec/engine)",
+        "url": "https://github.com/matdemers1/d3-floorspec"
+      }
+    ]
+  },
+  {
+    "name": "FS_plumbing",
+    "version": "0.1.0",
+    "status": "releaseCandidate",
+    "schema": "https://d3cloud.io/floorspec/schema/ext/FS_plumbing/0.1.0/plumbing.schema.json",
+    "title": "Plumbing",
+    "requires": {},
+    "kinds": {
+      "fixtures": {
+        "title": "Plumbing fixture",
+        "fallback": {}
+      },
+      "waterHeaters": {
+        "title": "Water heater",
+        "fallback": {}
+      },
+      "drains": {
+        "title": "Drain",
+        "fallback": {}
+      },
+      "cleanouts": {
+        "title": "Cleanout",
+        "fallback": {}
+      }
+    },
+    "terms": {
+      "roomFunctions": []
+    },
+    "implementations": [
+      {
+        "name": "D3 Floorspec (@floorspec/engine)",
+        "url": "https://github.com/matdemers1/d3-floorspec"
+      }
+    ]
+  },
+  {
+    "name": "FS_mechanical",
+    "version": "0.1.0",
+    "status": "releaseCandidate",
+    "schema": "https://d3cloud.io/floorspec/schema/ext/FS_mechanical/0.1.0/mechanical.schema.json",
+    "title": "Mechanical and fuel gas",
+    "requires": {},
+    "kinds": {
+      "equipment": {
+        "title": "HVAC equipment",
+        "fallback": {}
+      },
+      "terminals": {
+        "title": "Air terminal",
+        "fallback": {}
+      },
+      "exhaust": {
+        "title": "Exhaust fan or hood",
+        "fallback": {}
+      },
+      "gasAppliances": {
+        "title": "Gas appliance",
+        "fallback": {}
+      }
+    },
+    "terms": {
+      "roomFunctions": []
+    },
+    "implementations": [
+      {
+        "name": "D3 Floorspec (@floorspec/engine)",
+        "url": "https://github.com/matdemers1/d3-floorspec"
+      }
+    ]
+  },
+  {
+    "name": "FS_lowvoltage",
+    "version": "0.1.0",
+    "status": "releaseCandidate",
+    "schema": "https://d3cloud.io/floorspec/schema/ext/FS_lowvoltage/0.1.0/lowvoltage.schema.json",
+    "title": "Low voltage",
+    "requires": {},
+    "kinds": {
+      "outlets": {
+        "title": "Data, coax or phone outlet",
+        "fallback": {}
+      },
+      "doorbells": {
+        "title": "Doorbell button or chime",
+        "fallback": {}
+      },
+      "security": {
+        "title": "Security device",
+        "fallback": {}
+      },
+      "speakers": {
+        "title": "Speaker",
+        "fallback": {}
+      },
+      "headEnds": {
+        "title": "Head-end",
+        "fallback": {}
+      }
+    },
+    "terms": {
+      "roomFunctions": []
+    },
+    "implementations": [
+      {
+        "name": "D3 Floorspec (@floorspec/engine)",
+        "url": "https://github.com/matdemers1/d3-floorspec"
+      }
+    ]
+  },
+  {
+    "name": "FS_furniture",
+    "version": "0.1.0",
+    "status": "releaseCandidate",
+    "schema": "https://d3cloud.io/floorspec/schema/ext/FS_furniture/0.1.0/furniture.schema.json",
+    "title": "Furniture, appliances and casework",
+    "requires": {},
+    "kinds": {
+      "pieces": {
+        "title": "Furniture piece",
+        "fallback": {
+          "asset": true,
+          "symbol": true
+        }
+      },
+      "appliances": {
+        "title": "Appliance",
+        "fallback": {
+          "asset": true,
+          "symbol": true
+        }
+      },
+      "casework": {
+        "title": "Casework",
+        "fallback": {
+          "asset": true,
+          "symbol": true
+        }
+      }
+    },
+    "terms": {
+      "roomFunctions": []
+    },
+    "implementations": [
+      {
+        "name": "D3 Floorspec (@floorspec/engine)",
+        "url": "https://github.com/matdemers1/d3-floorspec"
+      }
+    ]
+  },
+  {
+    "name": "FS_structural",
+    "version": "0.1.0",
+    "status": "draft",
+    "schema": "https://d3cloud.io/floorspec/schema/ext/FS_structural/0.1.0/structural.schema.json",
+    "title": "Structural attributes",
+    "requires": {},
+    "kinds": {},
+    "terms": {
+      "roomFunctions": []
+    },
+    "implementations": [
+      {
+        "name": "D3 Floorspec (@floorspec/engine)",
+        "url": "https://github.com/matdemers1/d3-floorspec"
+      }
+    ]
+  },
+  {
+    "name": "FS_landscape",
+    "version": "0.1.0",
+    "status": "draft",
+    "schema": "https://d3cloud.io/floorspec/schema/ext/FS_landscape/0.1.0/landscape.schema.json",
+    "title": "Landscape: plants, beds, lawns and hardscape",
+    "requires": {},
+    "kinds": {
+      "plants": {
+        "title": "Plant"
+      },
+      "beds": {
+        "title": "Planting bed"
+      },
+      "lawns": {
+        "title": "Lawn"
+      },
+      "hardscape": {
+        "title": "Hardscape"
+      }
+    },
+    "terms": {
+      "roomFunctions": []
+    },
+    "implementations": [
+      {
+        "name": "D3 Floorspec (@floorspec/engine)",
+        "url": "https://github.com/matdemers1/d3-floorspec"
+      }
+    ]
+  },
+  {
+    "name": "FS_lighting",
+    "version": "0.1.0",
+    "status": "draft",
+    "schema": "https://d3cloud.io/floorspec/schema/ext/FS_lighting/0.1.0/lighting.schema.json",
+    "title": "Lighting: luminaires and scenes",
+    "requires": {
+      "FS_electrical": "^0.1.0"
+    },
+    "kinds": {},
+    "terms": {
+      "roomFunctions": []
+    },
+    "implementations": [
+      {
+        "name": "D3 Floorspec (@floorspec/engine)",
+        "url": "https://github.com/matdemers1/d3-floorspec"
+      }
+    ]
+  },
+  {
+    "name": "FS_views",
+    "version": "0.1.0",
+    "status": "draft",
+    "schema": "https://d3cloud.io/floorspec/schema/ext/FS_views/0.1.0/views.schema.json",
+    "title": "Views: saved cameras",
+    "requires": {},
+    "kinds": {},
+    "terms": {
+      "roomFunctions": []
+    },
+    "implementations": [
+      {
+        "name": "D3 Floorspec (@floorspec/engine)",
+        "url": "https://github.com/matdemers1/d3-floorspec"
+      }
+    ]
+  },
+  {
+    "name": "FS_renovation",
+    "version": "0.1.0",
+    "status": "draft",
+    "schema": "https://d3cloud.io/floorspec/schema/ext/FS_renovation/0.1.0/renovation.schema.json",
+    "title": "Renovation: existing, demolish and new",
+    "requires": {},
+    "kinds": {},
+    "terms": {
+      "roomFunctions": []
+    },
+    "implementations": [
+      {
+        "name": "D3 Floorspec (@floorspec/engine)",
+        "url": "https://github.com/matdemers1/d3-floorspec"
+      }
+    ]
+  },
+  {
+    "name": "FS_annotation",
+    "version": "0.1.0",
+    "status": "draft",
+    "schema": "https://d3cloud.io/floorspec/schema/ext/FS_annotation/0.1.0/annotation.schema.json",
+    "title": "Annotation: dimension strings and notes",
+    "requires": {},
+    "kinds": {},
+    "terms": {
+      "roomFunctions": []
+    },
+    "implementations": [
+      {
+        "name": "D3 Floorspec (@floorspec/engine)",
+        "url": "https://github.com/matdemers1/d3-floorspec"
+      }
+    ]
+  },
+  {
+    "name": "FS_site",
+    "version": "0.1.0",
+    "status": "draft",
+    "schema": "https://d3cloud.io/floorspec/schema/ext/FS_site/0.1.0/site.schema.json",
+    "title": "Site: setbacks, terrain and grading",
+    "requires": {},
+    "kinds": {},
+    "terms": {
+      "roomFunctions": []
+    },
+    "implementations": [
+      {
+        "name": "D3 Floorspec (@floorspec/engine)",
+        "url": "https://github.com/matdemers1/d3-floorspec"
+      }
+    ]
+  },
+  {
+    "name": "FS_outdoor",
+    "version": "0.1.0",
+    "status": "draft",
+    "schema": "https://d3cloud.io/floorspec/schema/ext/FS_outdoor/0.1.0/outdoor.schema.json",
+    "title": "Outdoor rooms: pools, fences and gates, shelters, outdoor kitchens and fire features",
+    "requires": {},
+    "kinds": {
+      "pools": {
+        "title": "Pool or spa"
+      },
+      "fences": {
+        "title": "Fence or garden wall"
+      },
+      "shelters": {
+        "title": "Pergola, porch or shade sail"
+      },
+      "kitchens": {
+        "title": "Outdoor kitchen"
+      },
+      "fires": {
+        "title": "Fire feature"
+      }
+    },
+    "terms": {
+      "roomFunctions": []
+    },
+    "implementations": [
+      {
+        "name": "D3 Floorspec (@floorspec/engine)",
+        "url": "https://github.com/matdemers1/d3-floorspec"
+      }
+    ]
+  },
+  {
+    "name": "FS_context",
+    "version": "0.1.0",
+    "status": "draft",
+    "schema": "https://d3cloud.io/floorspec/schema/ext/FS_context/0.1.0/context.schema.json",
+    "title": "Context: the street, neighbouring massing and trees beyond the lot",
+    "requires": {},
+    "kinds": {},
+    "terms": {
+      "roomFunctions": []
+    },
+    "implementations": [
+      {
+        "name": "D3 Floorspec (@floorspec/engine)",
+        "url": "https://github.com/matdemers1/d3-floorspec"
+      }
+    ]
+  },
+  {
+    "name": "FS_thermal",
+    "version": "0.1.0",
+    "status": "draft",
+    "schema": "https://d3cloud.io/floorspec/schema/ext/FS_thermal/0.1.0/thermal.schema.json",
+    "title": "Thermal: what materials conduct and store, framing, roof and floor assemblies, and doors' and windows' ratings",
+    "requires": {},
+    "kinds": {},
+    "terms": {
+      "roomFunctions": []
+    },
+    "implementations": [
+      {
+        "name": "D3 Floorspec (@floorspec/engine)",
+        "url": "https://github.com/matdemers1/d3-floorspec"
+      }
+    ]
+  },
+  {
+    "name": "FS_energy",
+    "version": "0.1.0",
+    "status": "draft",
+    "schema": "https://d3cloud.io/floorspec/schema/ext/FS_energy/0.1.0/energy.schema.json",
+    "title": "Energy: solar arrays on the roof, their inverters and rapid shutdown",
+    "requires": {},
+    "kinds": {
+      "pvArrays": {
+        "title": "Solar array",
+        "fallback": {}
+      },
+      "inverters": {
+        "title": "Inverter",
+        "fallback": {}
+      },
+      "shutdowns": {
+        "title": "Rapid-shutdown initiator",
+        "fallback": {}
+      }
+    },
+    "terms": {
+      "roomFunctions": []
+    },
+    "implementations": [
+      {
+        "name": "D3 Floorspec (@floorspec/engine)",
+        "url": "https://github.com/matdemers1/d3-floorspec"
+      }
+    ]
+  }
+]

@@ -49,6 +49,9 @@ importers:
       '@floorspec/assistant-electrical':
         specifier: workspace:*
         version: link:../../packages/assistants/electrical
+      '@floorspec/assistant-solar':
+        specifier: workspace:*
+        version: link:../../packages/assistants/solar
       '@floorspec/assistant-staging':
         specifier: workspace:*
         version: link:../../packages/assistants/staging
@@ -140,6 +143,9 @@ importers:
       '@floorspec/assistant-electrical':
         specifier: workspace:*
         version: link:../../packages/assistants/electrical
+      '@floorspec/assistant-solar':
+        specifier: workspace:*
+        version: link:../../packages/assistants/solar
       '@floorspec/engine':
         specifier: workspace:*
         version: link:../../packages/engine
@@ -314,6 +320,18 @@ importers:
       '@floorspec/render2d':
         specifier: workspace:*
         version: link:../../render2d
+
+  packages/assistants/solar:
+    dependencies:
+      '@floorspec/analysis':
+        specifier: workspace:*
+        version: link:../../analysis
+      '@floorspec/engine':
+        specifier: workspace:*
+        version: link:../../engine
+      '@floorspec/ops':
+        specifier: workspace:*
+        version: link:../../ops
 
   packages/assistants/staging:
     dependencies:

@@ -13,6 +13,7 @@ import { LightingButton, LightingChip, LightingPanel } from './lighting/Lighting
 import { controlsOf, houseLights, switchHint } from './lighting/lighting';
 import { useEditor, type EditorState, type EditorStore } from '../store';
 import { useContextShown } from '../context/Layer';
+import { useSolarShown } from '../solar/Layer';
 import { recordOf } from '../context/ops';
 import { contextOf } from '../context/state';
 import { labelOf, type EditorModel, type LevelView } from '../model';
@@ -87,6 +88,9 @@ import { useXr } from './xr/state';
  */
 
 const UNITS = 1_280_000;
+
+/** FLR-T-16.1: an FS_energy array's modules — on its roof, shown with it. */
+const isArray = (part: { extension?: { name: string; collection: string } | undefined }): boolean => part.extension?.name === 'FS_energy' && part.extension.collection === 'pvArrays';
 
 /**
  * Presentation (FLR-T-13.7): its passes and three.js's post-processing, loaded the first time it is
@@ -277,6 +281,7 @@ export default function ThreeView({ store, compact = false }: { store: EditorSto
   const walkFrom = useThreeState(store, (s) => s.walkFrom);
   const levels = useThreeState(store, (s) => s.levels);
   const roof = useThreeState(store, (s) => s.roof);
+  const solarShown = useSolarShown(store);
   const preset = useThreeState(store, (s) => s.preset);
   const lightsOn = useThreeState(store, (s) => s.lights);
   const lighting = useThreeState(store, (s) => s.lighting);
@@ -434,9 +439,12 @@ export default function ThreeView({ store, compact = false }: { store: EditorSto
       built.filter((b) =>
         exploding
           ? explodedVisible(b.part, explode, keptLevels)
-          : isVisible(b.part, { walking, levels, roof, level: levelId, order, context: contextShown }) && !(inXr && !xrRoofs && (b.part.kind === 'roof' || b.part.kind === 'roofGable')),
+          : isVisible(isArray(b.part) ? { ...b.part, kind: 'roof' } : b.part, { walking, levels, roof, level: levelId, order, context: contextShown }) &&
+            !(inXr && !xrRoofs && (b.part.kind === 'roof' || b.part.kind === 'roofGable' || isArray(b.part))) &&
+            // FLR-T-16.1: an array lies on its roof — shown with it — and the Solar layer hides it.
+            !(isArray(b.part) && solarShown === 'off'),
       ),
-    [built, walking, levels, roof, levelId, order, exploding, explode, keptLevels, inXr, xrRoofs, contextShown],
+    [built, walking, levels, roof, levelId, order, exploding, explode, keptLevels, inXr, xrRoofs, contextShown, solarShown],
   );
   // FLR-T-14.7: the levels whose floors the daylight study is laid on — the level cut at, or every
   // level in the whole house and on a walk; none in the exploded view.
@@ -2042,6 +2050,8 @@ interface Hook {
    */
   roles: Record<string, string[]>;
   wet: number;
+  /** FLR-T-16.1: the solar arrays' parts showing now. */
+  arrays: number;
   walking: boolean;
   /** The walker, in metres in the document's frame; null when not walking. */
   walker: { x: number; y: number; feet: number; eye: number; ground: number; yaw: number; room: string | null; blocked: string | null } | null;
@@ -2130,6 +2140,9 @@ function useTestHook(store: EditorStore, three: ThreeStore, ctl: ThreeController
       },
       get wet() {
         return built.filter((b) => b.wet === true).length;
+      },
+      get arrays() {
+        return visible.filter((b) => isArray(b.part)).length;
       },
       get walking() {
         return three.get().walking && ctl.walker !== null;

@@ -1,0 +1,8 @@
+{
+  "description": "The same house read with no known extensions: FS_energy is not evaluated, so nothing of it is derived, and a reader without it still derives each array's fallback and placement.",
+  "covers": [
+    "FS-ENGY-1.2.1",
+    "FS-ENGY-1.2.4",
+    "FS-CORE-1.6.9"
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "description": "INV1 lists RF1 and RS1, a roof and the initiator: reported once.",
+  "covers": [
+    "FS-ENGY-3.1.1"
+  ]
+}

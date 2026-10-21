@@ -1,0 +1,39 @@
+{
+  "status": "committed",
+  "diagnostics": [],
+  "hash": "90344936d2dd6754e864d462d30b05c2ab6efb2aa2cb314c1d04085e69e84fd1",
+  "created": [],
+  "removed": [],
+  "resolved": [
+    {
+      "op": "setProperty",
+      "id": "PV2",
+      "path": "/host",
+      "value": {
+        "level": "L1",
+        "position": [11704320, 0],
+        "mode": "free",
+        "rotation": -90000000
+      }
+    },
+    {
+      "op": "setProperty",
+      "id": "PV2",
+      "path": "/fallback/level",
+      "value": "L1"
+    }
+  ],
+  "inverse": [
+    {
+      "op": "setProperty",
+      "id": "PV2",
+      "path": "/host",
+      "value": {
+        "level": "L1",
+        "position": [10143744, 0],
+        "mode": "free",
+        "rotation": -90000000
+      }
+    }
+  ]
+}

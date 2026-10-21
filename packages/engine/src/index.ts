@@ -76,7 +76,7 @@ export {
   type DerivedStair,
   type EnvelopeRef,
 } from './derive/derive.js';
-export { surfaceNotDerivedReason } from './roofs/roofs.js';
+export { surfaceNotDerivedReason, deriveRoofs } from './roofs/roofs.js';
 export { analyseCirculation, type CirculationAnalysis, type BuildingCirculation } from './circulation/circulation.js';
 export { analyseProgram, type ProgramAnalysis } from './derive/program.js';
 export { loadKnownExtensions, knownEntry, satisfies as versionSatisfies, compareVersions } from './validate/registry.js';
@@ -108,6 +108,52 @@ export * as annotation from './extensions/fs/annotation.js';
 export * as site from './extensions/fs/site.js';
 export * as outdoor from './extensions/fs/outdoor.js';
 export * as context from './extensions/fs/context.js';
+export * as energy from './extensions/fs/energy.js';
+export {
+  type DerivedEnergy,
+  type DerivedArray,
+  type SolarArray,
+  type Inverter,
+  type ShutdownInitiator,
+  type PvModule,
+  type EnergySetbacks,
+  type EdgeKind as EnergyEdgeKind,
+  energyData,
+  energyCollection,
+  usesEnergy,
+  setbacksOf,
+  roofSlopes,
+  faceOk,
+  outwardNormal,
+  faceRotation,
+  facePitch,
+  toPlan as slopeToPlan,
+  moduleSides,
+  arrayExtents,
+  arrayFrame,
+  arrayFootprint,
+  edgeKind as energyEdgeKind,
+  tooNear,
+  facePolygons,
+  cornerClear,
+  GAP as PV_GAP,
+  SETBACKS as PV_SETBACKS,
+} from './extensions/fs/energy.js';
+export {
+  solarDrawing,
+  roofFaces,
+  setbackBands,
+  arrayModules,
+  solarBearingOf,
+  compassOf,
+  RACK_BASE,
+  STANDOFF,
+  type SolarDrawing,
+  type DrawRoofFace,
+  type DrawFaceEdge,
+  type DrawArray,
+  type DrawModule,
+} from './extensions/fs/energy-draw.js';
 export * as thermal from './extensions/fs/thermal.js';
 export {
   FS_THERMAL_NAME,

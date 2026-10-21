@@ -1,6 +1,6 @@
 /**
  * The official extensions the engine implements — FS_electrical, FS_plumbing, FS_mechanical,
- * FS_lowvoltage, FS_furniture, FS_structural (Draft), FS_landscape (Draft), FS_lighting (Draft, FLR-ADR-043), FS_views (Draft, FLR-ADR-046), FS_renovation (Draft, FLR-ADR-048), FS_annotation (Draft, FLR-ADR-047), FS_site (Draft, FLR-ADR-060), FS_outdoor (Draft, FLR-ADR-063), FS_context (Draft, FLR-ADR-064) and FS_thermal (Draft, FLR-ADR-066) 0.1.0 — and the extension tier of validation (each extension's spec, 1.2).
+ * FS_lowvoltage, FS_furniture, FS_structural (Draft), FS_landscape (Draft), FS_lighting (Draft, FLR-ADR-043), FS_views (Draft, FLR-ADR-046), FS_renovation (Draft, FLR-ADR-048), FS_annotation (Draft, FLR-ADR-047), FS_site (Draft, FLR-ADR-060), FS_outdoor (Draft, FLR-ADR-063), FS_context (Draft, FLR-ADR-064), FS_thermal (Draft, FLR-ADR-066) and FS_energy (Draft, FLR-ADR-065) 0.1.0 — and the extension tier of validation (each extension's spec, 1.2).
  *
  * An extension is **evaluated** for a document when the reader implements it (its name is in
  * `ValidateOptions.extensions`), the document declares "0.2", "0.3" or "0.4" and uses it at a version equal to the
@@ -29,6 +29,7 @@ import { FS_ANNOTATION, type DerivedAnnotation } from './fs/annotation.js';
 import { FS_SITE, type DerivedSite } from './fs/site.js';
 import { FS_OUTDOOR, type DerivedOutdoor } from './fs/outdoor.js';
 import { FS_CONTEXT, type DerivedContext } from './fs/context.js';
+import { FS_ENERGY, type DerivedEnergy } from './fs/energy.js';
 import { FS_THERMAL, type DerivedThermal } from './fs/thermal.js';
 
 /**
@@ -56,7 +57,7 @@ export const OFFICIAL_EXTENSION_SCHEMAS: Readonly<Record<string, unknown>> = OFF
 
 /** Every extension implementation the engine has, by name. */
 export const IMPLEMENTATIONS: ReadonlyMap<string, ExtensionImplementation> = new Map(
-  ([FS_ELECTRICAL, FS_PLUMBING, FS_MECHANICAL, FS_LOWVOLTAGE, FS_FURNITURE, FS_STRUCTURAL, FS_LANDSCAPE, FS_LIGHTING, FS_VIEWS, FS_RENOVATION, FS_ANNOTATION, FS_SITE, FS_OUTDOOR, FS_CONTEXT, FS_THERMAL] as ExtensionImplementation[]).map((x) => [x.name, x]),
+  ([FS_ELECTRICAL, FS_PLUMBING, FS_MECHANICAL, FS_LOWVOLTAGE, FS_FURNITURE, FS_STRUCTURAL, FS_LANDSCAPE, FS_LIGHTING, FS_VIEWS, FS_RENOVATION, FS_ANNOTATION, FS_SITE, FS_OUTDOOR, FS_CONTEXT, FS_THERMAL, FS_ENERGY] as ExtensionImplementation[]).map((x) => [x.name, x]),
 );
 
 /** The names of the official extensions the engine implements. */
@@ -78,6 +79,7 @@ export interface DerivedExtensions {
   FS_site?: DerivedSite;
   FS_outdoor?: DerivedOutdoor;
   FS_context?: DerivedContext;
+  FS_energy?: DerivedEnergy;
   FS_thermal?: DerivedThermal;
 }
 

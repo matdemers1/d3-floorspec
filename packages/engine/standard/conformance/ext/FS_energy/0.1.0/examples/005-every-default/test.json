@@ -1,0 +1,8 @@
+{
+  "description": "An array with only the members it always has, on the house roof: portrait, 1\" gaps, its row gap its gap, rapid shutdown at each module; an inverter with only its watts; and the default setbacks. One row of two: 6' 1\" along the slope, 4' in plan. The array has no inverter: FS-ENGY-LINT-002 (info).",
+  "covers": [
+    "FS-ENGY-1.3.1",
+    "FS-ENGY-7.1.1",
+    "FS-ENGY-3.1.3"
+  ]
+}

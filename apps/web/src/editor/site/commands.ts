@@ -35,4 +35,6 @@ export const SITE_COMMANDS: readonly Command[] = [
   siteTool('fence', 'Fence — a fence or a garden wall, drawn point to point', 'F', 'fence wall gate garden yard outdoor'),
   // FLR-T-15.3: context — the street, the neighbours and the trees beyond the lot (FS_context), never the design.
   siteTool('context', 'Context — the street, neighbours and trees beyond the lot', 'X', 'context street curb sidewalk neighbour neighbor massing trees beyond surroundings'),
+  // FLR-T-16.1: solar arrays on the roof faces (FS_energy), with the solar assistant beside them.
+  siteTool('solar', 'Solar — arrays on the roof faces, and the solar assistant', 'P', 'solar pv photovoltaic panels array roof energy inverter'),
 ];

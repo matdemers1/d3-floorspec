@@ -1,0 +1,6 @@
+{
+  "description": "A second inverter, INV2, also serves PV2: FS-ENGY-INV-006, naming the array and both inverters.",
+  "covers": [
+    "FS-ENGY-3.1.2"
+  ]
+}

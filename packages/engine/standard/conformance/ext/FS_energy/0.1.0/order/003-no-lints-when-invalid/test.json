@@ -1,0 +1,7 @@
+{
+  "description": "An invariant breaks and a lint would apply too - PV2 has no inverter: the document is invalid, so no lint is reported, FS_energy's or Core's.",
+  "covers": [
+    "FS-ENGY-1.2.2",
+    "FS-ENGY-1.2.3"
+  ]
+}

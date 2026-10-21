@@ -1,0 +1,10 @@
+{
+  "valid": false,
+  "diagnostics": [
+    {
+      "code": "FS-ENGY-SCH-001",
+      "severity": "error",
+      "elements": []
+    }
+  ]
+}

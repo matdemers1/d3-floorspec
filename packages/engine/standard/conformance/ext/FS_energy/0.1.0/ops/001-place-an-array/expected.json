@@ -1,0 +1,57 @@
+{
+  "status": "committed",
+  "diagnostics": [],
+  "hash": "557a3f05e3225a710f60f700551687c9314672090caa9cab2a38254e3c31c6c5",
+  "created": ["PV3"],
+  "removed": [],
+  "resolved": [
+    {
+      "op": "addElement",
+      "collection": "pvArrays",
+      "id": "PV3",
+      "element": {
+        "columns": 5,
+        "face": 2,
+        "fallback": {
+          "level": "L1",
+          "box": {
+            "max": [0, 5982208, 5406720],
+            "min": [-1560576, 0, 3456000]
+          }
+        },
+        "host": {
+          "level": "L1",
+          "position": [7022592, 5462016],
+          "mode": "free",
+          "rotation": 90000000
+        },
+        "module": {
+          "length": 1950720,
+          "watts": 350,
+          "width": 1170432
+        },
+        "roof": "RF1",
+        "rows": 1
+      },
+      "extension": "FS_energy"
+    },
+    {
+      "op": "setProperty",
+      "id": "INV1",
+      "path": "/arrays",
+      "value": ["PV1", "PV2", "PV3"]
+    }
+  ],
+  "inverse": [
+    {
+      "op": "setProperty",
+      "id": "INV1",
+      "path": "/arrays",
+      "value": ["PV1", "PV2"]
+    },
+    {
+      "op": "removeElement",
+      "id": "PV3"
+    }
+  ]
+}

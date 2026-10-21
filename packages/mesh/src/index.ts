@@ -20,7 +20,7 @@ export { openToSky } from './rooms.js';
 export { autumnHue, bareCrown, blossoms, changesParts, foliageOf, fullLook, landscapeCollection, lawnRole, leafLitter, lookMesh, seasonRole, snowHold, snowSplit, wetPart, type AutumnHue, type Foliage } from './looks.js';
 export { pairedElements } from './paired.js';
 export { surfaceGroups, tileCoordinates, type Surface, type SurfaceGroup, type TilePlacement } from './surfaces.js';
-export { CONTEXT_ROLES, DECOR_ROLES, LANDSCAPE_ROLES, LOOK_ROLES, MODEL_ROLES, OUTDOOR_ROLES, ROLE_LOOKS, type ModelRole, type RoleLook } from './roles.js';
+export { CONTEXT_ROLES, SOLAR_ROLES, DECOR_ROLES, LANDSCAPE_ROLES, LOOK_ROLES, MODEL_ROLES, OUTDOOR_ROLES, ROLE_LOOKS, type ModelRole, type RoleLook } from './roles.js';
 export { discriminant, elementKind } from './models/kinds.js';
 export { decorFamily, libraryItemOf, LAMP_SHADES } from './models/decor.js';
 export { islandBays } from './models/furniture.js';
@@ -171,4 +171,5 @@ export {
   type TourSize,
   type YawPitch,
 } from './tour.js';
+export { MODULE_THICKNESS, solarPieces } from './solar.js';
 export { heatLossMesh, earClip, LOSS_BANDS, type HeatLossBand, type HeatLossMesh, type HeatLossSurface } from './heatloss.js';

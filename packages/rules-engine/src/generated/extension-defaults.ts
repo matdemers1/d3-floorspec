@@ -27,6 +27,17 @@ export const ELEMENT_DEFAULTS: Readonly<Record<string, Readonly<Record<string, R
       "controls": []
     }
   },
+  "FS_energy": {
+    "inverters": {
+      "inputs": 1,
+      "kind": "string"
+    },
+    "pvArrays": {
+      "layout": "portrait",
+      "rapidShutdown": "module"
+    },
+    "shutdowns": {}
+  },
   "FS_furniture": {
     "appliances": {},
     "casework": {},
@@ -129,6 +140,9 @@ export const RECORD_DEFAULTS: Readonly<Record<string, Readonly<Record<string, Re
       "poles": 1,
       "protection": []
     }
+  },
+  "FS_energy": {
+    "setbacks": {}
   },
   "FS_furniture": {},
   "FS_landscape": {},

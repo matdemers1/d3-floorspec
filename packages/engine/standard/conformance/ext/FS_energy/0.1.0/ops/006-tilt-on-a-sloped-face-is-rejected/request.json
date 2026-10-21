@@ -1,0 +1,13 @@
+{
+  "batch": [
+    {
+      "op": "setProperty",
+      "id": "PV1",
+      "path": "/tilt",
+      "value": {
+        "rise": 3,
+        "run": 12
+      }
+    }
+  ]
+}

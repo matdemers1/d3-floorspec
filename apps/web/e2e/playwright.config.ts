@@ -148,6 +148,12 @@ import { defineConfig, devices } from '@playwright/test';
  *                   in the neutral context style with its tags; Show Ghost, Off and On; a tree planted by hand
  *                   and dragged, kept by Regenerate; every schedule unchanged; the house on its street in 3D,
  *                   the Context layer hiding it there too; axe in both themes.
+ *   - `solar`     — FLR-T-16.1: solar on the Courtyard House on its street, in Electrical mode — the Solar tool
+ *                   (⇧P) and panel ranking the roof faces, the assistant's proposal opened as a pending changeset
+ *                   while main has no array; an array placed by hand on the guest wing's shed roof, its inspector's
+ *                   yearly estimate as a range with its method and advisory note; the Solar layer Ghost, Off and
+ *                   On; the Solar arrays schedule; the arrays on the roofs in 3D within the texture budget, the
+ *                   Solar layer hiding them there too; axe in both themes.
  *   - `envelope`  — FLR-T-16.4: the Courtyard House's thermal envelope in Atlanta — the kitchen wall's type layer
  *                   by layer (its section, R per layer, cavity and framing in parallel, effective R and U, thermal
  *                   mass), brick tried in the siding's place, the Kitchen's heat loss and gain part by part, the
@@ -159,7 +165,7 @@ import { defineConfig, devices } from '@playwright/test';
  *
  * The database server defaults to the local test Postgres; E2E_DATABASE_URL points elsewhere (CI).
  * It names the keyboard suite's database; the others are derived from it (`…_main_test`,
- * `…_a11y_test`, `…_program_test`, `…_systems_test`, `…_findings_test`, `…_roofs_test`, `…_exports_test`, `…_options_test`, `…_three_test`, `…_share_test`, `…_assets_test`, `…_sun_test`, `…_package_test`, `…_furniture_test`, `…_templates_test`, `…_moonshots_test`, `…_arcs_test`, `…_lighting_test`, `…_materials_test`, `…_resize_test`, `…_drawers_test`, `…_presentation_test`, `…_panzoom_test`, `…_camera_test`, `…_modes_test`, `…_arrange_test`, `…_rooms_test`, `…_placing_test`, `…_precision_test`, `…_styles_test`, `…_feedback_test`, `…_trace_test`, `…_dimensions_test`, `…_renovation_test`, `…_phrases_test`, `…_keys_test`, `…_section_test`, `…_films_test`, `…_edit3d_test`, `…_compare_test`, `…_xray_test`, `…_daylight_test`, `…_tour_test`, `…_xr_test`, `…_seasons_test`, `…_site_test`, `…_extlighting_test`, `…_outdoor_test`, `…_context_test`, `…_envelope_test`). E2E_PORT is the keyboard suite's port; the others take the ports after it (modes, +26; arrange, +27; rooms, +31; placing, +33; precision, +34; styles, +37; dimensions, +41; trace, +42; renovation, +43; feedback, +46; phrases, +47; keys, +48; films, +49; section, +50; edit3d, +51; compare, +52; daylight, +53; xray, +54; tour, +55; xr, +56; site, +57; seasons, +58; extlighting, +59; outdoor, +60; context, +61; envelope, +63).
+ * `…_a11y_test`, `…_program_test`, `…_systems_test`, `…_findings_test`, `…_roofs_test`, `…_exports_test`, `…_options_test`, `…_three_test`, `…_share_test`, `…_assets_test`, `…_sun_test`, `…_package_test`, `…_furniture_test`, `…_templates_test`, `…_moonshots_test`, `…_arcs_test`, `…_lighting_test`, `…_materials_test`, `…_resize_test`, `…_drawers_test`, `…_presentation_test`, `…_panzoom_test`, `…_camera_test`, `…_modes_test`, `…_arrange_test`, `…_rooms_test`, `…_placing_test`, `…_precision_test`, `…_styles_test`, `…_feedback_test`, `…_trace_test`, `…_dimensions_test`, `…_renovation_test`, `…_phrases_test`, `…_keys_test`, `…_section_test`, `…_films_test`, `…_edit3d_test`, `…_compare_test`, `…_xray_test`, `…_daylight_test`, `…_tour_test`, `…_xr_test`, `…_seasons_test`, `…_site_test`, `…_extlighting_test`, `…_outdoor_test`, `…_context_test`, `…_solar_test`, `…_envelope_test`). E2E_PORT is the keyboard suite's port; the others take the ports after it (modes, +26; arrange, +27; rooms, +31; placing, +33; precision, +34; styles, +37; dimensions, +41; trace, +42; renovation, +43; feedback, +46; phrases, +47; keys, +48; films, +49; section, +50; edit3d, +51; compare, +52; daylight, +53; xray, +54; tour, +55; xr, +56; site, +57; seasons, +58; extlighting, +59; outdoor, +60; context, +61; solar, +62; envelope, +63).
  */
 
 const PORT = Number(process.env['E2E_PORT'] ?? 3491);
@@ -290,6 +296,8 @@ const SUITES: Suite[] = [
   { name: 'outdoor', spec: 'outdoor.spec.ts', port: PORT + 60, database: databaseFor('outdoor'), setupToken: true, gl: true },
   // FLR-T-15.3: context — the street, neighbours and trees generated from the street side, On/Ghost/Off, a tree by hand, schedules unchanged, 3D, axe.
   { name: 'context', spec: 'context.spec.ts', port: PORT + 61, database: databaseFor('context'), setupToken: true, gl: true },
+  // FLR-T-16.1: solar — the assistant's faces and its changeset, an array placed on a face, its estimate and note, Ghost/Off/On, the schedule, 3D, axe.
+  { name: 'solar', spec: 'solar.spec.ts', port: PORT + 62, database: databaseFor('solar'), setupToken: true, gl: true },
   // FLR-T-16.4: the envelope — the kitchen wall type layer by layer, brick tried, the Kitchen's loads by part, the heat-loss map in 3D, rooms on the energy screen, axe.
   { name: 'envelope', spec: 'envelope.spec.ts', port: PORT + 63, database: databaseFor('envelope'), setupToken: true, gl: true },
 ];

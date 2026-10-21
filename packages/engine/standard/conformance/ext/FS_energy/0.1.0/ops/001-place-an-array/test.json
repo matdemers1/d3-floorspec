@@ -1,0 +1,11 @@
+{
+  "description": "placeElement puts PV3 on the house roof's north face, sloped edge 2, with a free host on L1 at (18', 14') facing north, and INV1 is set to serve it. It commits, valid under FS_energy, and derives its footprint.",
+  "covers": [
+    "FS-ENGY-1.2.1",
+    "FS-ENGY-2.2.2",
+    "FS-ENGY-2.3.1",
+    "FS-ENGY-2.3.2",
+    "FS-ENGY-7.1.1",
+    "FS-OPS-4.10.1"
+  ]
+}

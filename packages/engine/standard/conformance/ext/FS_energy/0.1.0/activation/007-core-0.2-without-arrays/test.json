@@ -1,0 +1,8 @@
+{
+  "description": "The same \"0.2\" house with no array: an inverter and an initiator that serve nothing yet. FS_energy is evaluated, reports nothing and derives them.",
+  "covers": [
+    "FS-ENGY-1.2.1",
+    "FS-ENGY-1.2.4",
+    "FS-ENGY-7.1.1"
+  ]
+}

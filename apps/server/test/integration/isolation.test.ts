@@ -51,6 +51,8 @@ const CALLS: Record<string, Call> = {
   'POST /api/projects/:projectId/layouts': { body: {}, ownerStatus: 422 },
   // Answered, by a route that works: A's project has no rooms, so there is nothing to propose.
   'POST /api/projects/:projectId/assistants/electrical': { body: {}, ownerStatus: 200 },
+  // Answered, by a route that works: A's project has no roofs, so there is nothing to lay out.
+  'POST /api/projects/:projectId/assistants/solar': { body: {}, ownerStatus: 200 },
   // Answered, by a route that works: A's project has no rooms, so there is nothing to stage.
   'POST /api/projects/:projectId/assistants/staging': { body: {}, ownerStatus: 200 },
   'POST /api/projects/:projectId/changesets/:changesetId/accept': { body: {}, ownerStatus: 200 },

@@ -1,0 +1,8 @@
+{
+  "description": "moveElement moves PV2 4' east on the carport roof, its rotation kept. It commits, and its footprint moves with it.",
+  "covers": [
+    "FS-ENGY-1.2.1",
+    "FS-ENGY-7.1.1",
+    "FS-OPS-4.10.1"
+  ]
+}

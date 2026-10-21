@@ -1,0 +1,6 @@
+{
+  "description": "An inverter that lists PV1 twice: `arrays` is a set.",
+  "covers": [
+    "FS-ENGY-1.3.1"
+  ]
+}

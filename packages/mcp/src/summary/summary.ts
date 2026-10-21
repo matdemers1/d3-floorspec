@@ -13,8 +13,9 @@
 import { describeAssemblies, describeRooms, estimateEnergy, EstimateError, loadRange, ROOM_METHOD, usesThermal } from '@floorspec/analysis';
 import { landings } from '../stairwell.js';
 import { describeLens, savedViewsOf } from '@floorspec/mesh';
-import { type DerivedContext, type DerivedOutdoor, type DerivedSite, analyseCirculation, deriveEvaluation, hasOptions, membership, optionsOf, z765, effectiveClearOpening, evaluate, extElements, OFFICIAL_READER, polylineLength, predicates, type Diagnostic, type Evaluation, type FloorspecDocument, type LevelGeometry } from '@floorspec/engine';
+import { type DerivedContext, type DerivedEnergy, compassOf, solarDrawing, type DerivedOutdoor, type DerivedSite, analyseCirculation, deriveEvaluation, hasOptions, membership, optionsOf, z765, effectiveClearOpening, evaluate, extElements, OFFICIAL_READER, polylineLength, predicates, type Diagnostic, type Evaluation, type FloorspecDocument, type LevelGeometry } from '@floorspec/engine';
 import { halfString, length, segmentLength, squareFeet, type Length } from './units.js';
+import { estimateSolar, PV_ADVISORY } from '@floorspec/analysis';
 
 export type Side = 'north' | 'east' | 'south' | 'west';
 export const SIDES: readonly Side[] = ['north', 'east', 'south', 'west'];
@@ -352,9 +353,75 @@ export interface DocumentSummary {
   readonly outdoor?: OutdoorSummary;
   /** FS_context's street, neighbours and trees beyond the lot (FLR-T-15.3); absent when it has none. Never part of the design. */
   readonly context?: ContextSummary;
+  /** FS_energy's solar arrays (FLR-T-16.1), with a production estimate; absent when it has none. */
+  readonly solar?: SolarSummary;
   /** FS_thermal's envelope (FLR-T-16.4): assemblies' R and U and heat loss by room, advisory; absent when the document does not use FS_thermal. */
   readonly envelope?: EnvelopeSummary;
   readonly diagnostics: readonly DiagnosticSummary[];
+}
+
+/**
+ * FS_energy (chapter 7), as an agent reads it, with @floorspec/analysis's production estimate: every
+ * figure a range (±20%) with its method — an estimate to compare layouts, never a guarantee.
+ */
+export interface SolarSummary {
+  readonly arrays: readonly {
+    readonly id: string;
+    readonly name?: string;
+    readonly roof: string;
+    readonly face?: number;
+    readonly mount: string;
+    readonly facing: string;
+    readonly tilt: number;
+    readonly modules: number;
+    readonly kw: number;
+    readonly kwhPerYear: string;
+    readonly shade: string;
+    readonly clear: boolean | null;
+    readonly inverter: string | null;
+  }[];
+  readonly inverters: readonly { readonly id: string; readonly kw: number; readonly arrays: readonly string[] }[];
+  readonly shutdowns: readonly { readonly id: string; readonly arrays: readonly string[] }[];
+  readonly total: { readonly modules: number; readonly kw: number; readonly kwhPerYear: string };
+  readonly method: string;
+  readonly advisory: string;
+}
+
+const kwhRange = (low: number, high: number): string => `${low.toLocaleString('en-US')}–${high.toLocaleString('en-US')} kWh`;
+
+/** FS_energy's derived values and the production estimate, summarised; undefined when it derived no array. */
+export function solarSummary(doc: FloorspecDocument, x: DerivedEnergy | undefined): SolarSummary | undefined {
+  if (x === undefined || Object.keys(x.arrays).length === 0) return undefined;
+  const drawing = solarDrawing(doc);
+  const est = estimateSolar(doc, { drawing });
+  const byId = new Map(est.arrays.map((a) => [a.id, a]));
+  const drawn = new Map(drawing.arrays.map((a) => [a.id, a]));
+  return {
+    arrays: Object.entries(x.arrays).map(([id, a]) => {
+      const e = byId.get(id);
+      const d = drawn.get(id);
+      return {
+        id,
+        ...(d?.name === undefined ? {} : { name: d.name }),
+        roof: a.roof,
+        ...(a.face === undefined ? {} : { face: a.face }),
+        mount: a.mount,
+        facing: d?.bearing === undefined || d.bearing === null ? 'flat' : compassOf(d.bearing),
+        tilt: Math.round(d?.tilt ?? 0),
+        modules: a.modules,
+        kw: a.watts / 1000,
+        kwhPerYear: e === undefined ? 'unknown' : kwhRange(e.low, e.high),
+        shade: e === undefined ? 'unknown' : `${String(Math.round(e.shade * 100))}% a year`,
+        clear: d?.clear ?? null,
+        inverter: a.inverter,
+      };
+    }),
+    inverters: Object.entries(x.inverters).map(([id, i]) => ({ id, kw: i.watts / 1000, arrays: i.arrays })),
+    shutdowns: Object.entries(x.shutdowns).map(([id, r]) => ({ id, arrays: r.arrays })),
+    total: { modules: x.modules, kw: x.watts / 1000, kwhPerYear: kwhRange(est.total.low, est.total.high) },
+    method: est.methodText,
+    advisory: PV_ADVISORY,
+  };
 }
 
 /**
@@ -1194,8 +1261,9 @@ export function describeJson(document: string | Uint8Array | object, options: De
   const views = options.room === undefined && options.level === undefined ? viewSummaries(doc) : undefined;
   const outdoor = options.room === undefined && options.level === undefined ? outdoorSummary(doc, (derived?.extensions as { FS_outdoor?: DerivedOutdoor } | undefined)?.FS_outdoor) : undefined;
   const context = options.room === undefined && options.level === undefined ? contextSummary(doc, (derived?.extensions as { FS_context?: DerivedContext } | undefined)?.FS_context) : undefined;
+  const solar = options.room === undefined && options.level === undefined ? solarSummary(doc, (derived?.extensions as { FS_energy?: DerivedEnergy } | undefined)?.FS_energy) : undefined;
   const envelope = options.level === undefined ? envelopeSummary(ev.document, ev.valid, options.room) : undefined;
-  return { project: doc.project.name, valid: ev.valid, ...(site && { site }), levels, ...(program && { program }), ...(circulation && { circulation }), ...(area && { area }), ...(optionSets && { options: optionSets }), ...(scenes && { scenes }), ...(views && { views }), ...(outdoor && { outdoor }), ...(context && { context }), ...(envelope && { envelope }), diagnostics: diags };
+  return { project: doc.project.name, valid: ev.valid, ...(site && { site }), levels, ...(program && { program }), ...(circulation && { circulation }), ...(area && { area }), ...(optionSets && { options: optionSets }), ...(scenes && { scenes }), ...(views && { views }), ...(outdoor && { outdoor }), ...(context && { context }), ...(solar && { solar }), ...(envelope && { envelope }), diagnostics: diags };
 }
 
 const COMPASS = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW'] as const;

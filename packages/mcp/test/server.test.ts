@@ -141,6 +141,25 @@ class MemoryClient implements FloorspecClient {
       candidates: [candidate(1, 97.56, 'Bedroom wing along a hall'), candidate(2, 97.23, 'Compact, no hall'), candidate(3, 96.88, 'Split bedrooms')],
     });
   }
+  proposeSolar(projectId: string, input: { kwh?: number; changeset?: string }) {
+    this.record('proposeSolar', projectId, input);
+    return Promise.resolve({
+      main: PROJECT.head,
+      changeset: { id: 'cs-pv', name: 'Solar on the roof', status: 'pending' as const, base: PROJECT.head, head: 'p'.repeat(64), ops: 1 },
+      proposal: {
+        name: 'Solar on the roof',
+        explanation: ['PV1: 35 modules on East wing shed roof (faces E), 14.3 kW, 14000–22000 kWh a year.'],
+        arrays: [{ id: 'PV1', name: 'East wing shed roof', modules: 35, kw: 14.35, low: 14000, high: 22000 }],
+        total: { modules: 35, kw: 14.35, low: 14000, high: 22000 },
+        inverter: { id: 'INV1' },
+        shutdown: 'RS1',
+        notes: [],
+        advisory: 'An estimate to compare layouts — not a production guarantee.',
+        ops: 6,
+      },
+    });
+  }
+
   proposeStaging(projectId: string, input: { rooms?: readonly string[] }) {
     this.record('proposeStaging', projectId, input);
     return Promise.resolve({
@@ -344,6 +363,19 @@ describe('the MCP server', () => {
     expect(said).toContain('- Great room: a 3000 × 2000 mm rug under the seating group');
     const both = await mcp.callTool({ name: 'floorspec_propose', arguments: { assistant: 'staging', batch: [] } });
     expect(both.isError).toBe(true);
+  });
+
+  it('lets the solar assistant lay out the roof as a changeset, sized in kWh (FLR-T-16.1)', async () => {
+    const client = new MemoryClient();
+    const mcp = await connect(client);
+    const result = await mcp.callTool({ name: 'floorspec_propose', arguments: { assistant: 'solar', kwh: 12000 } });
+    expect(result.isError, texts(result)).toBeFalsy();
+    expect(client.calls.at(-1)).toEqual({ method: 'proposeSolar', args: [PROJECT.id, { kwh: 12000 }] });
+    const said = texts(result);
+    expect(said).toContain('Changeset "Solar on the roof" (cs-pv) is pending: 35 modules, 14.3 kW, 14000–22000 kWh a year (an estimate, ±20%).');
+    expect(said).not.toMatch(/compliant/i);
+    const kwhElsewhere = await mcp.callTool({ name: 'floorspec_propose', arguments: { assistant: 'electrical', kwh: 100 } });
+    expect(texts(kwhElsewhere)).toContain('kwh goes with assistant "solar"');
   });
 
   it('keeps tools/list within its budget', async () => {
@@ -793,8 +825,8 @@ describe('the MCP server', () => {
     expect(params('floorspec_render')['mode']).toMatchObject({ enum: ['construction', 'decorator', 'electrical', 'plumbing', 'mechanical', 'lowvoltage', 'landscape'] });
     expect(params('floorspec_render')['sky']).toMatchObject({ enum: ['clear', 'overcast', 'dusk', 'night', 'studio'] });
     expect(params('floorspec_render')['doors']).toMatchObject({ enum: ['closed', 'open'] });
-    expect(params('floorspec_propose')['assistant']).toMatchObject({ enum: ['electrical', 'staging'] });
-    expect(Object.keys(params('floorspec_propose')).sort()).toEqual(['assistant', 'batch', 'changeset', 'exterior', 'locks', 'name', 'project', 'render', 'rooms']);
+    expect(params('floorspec_propose')['assistant']).toMatchObject({ enum: ['electrical', 'staging', 'solar'] });
+    expect(Object.keys(params('floorspec_propose')).sort()).toEqual(['assistant', 'batch', 'changeset', 'exterior', 'kwh', 'locks', 'name', 'project', 'render', 'rooms']);
     expect(Object.keys(params('floorspec_apply')).sort()).toEqual(['batch', 'changeset', 'ifMatch', 'locks', 'option', 'project', 'render']);
   });
 

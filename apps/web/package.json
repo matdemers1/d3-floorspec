@@ -17,6 +17,7 @@
     "@d3cloud/ui": "https://github.com/matdemers1/d3-design-system/releases/download/v1.5.0/d3cloud-ui-1.5.0.tgz",
     "@floorspec/analysis": "workspace:*",
     "@floorspec/assistant-electrical": "workspace:*",
+    "@floorspec/assistant-solar": "workspace:*",
     "@floorspec/engine": "workspace:*",
     "@floorspec/mesh": "workspace:*",
     "@floorspec/migrate": "workspace:*",

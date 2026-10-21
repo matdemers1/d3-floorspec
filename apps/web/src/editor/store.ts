@@ -48,7 +48,7 @@ export type StairForm = 'straight' | 'lShaped' | 'uShaped' | 'winder' | 'spiral'
  * places the library's item under the pointer, click after click (FLR-T-18.7); `measure` measures the
  * plan, point to point, chained, an area (FLR-T-18.9).
  */
-export type ToolId = 'select' | 'hand' | 'wall' | 'arc' | 'separator' | 'slab' | 'roof' | 'stair' | 'door' | 'window' | 'room' | 'wand' | 'device' | 'place' | 'measure' | 'dimension' | 'note' | 'lot' | 'setback' | 'spot' | 'contour' | 'pad' | 'fence' | 'context' | 'tree' | 'neighbour' | 'street';
+export type ToolId = 'select' | 'hand' | 'wall' | 'arc' | 'separator' | 'slab' | 'roof' | 'stair' | 'door' | 'window' | 'room' | 'wand' | 'device' | 'place' | 'measure' | 'dimension' | 'note' | 'lot' | 'setback' | 'spot' | 'contour' | 'pad' | 'fence' | 'context' | 'tree' | 'neighbour' | 'street' | 'solar';
 
 /**
  * The tools that draw a chain of points: walls and separators (a polyline), and the outlines of a
@@ -201,6 +201,8 @@ export interface Layers {
   beams?: boolean;
   /** FLR-T-15.3, FS_context: the street, the neighbours and the trees beyond the lot; absent: shown. */
   context?: boolean;
+  /** FLR-T-16.1, FS_energy: the solar arrays on each level's roofs and the setbacks they keep; absent: shown. */
+  solar?: boolean;
 }
 
 export interface DrawSettings {

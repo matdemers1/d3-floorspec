@@ -1,0 +1,6 @@
+{
+  "description": "Rapid shutdown \"string\" is not a place it acts.",
+  "covers": [
+    "FS-ENGY-1.3.1"
+  ]
+}

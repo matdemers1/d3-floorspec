@@ -1,0 +1,7 @@
+{
+  "description": "A collection FS_energy 0.1.0's registry entry does not name: `batteries`. Core reports it (Core 12.4.1, FS-INV-604) before FS_energy is evaluated.",
+  "covers": [
+    "FS-ENGY-1.2.2",
+    "FS-CORE-12.4.1"
+  ]
+}

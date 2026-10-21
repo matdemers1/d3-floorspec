@@ -128,3 +128,4 @@ export {
   type SideDepths,
   type ScaleBar,
 } from './annotate.js';
+export { solarLayers, solarExtent, faceWords, arrayTagText, type SolarLayers, type SolarDrawOptions } from './solar.js';

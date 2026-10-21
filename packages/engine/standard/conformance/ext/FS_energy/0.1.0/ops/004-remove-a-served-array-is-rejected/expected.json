@@ -1,0 +1,15 @@
+{
+  "status": "rejected",
+  "diagnostics": [
+    {
+      "code": "FS-ENGY-INV-005",
+      "severity": "error",
+      "elements": ["INV1"]
+    },
+    {
+      "code": "FS-ENGY-INV-005",
+      "severity": "error",
+      "elements": ["RS1"]
+    }
+  ]
+}

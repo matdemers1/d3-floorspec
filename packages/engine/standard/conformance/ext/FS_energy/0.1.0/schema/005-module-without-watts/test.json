@@ -1,0 +1,6 @@
+{
+  "description": "A module always says its watts.",
+  "covers": [
+    "FS-ENGY-1.3.1"
+  ]
+}

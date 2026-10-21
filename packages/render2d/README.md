@@ -100,6 +100,12 @@ renderPlan(doc, { reader: { extensions: ['FS_electrical'], knownExtensions } });
   street named along it; each neighbour's footprint hatched and dashed with its ridge (and hips); each tree
   a dashed crown. A dashed "Context · …" tag sits by each kind. One plan layer, `context`, on in Landscape
   mode and off in every other; `contextLayers` is exported so the editor's canvas draws the same SVG.
+- **Solar (FLR-T-16.1, FS_energy)** — each array on its roof's level: its modules as blue cells inside the
+  exact footprint FS_energy derives, a tag "PV1 · 28 × 410 W · faces S", the setbacks each face keeps from
+  its eaves, ridges and rakes as tinted strips, and the way the face slopes. An array a corner of which is
+  inside a setback is outlined dashed in the warning colour; an array's fallback box is never drawn. One
+  plan layer, `solar`, on in Electrical mode and ghosted in Construction; `solarLayers` is exported so the
+  editor's canvas draws the same SVG.
 
 PNG output lives in the worker (`apps/worker/src/render`): `renderPlanPng(doc, { width, ...opts })`
 rasterises with resvg and the bundled Inter / JetBrains Mono, never the host's fonts.

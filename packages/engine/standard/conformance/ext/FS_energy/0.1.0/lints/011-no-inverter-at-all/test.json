@@ -1,0 +1,6 @@
+{
+  "description": "No inverter: both arrays are reported.",
+  "covers": [
+    "FS-ENGY-3.1.3"
+  ]
+}

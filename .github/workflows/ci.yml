@@ -196,7 +196,7 @@ jobs:
           - group: solvers
             packages: '@floorspec/layout-solver,@floorspec/dsl,@floorspec/migrate'
           - group: rest
-            packages: '@floorspec/engine,@floorspec/ops,@floorspec/rules-engine,@floorspec/mcp,@floorspec/mcp-stdio,@floorspec/package,@floorspec/analysis,@floorspec/assistant-electrical,@floorspec/assistant-staging,@d3-floorspec/server,@d3-floorspec/agent-eval'
+            packages: '@floorspec/engine,@floorspec/ops,@floorspec/rules-engine,@floorspec/mcp,@floorspec/mcp-stdio,@floorspec/package,@floorspec/analysis,@floorspec/assistant-electrical,@floorspec/assistant-staging,@floorspec/assistant-solar,@d3-floorspec/server,@d3-floorspec/agent-eval'
             build: true
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -326,7 +326,7 @@ jobs:
           - group: 3d
             suites: three,sun,furniture,share,assets,lighting,resize,presentation,camera,arrange,rooms,precision,styles,feedback,renovation,section,films,edit3d,compare,xray,daylight,tour,xr,seasons,extlighting,envelope
           - group: editor
-            suites: moonshots,arcs,materials,findings,templates,roofs-stairs,package,exports,systems,program,options,main-path,keyboard,drawers,panzoom,modes,placing,trace,dimensions,phrases,keys,site,outdoor,context
+            suites: moonshots,arcs,materials,findings,templates,roofs-stairs,package,exports,systems,program,options,main-path,keyboard,drawers,panzoom,modes,placing,trace,dimensions,phrases,keys,site,outdoor,context,solar
     services:
       postgres:
         image: mirror.gcr.io/library/postgres:16 # Docker Hub's postgres through Google's mirror: anonymous Hub pulls hit 429s (FLR-T-12.30)

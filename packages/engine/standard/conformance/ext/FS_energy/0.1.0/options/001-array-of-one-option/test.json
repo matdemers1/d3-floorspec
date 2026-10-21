@@ -1,0 +1,8 @@
+{
+  "description": "PV2 in carport option A only (Core 19): the primary design has both arrays; option B's design has PV1 alone, and INV1 lists an array B does not have - FS-ENGY-INV-005 in B (Core 19.5.2).",
+  "covers": [
+    "FS-ENGY-1.2.1",
+    "FS-ENGY-3.1.1",
+    "FS-CORE-19.3.1"
+  ]
+}

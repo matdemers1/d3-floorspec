@@ -1,0 +1,12 @@
+{
+  "batch": [
+    {
+      "op": "setProperty",
+      "id": "$document",
+      "path": "/extensions/FS_energy/setbacks",
+      "value": {
+        "eave": 975360
+      }
+    }
+  ]
+}

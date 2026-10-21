@@ -1,0 +1,91 @@
+/* FLR-T-16.1: the Solar panel and an array's inspector — semantic tokens only. The arrays themselves are drawn in the plan's palette (render2d). */
+.fs-solar-panel,
+.fs-solar-array {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+}
+.fs-solar__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+}
+.fs-solar__hint {
+  margin: 0;
+}
+.fs-solar__facts {
+  margin: 0 0 var(--space-8);
+  display: grid;
+  gap: var(--space-4);
+}
+.fs-solar__fact {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-8);
+  font-size: var(--text-13);
+}
+.fs-solar__fact dt {
+  color: var(--color-fg-muted);
+}
+.fs-solar__fact dd {
+  margin: 0;
+  color: var(--color-fg);
+  text-align: right;
+}
+.fs-solar__fact--lead dd {
+  font-weight: 600;
+}
+.fs-solar__months {
+  margin: 0 0 var(--space-8);
+}
+.fs-solar__bars {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  align-items: end;
+  gap: var(--space-4);
+  height: 44px;
+}
+.fs-solar__bar {
+  display: block;
+  background: var(--color-info);
+  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+}
+.fs-solar__letters {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: var(--space-4);
+  margin-top: var(--space-4);
+  font-size: var(--text-12);
+  color: var(--color-fg-muted);
+  text-align: center;
+}
+.fs-solar__faces,
+.fs-solar__adds {
+  list-style: none;
+  margin: 0 0 var(--space-8);
+  padding: 0;
+  display: grid;
+  gap: var(--space-4);
+}
+.fs-solar__face,
+.fs-solar__adds li {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-8);
+  font-size: var(--text-13);
+  color: var(--color-fg);
+}
+.fs-solar__face[data-status='skipped'] {
+  color: var(--color-fg-muted);
+}
+.fs-solar__face-value,
+.fs-solar__muted {
+  color: var(--color-fg-muted);
+  text-align: right;
+}
+.fs-solar__picked {
+  fill: none;
+  stroke: var(--color-accent);
+  stroke-width: 2;
+  stroke-dasharray: 6 3;
+}

@@ -1,0 +1,9 @@
+{
+  "description": "The sunny house declaring Core \"0.3\": its gable and its flat roof derive the same faces for a 0.3 reader, so FS_energy reports nothing and derives exactly what it derives for \"0.4\".",
+  "covers": [
+    "FS-ENGY-1.2.1",
+    "FS-ENGY-1.2.3",
+    "FS-ENGY-1.2.4",
+    "FS-ENGY-7.1.1"
+  ]
+}

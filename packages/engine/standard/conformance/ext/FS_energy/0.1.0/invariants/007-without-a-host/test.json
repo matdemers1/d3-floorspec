@@ -1,0 +1,6 @@
+{
+  "description": "PV1 without a host: FS-ENGY-INV-003, and its rotation is not tested.",
+  "covers": [
+    "FS-ENGY-2.3.1"
+  ]
+}

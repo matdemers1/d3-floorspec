@@ -8,9 +8,10 @@
  */
 import { BU_PER_FOOT, feetInches, num, squareFeet } from './format.js';
 import { diffScenes, type Change, type SceneDiff } from './ghost.js';
-import { contextDrawing, deriveFrom, evaluate, resolveAnnotations, siteDrawing, type ContextDrawing, type Evaluation, type SiteDrawing } from '@floorspec/engine';
+import { contextDrawing, solarDrawing, usesEnergy, type SolarDrawing, deriveFrom, evaluate, resolveAnnotations, siteDrawing, type ContextDrawing, type Evaluation, type SiteDrawing } from '@floorspec/engine';
 import { siteExtent, siteLayers } from './site.js';
 import { contextExtent, contextLayers } from './context.js';
+import { solarExtent, solarLayers } from './solar.js';
 import { DEMOLISH_DASH, EXISTING_OPACITY, RENOVATION_FILTER_LABELS, RENOVATION_INK, RENOVATION_STATUS_LABELS, filteredDocument, renovationStyles, type RenovationFilter, type RenovationStyle } from './renovation.js';
 import { DEFAULT_READER, defaultLevel, sceneOf, type Pt, type ReaderOptions, type Scene, type SceneFallback, type SceneOpening, type SceneRoom, type SceneStair, type SceneWall } from './scene.js';
 import { base64, el, escText as esc, linePath, polylinePath, ringsPath, type XY } from './svg.js';
@@ -536,6 +537,10 @@ export function renderEvaluation(given: Evaluation, options: EvaluationRenderOpt
   const drawnContext: ContextDrawing | null = st.context !== 'off' && evaluation.view !== undefined && defaultLevel(evaluation.view) === scene.levelId ? contextDrawing(evaluation.view) : null;
   const context = drawnContext !== null && !drawnContext.empty ? drawnContext : null;
 
+  // ── FS_energy (FLR-T-16.1): the solar arrays on this level's roofs ──
+  const drawnSolar: SolarDrawing | null = st.solar !== 'off' && evaluation.view !== undefined && usesEnergy(evaluation.view) ? solarDrawing(evaluation.view) : null;
+  const solar = drawnSolar !== null && drawnSolar.arrays.some((x) => x.level === scene.levelId) ? drawnSolar : null;
+
   // ── extent ──
   let body: Box | undefined;
   for (const w of scene.walls.values()) body = grow(body, w.outline);
@@ -555,6 +560,10 @@ export function renderEvaluation(given: Evaluation, options: EvaluationRenderOpt
   }
   if (context !== null) {
     const pts = contextExtent(context);
+    if (pts.length) all = grow(all, pts);
+  }
+  if (solar !== null) {
+    const pts = solarExtent(solar, scene.levelId);
     if (pts.length) all = grow(all, pts);
   }
   const showClearances = options.clearances ?? false;
@@ -953,6 +962,8 @@ export function renderEvaluation(given: Evaluation, options: EvaluationRenderOpt
     };
     for (const fb of scene.fallbacks.values()) {
       if (fb.landscape !== undefined || fb.outdoor !== undefined) continue;
+      // FS_energy's arrays (FLR-T-16.1) are the Solar layer's: their modules, never their box.
+      if (fb.extension === 'FS_energy' && fb.collection === 'pvArrays') continue;
       const layer = layerOfElement(fb.extension, fb.collection);
       const state = layer === null ? 'on' : st[layer];
       if (state === 'off') continue;
@@ -1052,6 +1063,14 @@ export function renderEvaluation(given: Evaluation, options: EvaluationRenderOpt
       roofs += el('g', { 'data-id': id, 'data-kind': rf.kind }, g);
     }
     put('roof', el('g', { id: 'roofs' }, roofs));
+  }
+
+  // ── FS_energy (FLR-T-16.1): the setbacks each face keeps, the arrays' modules, their tags ──
+  if (solar !== null) {
+    const svg = solarLayers(solar, scene.levelId, f, pal, { highlight: (id) => hi.has(id) });
+    if (svg.setbacks !== '') put('solar', el('g', { id: 'solar-setbacks' }, svg.setbacks));
+    if (svg.arrays !== '') put('solar', el('g', { id: 'solar-arrays' }, svg.arrays));
+    if (svg.tags !== '') put('solar', el('g', { id: 'solar-tags' }, svg.tags));
   }
 
   // ── ghosts: what the changeset removed, and where moved elements were ──
@@ -1344,7 +1363,7 @@ function beamsSvg(beams: readonly Beam[], P: (ring: readonly Pt[]) => XY[], them
 const TRADES: ReadonlySet<PlanLayer> = new Set(['electrical', 'plumbing', 'mechanical', 'lowvoltage']);
 
 /** The layers whose ghosts the filter greys. */
-const PLAN_GHOSTS: readonly PlanLayer[] = ['walls', 'openings', 'rooms', 'furniture', 'casework', 'dimensions', 'roof', 'electrical', 'beams', 'plumbing', 'mechanical', 'lowvoltage', 'site', 'contours', 'grading', 'spots', 'landscape', 'outdoor', 'context'];
+const PLAN_GHOSTS: readonly PlanLayer[] = ['walls', 'openings', 'rooms', 'furniture', 'casework', 'dimensions', 'roof', 'electrical', 'beams', 'plumbing', 'mechanical', 'lowvoltage', 'site', 'contours', 'grading', 'spots', 'landscape', 'outdoor', 'context', 'solar'];
 
 /** A ghost is grey: every colour desaturated, then faded (FLR-T-18.3). */
 const GHOST_FILTER = el('filter', { id: 'fs-ghost', 'color-interpolation-filters': 'sRGB' }, el('feColorMatrix', { type: 'saturate', values: 0 }));

@@ -1,0 +1,6 @@
+{
+  "description": "An array has a member it does not define: `azimuth` - the way it faces is its host's rotation.",
+  "covers": [
+    "FS-ENGY-1.3.1"
+  ]
+}

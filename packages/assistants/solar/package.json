@@ -1,0 +1,29 @@
+{
+  "name": "@floorspec/assistant-solar",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Non-normative solar assistant (FLR-T-16.1): ranks a Floorspec plan's roof faces by a typical year's sun after shade, lays out FS_energy arrays on the most productive ones within their setbacks, sized to a target, with an inverter and a rapid-shutdown initiator on a circuit, as one Floorspec Ops batch. An estimate to compare layouts, never a guarantee or a code check. Isomorphic and deterministic.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit && tsc -p test",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@floorspec/analysis": "workspace:*",
+    "@floorspec/engine": "workspace:*",
+    "@floorspec/ops": "workspace:*"
+  }
+}

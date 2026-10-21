@@ -647,7 +647,8 @@ export function createFloorspecServer({ client }: ServerOptions): McpServer {
           name: z.string().trim().min(1).max(120).optional().describe('What the change is, for the reviewer: "Widen the kitchen 2 ft".'),
           batch: Batch.optional(),
           locks: z.array(Lock).max(200).optional(),
-          assistant: z.enum(['electrical', 'staging']).optional().describe('Not with name/batch. electrical: receptacles, lights, circuits; staging: decor.'),
+          assistant: z.enum(['electrical', 'staging', 'solar']).optional().describe('Not with name/batch. electrical: receptacles, lights, circuits; staging: decor; solar: PV arrays on the best roof faces, inverter.'),
+          kwh: z.number().min(1).max(10_000_000).optional().describe('solar: kWh a year to size to; default the house\'s use.'),
           exterior: z.boolean().optional().describe('electrical: light the grounds instead — path lights along walks, step lights, entries, transformer, scene.'),
           rooms: z.array(z.string().min(1).max(200)).max(200).optional().describe('The assistant\'s rooms; default all.'),
           changeset: ChangesetHandle.optional().describe('Assistant: the changeset whose plan to read.'),
@@ -679,6 +680,24 @@ export function createFloorspecServer({ client }: ServerOptions): McpServer {
           if (args.render === true && result.changeset !== null) content.push(...(await renderContent(client, project.id, { changeset: result.changeset.id, highlight: result.proposal.added.map((a) => a.id) })));
           return { content, structuredContent: structured };
         }
+        if (args.assistant === 'solar') {
+          if (args.batch !== undefined) throw new ToolError('Send either a batch or an assistant, not both.');
+          const source = args.changeset === undefined ? undefined : await resolveChangeset(client, project.id, args.changeset);
+          const result = await client.proposeSolar(project.id, {
+            ...(args.kwh === undefined ? {} : { kwh: args.kwh }),
+            ...(source === undefined ? {} : { changeset: source.id }),
+          });
+          const structured = { project: project.id, ...result };
+          const lead =
+            result.changeset === null
+              ? 'No array proposed: main is unchanged.'
+              : `Changeset "${result.changeset.name}" (${result.changeset.id}) is pending: ${String(result.proposal.total.modules)} modules, ${result.proposal.total.kw.toFixed(1)} kW, ${String(result.proposal.total.low)}–${String(result.proposal.total.high)} kWh a year (an estimate, ±20%). Main has not changed until a person accepts it.` +
+                (result.carries === undefined ? '' : ` It carries the ${String(result.carries.ops)} op(s) of "${result.carries.name}" ahead of them.`);
+          const content: CallToolResult['content'] = [text([lead, ...result.proposal.explanation.map((l) => `- ${l}`)].join('\n')), text(structured)];
+          if (args.render === true && result.changeset !== null) content.push(...(await renderContent(client, project.id, { changeset: result.changeset.id, highlight: result.proposal.arrays.map((a) => a.id) })));
+          return { content, structuredContent: structured };
+        }
+        if (args.kwh !== undefined) throw new ToolError('kwh goes with assistant "solar".');
         if (args.assistant === 'electrical') {
           if (args.batch !== undefined) throw new ToolError('Send either a batch or an assistant, not both.');
           const source = args.changeset === undefined ? undefined : await resolveChangeset(client, project.id, args.changeset);
