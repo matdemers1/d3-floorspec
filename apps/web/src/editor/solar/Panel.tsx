@@ -11,6 +11,7 @@ import { modesOf, type LayerState } from '../modes';
 import { api, messageOf } from '../../lib/api';
 import { openReview, refreshProposals } from '../review';
 import { useSolarShown } from './Layer';
+import { proposeSolar } from '@floorspec/assistant-solar';
 import { kwhRange, optionsOf, proposalOf, solarDrawingOf, solarEstimateOf, solarOf, useSolarState, type Sizing } from './data';
 import './solar.css';
 
@@ -91,7 +92,7 @@ export function SolarPanel({ store, model, units, readOnly }: { store: EditorSto
           ) : onFace?.arrays[0] === undefined ? (
             <p className="fs-note">{onFace?.faces[0]?.reason === undefined ? 'Nothing fits a row of modules inside this face’s setbacks.' : `Not here: ${onFace.faces[0].reason}.`}</p>
           ) : (
-            <FaceFit store={store} label={picked.roofName ?? picked.roof} fit={onFace.arrays[0]} batch={onFace.batch} readOnly={readOnly} />
+            <FaceFit store={store} model={model} face={picked.key} label={picked.roofName ?? picked.roof} fit={onFace.arrays[0]} readOnly={readOnly} />
           )}
         </Section>
       ) : null}
@@ -169,7 +170,25 @@ export function SolarPanel({ store, model, units, readOnly }: { store: EditorSto
   );
 }
 
-function FaceFit({ store, label, fit, batch, readOnly }: { store: EditorStore; label: string; fit: { id: string; modules: number; rows: number; columns: number; layout: string; mount: string; kw: number; low: number; high: number; perKw: number }; batch: readonly unknown[]; readOnly: boolean }) {
+/**
+ * An array laid on one face, as ops on the plan shown. Its IDs are the assistant's next free ones; an ID a
+ * changeset retired is refused (FS-OPS-005), and the batch is built again with it set aside.
+ */
+function FaceFit({ store, model, face, label, fit, readOnly }: { store: EditorStore; model: EditorModel; face: string; label: string; fit: { id: string; modules: number; rows: number; columns: number; layout: string; mount: string; kw: number; low: number; high: number; perKw: number }; readOnly: boolean }) {
+  const place = () => {
+    const tried = new Set<string>();
+    const build = (): never => {
+      const p = proposeSolar(model.document, { faces: [face], retired: [...tried] });
+      for (const op of p.batch as { id?: string; path?: string }[]) {
+        if (typeof op.id === 'string' && op.id !== '$document') tried.add(op.id);
+        const c = /\/circuits\/([^/]+)$/.exec(op.path ?? '');
+        if (c?.[1] !== undefined) tried.add(c[1]);
+      }
+      return p.batch as never;
+    };
+    solarOf(store).set({ face: null });
+    void store.apply(`Place an array on ${label}`, build, { select: (created) => created.find((id) => id.startsWith('PV')) ?? null });
+  };
   return (
     <>
       <p className="fs-note" data-testid="solar-face-fit">
@@ -179,10 +198,7 @@ function FaceFit({ store, label, fit, batch, readOnly }: { store: EditorStore; l
         <Button
           variant="secondary"
           size="sm"
-          onClick={() => {
-            solarOf(store).set({ face: null });
-            void store.apply(`Place an array on ${label}`, batch as never, { select: () => fit.id });
-          }}
+          onClick={place}
         >
           Place an array here
         </Button>
@@ -211,7 +227,7 @@ export function MonthBars({ monthly, label }: { monthly: readonly number[]; labe
 }
 
 /** The inspector of a selected array (the board's "Array · PV1"): its panels, its face and shade, its year, its circuits. */
-export function ArrayBody({ store, model, id, units, readOnly }: { store: EditorStore; model: EditorModel; id: string; units: UnitSystem; readOnly: boolean }) {
+export function ArrayBody({ store, model, id, units, readOnly, heading = false }: { store: EditorStore; model: EditorModel; id: string; units: UnitSystem; readOnly: boolean; heading?: boolean }) {
   const drawing = solarDrawingOf(model);
   const a = drawing.arrays.find((x) => x.id === id);
   const est: ArrayEstimate | undefined = solarEstimateOf(model).arrays.find((x) => x.id === id);
@@ -224,6 +240,17 @@ export function ArrayBody({ store, model, id, units, readOnly }: { store: Editor
   const inverter = a.inverter === null ? null : drawing.inverters.find(([iid]) => iid === a.inverter);
   return (
     <div className="fs-solar-array" data-testid="solar-array">
+      {heading ? (
+        <div className="fs-inspector__head">
+          <span className="fs-inspector__icon">
+            <Sun />
+          </span>
+          <div className="fs-inspector__title">
+            <h2>Array · {id}</h2>
+            <p>{a.name ?? a.roof} · FS_energy array</p>
+          </div>
+        </div>
+      ) : null}
       <div className="fs-solar__chips" aria-label={`${id} at a glance`}>
         <Badge tone="neutral" size="sm">{a.modules.length} panels</Badge>
         <Badge tone="neutral" size="sm">{(a.watts / 1000).toFixed(1)} kW</Badge>

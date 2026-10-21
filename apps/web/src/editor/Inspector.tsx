@@ -138,7 +138,7 @@ export function Inspector({ store, tools }: { store: EditorStore; tools: ToolCon
     const picked = selection !== null && model.ext.get(selection)?.extension === 'FS_energy' && model.ext.get(selection)?.collection === 'pvArrays' ? selection : null;
     return (
       <div className="fs-inspector__body">
-        {picked !== null ? <ArrayBody store={store} model={model} id={picked} units={units} readOnly={readOnly !== null} /> : null}
+        {picked !== null ? <ArrayBody store={store} model={model} id={picked} units={units} readOnly={readOnly !== null} heading /> : null}
         <SolarPanel store={store} model={model} units={units} readOnly={readOnly !== null} />
       </div>
     );

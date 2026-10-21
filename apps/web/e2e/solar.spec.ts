@@ -99,6 +99,17 @@ async function cameraOf(page: Page): Promise<{ at: (p: readonly [number, number]
   return { at: (p) => ({ x: a.x + (p[0] - wa[0]) * s, y: a.y - (p[1] - wa[1]) * s }), s };
 }
 
+/** The Solar tool on — ⇧P toggles it, so it is pressed only when the Solar panel is not showing. */
+async function solarTool(page: Page): Promise<void> {
+  const panel = page.getByRole('complementary', { name: 'Inspector' }).getByRole('region', { name: 'Solar', exact: true });
+  // the pending proposal reopens in the right drawer with the page: close it to see the inspector
+  const proposal = page.getByRole('complementary', { name: 'Proposal' });
+  if (await proposal.isVisible()) await proposal.getByRole('button', { name: 'Close the proposal' }).click();
+  if (await panel.isVisible()) return;
+  await page.locator('.fs-editor').focus();
+  await page.keyboard.press('Shift+KeyP');
+}
+
 test('solar: the assistant ranks the faces and opens a changeset, an array placed on the guest wing with its estimate and note, Ghost/Off/On, the schedule, the arrays in 3D — axe in both themes', async ({ page }) => {
   test.setTimeout(480_000);
   await firstRunSetup(page, { name: 'Electrician', email: 'solar@example.test', password: password('solar') });
@@ -118,7 +129,7 @@ test('solar: the assistant ranks the faces and opens a changeset, an array place
   await expect(page.getByRole('button', { name: 'Solar (⇧P)' })).toBeVisible();
   await page.locator('.fs-editor').focus();
   await page.keyboard.press('Shift+KeyP');
-  const panel = inspector.getByRole('region', { name: 'Solar' });
+  const panel = inspector.getByRole('region', { name: 'Solar', exact: true });
   await expect(panel).toBeVisible();
   // the faces, ranked by a kW's year: the east wing, the garage's flat roof, the guest wing
   const faces = panel.getByTestId('solar-faces').getByRole('listitem');
@@ -140,19 +151,17 @@ test('solar: the assistant ranks the faces and opens a changeset, an array place
   const { changesets } = (await (await page.request.get(`/api/projects/${project}/changesets`)).json()) as { changesets: { name: string; status?: string }[] };
   expect(changesets.some((c) => c.name.startsWith('Solar on the roof') && (c.status ?? 'pending') === 'pending')).toBe(true);
   expect(arrays(await docOf(page, project))).toEqual([]);
-  await page.keyboard.press('Escape');
+  await proposal.getByRole('button', { name: 'Close the proposal' }).click();
+  await expect(inspector).toBeVisible();
 
   // ── By hand, on main: pick the guest wing's shed roof, and lay an array on it.
-  await page.goto(`/projects/${project}/editor`);
-  await settled(page);
-  await page.locator('.fs-editor').focus();
-  await page.keyboard.press('Shift+KeyP');
-  await expect(inspector.getByRole('region', { name: 'Solar' })).toBeVisible();
+  await solarTool(page);
+  await expect(inspector.getByRole('region', { name: 'Solar', exact: true })).toBeVisible();
   const cam = await cameraOf(page);
   const at = cam.at(GUEST_WING);
   await page.mouse.click(at.x, at.y);
   await expect(page.getByTestId('solar-picked-face')).toBeAttached();
-  const solar = inspector.getByRole('region', { name: 'Solar' });
+  const solar = inspector.getByRole('region', { name: 'Solar', exact: true });
   await expect(solar.getByTestId('solar-face-fit')).toContainText('kWh a year');
   await solar.getByRole('button', { name: 'Place an array here' }).click();
   await expect.poll(async () => arrays(await docOf(page, project)).length).toBe(1);
@@ -175,7 +184,7 @@ test('solar: the assistant ranks the faces and opens a changeset, an array place
   await axe(page, 'an array selected in the Solar panel');
 
   // ── Show: Ghost greys it, Off hides it, On brings it back.
-  const show = inspector.getByRole('region', { name: 'Solar' }).getByRole('radiogroup', { name: 'Show solar' });
+  const show = inspector.getByRole('region', { name: 'Solar', exact: true }).getByRole('radiogroup', { name: 'Show solar' });
   await show.getByRole('radio', { name: 'Ghost' }).click();
   await expect(page.locator('.fs-canvas')).toHaveAttribute('data-ghost', /\bsolar\b/);
   await show.getByRole('radio', { name: 'Off' }).click();
@@ -197,15 +206,18 @@ test('solar: the assistant ranks the faces and opens a changeset, an array place
   await settled(page);
   await page.waitForFunction(() => (window as unknown as Hook).__floorspec3d?.ready === true, undefined, { timeout: 120_000 });
   const shownArrays = () => page.evaluate(() => (window as unknown as Hook).__floorspec3d!.arrays);
+  // An array lies on its roof, which a cutaway at its level leaves off: the whole house shows it.
+  await page.getByRole('combobox', { name: 'Levels in 3D' }).click();
+  await page.getByRole('option', { name: /^Whole house/ }).click();
+  await expect(page.getByRole('combobox', { name: 'Levels in 3D' })).toContainText('Whole house');
   await expect.poll(shownArrays).toBeGreaterThan(0);
   await page.waitForTimeout(2_000);
   const programs = await page.evaluate(() => (window as unknown as Hook).__floorspec3d!.programs.list);
   expect(programs.every((p) => p.linked && p.samplers <= 16), JSON.stringify(programs)).toBe(true);
   await shoot(page, '3d');
   await axe(page, 'the 3D view with an array');
-  await page.locator('.fs-editor').focus();
-  await page.keyboard.press('Shift+KeyP');
-  const panel3d = inspector.getByRole('region', { name: 'Solar' });
+  await solarTool(page);
+  const panel3d = inspector.getByRole('region', { name: 'Solar', exact: true });
   await expect(panel3d).toBeVisible();
   await panel3d.getByRole('radiogroup', { name: 'Show solar' }).getByRole('radio', { name: 'Off' }).click();
   await expect.poll(shownArrays).toBe(0);
